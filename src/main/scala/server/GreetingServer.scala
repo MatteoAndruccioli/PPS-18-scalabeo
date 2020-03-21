@@ -8,7 +8,7 @@ import com.sun.xml.internal.bind.v2.TODO
 import shared.ClientToGreetingMessages.{ConnectionToGreetingQuery, PlayerReadyAnswer}
 import shared.{ClusterScheduler, CustomScheduler}
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
-import shared.GreetingToClientMessages.{ConnectionAnswer, ReadyToJoinAck, ReadyToJoinQuery}
+import shared.GreetingToClientMessages.{ConnectionAnswer, ReadyToJoinAck, ReadyToJoinQuery, StartGame}
 
 import scala.collection.mutable
 
@@ -19,8 +19,6 @@ class GreetingServer extends Actor {
   private val scheduler: CustomScheduler = ClusterScheduler(cluster)
   private val isServerOn = true
 
-  var counter: Int = 0
-  private var client: Option[ActorRef] = None
   private val nPlayer = 2
 
   var listPlayers = new mutable.ListBuffer[ActorRef]()
@@ -49,6 +47,7 @@ class GreetingServer extends Actor {
           for (player <- playersForGame) listPlayers-=player
           println("ListPlayers after the game start: " +listPlayers)
           // TODO Qua instanzierò il server che gestirà il gioco del quale conservero l' ActorRef e i quello dei partecipanti
+          for(player <- playersForGame) player ! StartGame()
         } else {
           listPlayers-=sender()
           mapPlayersName -= sender()
