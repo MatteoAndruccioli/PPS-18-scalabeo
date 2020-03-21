@@ -3,10 +3,10 @@ package client
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.Publish
+import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import shared.ClientToGreetingMessages._
 import shared.{ClusterScheduler, CustomScheduler}
-import shared.Topic.SERVER_TOPIC
+import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
 import shared.GreetingToClientMessages._
 
 class ClientActor extends Actor{
@@ -20,6 +20,8 @@ class ClientActor extends Actor{
   private var username: Option[String] = None
   //l'utente è disposto a giocare
   private var playerIsReady:Boolean = true //todo andrà settato a false quando interazione con UI sarà pronta
+
+  mediator ! Subscribe(GREETING_SERVER_RECEIVES_TOPIC, self)
 
   override def receive: Receive = waitingRequestForGameModeFromGreetingServer
 
@@ -83,7 +85,7 @@ class ClientActor extends Actor{
   //runnable sending connection request to GreetingServer
   private def estabilishConnectionToGreetingServer(): Unit = {
     println(self + " - Ho inviato ConnectionToGreetingQuery; name" +username.getOrElse("errore-username1"))
-    mediator ! Publish(SERVER_TOPIC, ConnectionToGreetingQuery(username.getOrElse("default-name"))) //questo deve rimanere su topic
+    mediator ! Publish(GREETING_SERVER_RECEIVES_TOPIC, ConnectionToGreetingQuery(username.getOrElse("default-name"))) //questo deve rimanere su topic
   }
 
   //client tells GreetingServer whether he wants to join match
