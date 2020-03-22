@@ -3,6 +3,7 @@ package model
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
+
 package object constants {
   // lista del punteggio e della cardinalità che le lettere devono avere in una partita
   // (lettare. valore, cardinalità)
@@ -35,6 +36,8 @@ sealed trait LettersBag {
   def bag: List[Card]
   def populateBag(list: List[(String, Int, Int)]): List[Card]
   def tuple2Cards(tuple: (String, Int, Int)): List[Card]
+  def reinsertCardInBag(cardsToInsert: ArrayBuffer[Card]): Unit
+  def takeRandomElementFromBagOfLetters(lettersToTake: Int): Option[List[Card]]
 }
 
 
@@ -44,4 +47,17 @@ case class LettersBagImpl() extends LettersBag {
   override def populateBag(list: List[(String, Int, Int)]): List[Card] = list.flatMap(tuple2Cards)
   override def tuple2Cards(tuple: (String, Int, Int)): List[Card] = List.fill(tuple._3)(CardImpl(tuple._1))
   override def bag: List[Card] = _bag
+  override def reinsertCardInBag(cardsToInsert: ArrayBuffer[Card]): Unit = _bag = _bag ++ cardsToInsert
+  def takeRandomElementFromBagOfLetters(lettersToTake: Int): Option[List[Card]] = _bag match {
+    case Nil => Option.empty
+    case _ =>
+      val shuffledList = Random.shuffle(_bag)
+      if (lettersToTake > _bag.length) {
+        _bag = Nil
+        Some(shuffledList)
+      } else {
+        _bag = shuffledList.drop(lettersToTake)
+        Some(shuffledList.slice(0, lettersToTake))
+      }
+  }
 }
