@@ -61,3 +61,33 @@ case class LettersBagImpl() extends LettersBag {
       }
   }
 }
+
+// mano delle card di ogni giocatore
+sealed trait LettersHand {
+  def hand: ArrayBuffer[Card]
+  def playLetter (cardPosition: Int): Card
+  def putLetter (cardPosition: Int, card: Card)
+  def changeHand(newHand: ArrayBuffer[Card])
+  def calculateHandPoint: Int
+  def containsOnlyVowelsOrOnlyConsonants(): Boolean
+}
+
+// implementazione LettersHand
+case class LettersHandImpl(_hand: ArrayBuffer[Card]) extends LettersHand{
+  override def hand: ArrayBuffer[Card] = _hand
+  override def playLetter(cardPosition: Int): Card = hand.remove(cardPosition)
+  override def putLetter(cardPosition:Int, card: Card): Unit = hand.insert(cardPosition, card)
+  override def changeHand(newHand: ArrayBuffer[Card]): Unit = {
+    hand.clear()
+    hand.insertAll(0, newHand)
+  }
+  override def containsOnlyVowelsOrOnlyConsonants(): Boolean = {
+    val vowels = Set("A", "E", "I", "O", "U")
+    hand.forall(card => vowels.contains(card.letter)) || hand.forall(card => !vowels.contains(card.letter))
+  }
+  override def calculateHandPoint: Int = {
+    var handValue = 0
+    _hand.foreach(card => handValue += card.score)
+    handValue
+  }
+}
