@@ -1,5 +1,8 @@
 package model
 
+import scala.collection.mutable.ArrayBuffer
+import scala.util.Random
+
 package object constants {
   // lista del punteggio e della cardinalità che le lettere devono avere in una partita
   // (lettare. valore, cardinalità)
@@ -26,3 +29,19 @@ case class CardImpl (var _letter : String) extends Card {
   override def score: Int = constants.lettersScoresCardinalities.find(s => s._1 == _letter).head._2
 }
 
+
+// Sacchetto contentenente le lettere da poter usare durante una partita
+sealed trait LettersBag {
+  def bag: List[Card]
+  def populateBag(list: List[(String, Int, Int)]): List[Card]
+  def tuple2Cards(tuple: (String, Int, Int)): List[Card]
+}
+
+
+// implementazione LettersBag
+case class LettersBagImpl() extends LettersBag {
+  private var _bag: List[Card] = populateBag(constants.lettersScoresCardinalities)
+  override def populateBag(list: List[(String, Int, Int)]): List[Card] = list.flatMap(tuple2Cards)
+  override def tuple2Cards(tuple: (String, Int, Int)): List[Card] = List.fill(tuple._3)(CardImpl(tuple._1))
+  override def bag: List[Card] = _bag
+}
