@@ -1,0 +1,37 @@
+/*CSS for the styling of the BoardAndPlayerPanel*/
+.body {
+-fx-background-color: #ccae62;
+}
+
+.my-hand {
+    -fx-pref-height: 70;
+    -fx-alignment: bottom-center;
+    -fx-padding: 0 0 5 0;
+    -fx-background-color: green;
+}
+
+.left-opponent {
+    -fx-pref-width: 90;
+    -fx-alignment: center-left;
+    -fx-padding: 0 0 0 5;
+    -fx-background-color: red;
+}
+
+.right-opponent {
+    -fx-pref-width: 90;
+    -fx-alignment: center-right;
+    -fx-padding: 0 5 0 0;
+    -fx-background-color: blue;
+}
+
+.top-opponent {
+    -fx-pref-height: 70;
+    -fx-alignment: top-center;
+    -fx-padding: 5 0 0 0;
+    -fx-background-color: black;
+}
+
+.board-panel {
+    -fx-border-width: 1;
+    -fx-border-color: #000;
+}

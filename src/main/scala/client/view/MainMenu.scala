@@ -9,6 +9,7 @@ import scalafx.Includes.{handle, _}
 import scalafx.geometry.Pos
 import scalafx.scene.Scene
 import scalafx.scene.layout.{StackPane, VBox}
+import scalafx.stage.Stage
 
 class MainMenu extends JFXApp.PrimaryStage {
   private val VBOX_CHILDREN_SPACING = 23
@@ -72,6 +73,12 @@ class MainMenu extends JFXApp.PrimaryStage {
     onAction = handle {
       //TODO: Inviare messaggio di ricerca partita
       startMatchMaking()
+      val board = new Stage
+      board.scene = new Scene() {
+        root = new BoardAndPlayerPanel
+
+      }
+      board.show()
     }
   }
 

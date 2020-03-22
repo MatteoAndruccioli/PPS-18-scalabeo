@@ -1,0 +1,67 @@
+/*CSS for the styling of the LetterTile object and BoardTile object*/
+
+.letter-tile {
+    -fx-border-radius: 5;
+    -fx-border-width: 1;
+    -fx-border-color: #000;
+    -fx-background-color: #d1ccc0;
+    -fx-background-radius: 5;
+    -fx-effect: dropshadow(gaussian, #84817a, 5, 0, 3, 3)
+}
+
+.letter-tile-text-hand {
+    -fx-font-size: 18;
+}
+
+.letter-tile-text-board {
+    -fx-font-size: 18;
+}
+
+.letter-tile-value-text {
+    -fx-font-size: 13;
+}
+
+.value-container {
+    -fx-alignment: bottom-right;
+    -fx-padding: 0 3 3 0;
+}
+
+.board-tile {
+    -fx-border-color: #000;
+    -fx-border-width: 1;
+}
+
+.board-tile-start {
+    -fx-background-image: url('/assets/start.png');
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+    -fx-background-size: contain;
+}
+
+.board-tile-3letter {
+    -fx-background-image: url('/assets/3xletter.png');
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+    -fx-background-size: contain;
+}
+
+.board-tile-2letter {
+    -fx-background-image: url('/assets/2xletter.png');
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+    -fx-background-size: contain;
+}
+
+.board-tile-3word {
+    -fx-background-image: url('/assets/3xword.png');
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+    -fx-background-size: contain;
+}
+
+.board-tile-2word {
+    -fx-background-image: url('/assets/2xword.png');
+    -fx-background-repeat: no-repeat;
+    -fx-background-position: center;
+    -fx-background-size: contain;
+}
