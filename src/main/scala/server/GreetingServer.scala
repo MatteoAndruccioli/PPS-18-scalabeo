@@ -4,9 +4,7 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
-import com.sun.xml.internal.bind.v2.TODO
 import shared.ClientToGreetingMessages.{ConnectionToGreetingQuery, PlayerReadyAnswer}
-import shared.{ClusterScheduler, CustomScheduler}
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
 import shared.GreetingToClientMessages.{ConnectionAnswer, ReadyToJoinAck, ReadyToJoinQuery, StartGame}
 
@@ -16,14 +14,13 @@ class GreetingServer extends Actor {
 
   private val mediator = DistributedPubSub.get(context.system).mediator
   private val cluster = Cluster.get(context.system)
-  private val scheduler: CustomScheduler = ClusterScheduler(cluster)
   private val isServerOn = true
 
   private val nPlayer = 2
 
-  var listPlayers = new mutable.ListBuffer[ActorRef]()
-  var mapPlayersName = mutable.Map[ActorRef, String]()
-  var readyPlayers = new mutable.Queue[ActorRef]()
+  private var listPlayers = new mutable.ListBuffer[ActorRef]()
+  private var mapPlayersName = mutable.Map[ActorRef, String]()
+  private var readyPlayers = new mutable.Queue[ActorRef]()
 
   //server si sottoscrive al proprio topic
   mediator ! Subscribe(GREETING_SERVER_RECEIVES_TOPIC, self)
@@ -57,6 +54,6 @@ class GreetingServer extends Actor {
 }
 
 object GreetingServer{
-  def props() = Props(classOf[GreetingServer])
+  def props() = Props(new GreetingServer())
 }
 
