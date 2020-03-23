@@ -5,7 +5,7 @@ import com.typesafe.config.ConfigFactory
 
 //launcher del client
 object ClientLauncher extends App{
-  val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2552)
+  val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 0)
     .withFallback(ConfigFactory.parseString("akka.cluster.roles = [clientRole]"))
     .withFallback(ConfigFactory.load())
 
