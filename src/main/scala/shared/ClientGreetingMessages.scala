@@ -24,7 +24,4 @@ object GreetingToClientMessages {
   case class ReadyToJoinAck() extends GreetingToClientMessages
   //conferma di ricezione messaggio di disconnessione
   case class DisconnectionAck() extends GreetingToClientMessages
-
-  //messaggio per fare iniziare la partita
-  case class StartGame() extends GreetingToClientMessages
 }
