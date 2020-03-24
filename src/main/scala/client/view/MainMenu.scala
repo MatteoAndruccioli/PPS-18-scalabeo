@@ -73,11 +73,7 @@ class MainMenu extends JFXApp.PrimaryStage {
     onAction = handle {
       //TODO: Inviare messaggio di ricerca partita
       startMatchMaking()
-      val board = new Stage
-      board.scene = new Scene() {
-        root = new BoardAndPlayerPanel
-
-      }
+      val board = new GameView
       board.show()
     }
   }

@@ -1,0 +1,55 @@
+.body {
+    -fx-background-color: #353b48;
+}
+
+.timer-container {
+    -fx-padding: 20;
+}
+
+.button-container {
+    -fx-alignment: center;
+    -fx-padding: 10 15;
+}
+
+.big-container {
+
+}
+
+.line-container {
+    -fx-alignment: center;
+    -fx-padding: 10 10 0 10;
+}
+
+.chat-container {
+    -fx-padding: 10 0 0 0;
+}
+
+.chat {
+    -fx-focus-color: transparent;
+}
+
+.scroll-pane{
+    -fx-background-color:transparent;
+}
+
+.scroll-pane > .viewport {
+    -fx-background-color: transparent;
+}
+
+.message {
+    -fx-font-size: 11pt;
+    -fx-fill: white;
+}
+
+.event-message {
+    -fx-font-size: 11pt;
+    -fx-fill: #c23616;
+}
+
+.scroll-pane .scroll-bar:vertical {
+    -fx-scale-x: 0;
+}
+
+.scroll-pane .scroll-bar:vertical {
+    -fx-padding: 0px;
+}
