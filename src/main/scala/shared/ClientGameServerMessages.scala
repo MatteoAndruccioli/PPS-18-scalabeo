@@ -11,6 +11,7 @@ object ClientToGameServerMessages {
   case class MatchTopicListenAck() extends ClientToGameServerMessages
   case class PlayerTurnBeginAck() extends ClientToGameServerMessages
   case class ClientMadeMove(move:Move) extends ClientToGameServerMessages
+  case class EndTurnUpdateAck() extends ClientToGameServerMessages
 }
 
 sealed trait Move
@@ -28,6 +29,7 @@ object GameServerToClientMessages {
   case class MatchTopicListenQuery(gameServerTopic:String, playerHand: ArrayBuffer[Card]) extends GameServerToClientMessages
   case class PlayerTurnBegins(playerInTurn:ActorRef) extends GameServerToClientMessages
   case class ClientMoveAck(moveAckType:ClientMoveAckType) extends GameServerToClientMessages
+  case class EndTurnUpdate(board:List[BoardTile]) extends GameServerToClientMessages
 }
 
 sealed trait ClientMoveAckType
