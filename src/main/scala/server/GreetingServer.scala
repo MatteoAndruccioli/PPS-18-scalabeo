@@ -4,9 +4,10 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
+import server.GreetingToGameServer.InitGame
 import shared.ClientToGreetingMessages.{ConnectionToGreetingQuery, PlayerReadyAnswer}
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
-import shared.GreetingToClientMessages.{ConnectionAnswer, ReadyToJoinAck, ReadyToJoinQuery, StartGame}
+import shared.GreetingToClientMessages.{ConnectionAnswer, ReadyToJoinAck, ReadyToJoinQuery}
 
 import scala.collection.mutable
 
@@ -21,6 +22,9 @@ class GreetingServer extends Actor {
   private var listPlayers = new mutable.ListBuffer[ActorRef]()
   private var mapPlayersName = mutable.Map[ActorRef, String]()
   private var readyPlayers = new mutable.Queue[ActorRef]()
+
+  var games = mutable.Map[ActorRef, List[ActorRef]]()
+  var gameNumber = 0
 
   //server si sottoscrive al proprio topic
   mediator ! Subscribe(GREETING_SERVER_RECEIVES_TOPIC, self)
@@ -39,16 +43,19 @@ class GreetingServer extends Actor {
       sender ! ReadyToJoinAck()
       if(answer) {
         readyPlayers.enqueue(sender())
-        if(readyPlayers.size>=nPlayer) {
-          val playersForGame = List[ActorRef](readyPlayers.dequeue(),readyPlayers.dequeue()/*,readyPlayers.dequeue(),readyPlayers.dequeue()*/)
-          for (player <- playersForGame) listPlayers-=player
-          println("ListPlayers after the game start: " +listPlayers)
-          // TODO Qua instanzierò il server che gestirà il gioco del quale conservero l' ActorRef e i quello dei partecipanti
-          for(player <- playersForGame) player ! StartGame()
-        } else {
+        if (readyPlayers.size >= nPlayer) {
+          val playersForGame = List[ActorRef](readyPlayers.dequeue(), readyPlayers.dequeue() /*,readyPlayers.dequeue(),readyPlayers.dequeue()*/)
+          for (player <- playersForGame) listPlayers -= player
+          println("ListPlayers after the game start: " + listPlayers)
+          val gameServer = context.actorOf(Props(new GameServer(playersForGame, mapPlayersName.filter(user => playersForGame.contains(user._1)).toMap)), "gameServer" + gameNumber)
+          games += (gameServer -> playersForGame)
+          gameNumber = gameNumber + 1
+          println("GAME LIST :" + games.toString())
+          gameServer ! InitGame()
+        }
+      } else {
           listPlayers-=sender()
           mapPlayersName -= sender()
-        }
       }
   }
 }
