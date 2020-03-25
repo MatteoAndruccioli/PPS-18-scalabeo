@@ -5,12 +5,13 @@ import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
 import model.Card
-import shared.ClientToGameServerMessages.MatchTopicListenAck
+import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
 import shared.ClientToGreetingMessages._
-import shared.GameServerToClientMessages.MatchTopicListenQuery
-import shared.{ClusterScheduler, CustomScheduler}
+import shared.GameServerToClientMessages.{EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins}
+import shared.{ClusterScheduler, CustomScheduler, Move}
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
 import shared.GreetingToClientMessages._
+import shared.Move.FakeMove
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -102,13 +103,65 @@ class ClientActor extends Actor{
       updateGameServerReference(sender())
       updateGameServerTopic(topicMessage.gameServerTopic)
       //todo forse in questo momento vorresti ricevere e gestire tutte info da mostrare a giocatore in partita tra cui lista dei giocatori e chat
-      sendControllerHand(topicMessage.playerHand)
+      //todo comunicare al player la propria mano attuale attraverso la UI
       sendGameServerTopicReceived()
       context.become(waitingInTurnPlayerNomination)
   }
 
-  //attendo che il GameServer decida di chi è il turno
-  def waitingInTurnPlayerNomination: Receive = ???
+  //attendo che il GameServer decida di chi è il turno //todo manca gestione arrivo messaggi in chat
+  def waitingInTurnPlayerNomination: Receive = {
+    UnexpectedShutdown orElse{
+      //todo in questo momento mi aspetto eventualmente un messaggio di terminazione della partita
+      case message: PlayerTurnBegins => {
+        message.playerInTurn match {
+          case self => {
+            //caso in cui spetta a me giocare
+            println("ricevuto PlayerTurnBegins - è il mio turno: self=" + self + " === attore in turno = " + message.playerInTurn)
+            /*
+                todo devi notificare all'UI l'inizio del turno del player ed in teoria attendere una mossa del player,
+                 ma per ora la implemento direttamente e salto la fase in cui attendo mossa dall'UI
+             */
+            scheduler.replaceBehaviourAndStart(()=>sendUserMove(FakeMove())) //todo da eliminare
+            context.become(waitingMoveAckFromGameServer) //todo questo salto dovrà andare verso uno stato intermedio di attesa mossa da parte di UI
+          }
+          case _ => {
+            // è il turno di un avversario, devo mettermi in attesa degli aggiornamenti di fine turno
+            println("ricevuto PlayerTurnBegins - NON è il mio turno: self=" + self + " !== attore in turno = " + message.playerInTurn)
+            context.become(waitingTurnEndUpdates)
+          }
+        }
+        sendPlayerInTurnAck() //invio ack al GameServer
+      }
+    }
+  }
+
+  //attendo che il server mi confermi la ricezione della mossa //todo ricorda di smettere di inviare la mossa scelta una volta ricevuto ack
+  def waitingMoveAckFromGameServer: Receive = ???
+
+
+  //attendo che il GameServer comunichi gli aggiornamenti da compiere //todo manca gestione arrivo messaggi in chat
+  def waitingTurnEndUpdates: Receive = UnexpectedShutdown orElse {
+    case endTurnUpdateMessage :EndTurnUpdate =>{
+      println("ricevuti aggironamenti di fine turno dal GameServer [EndTurnUpdate]")
+      //todo dovrò probabilmente aggiornare UI
+      sendEndTurnUpdateAck()
+      context.become(waitingInTurnPlayerNomination)
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
   //GESTIONE MESSAGGI GAME_SERVER
@@ -132,6 +185,24 @@ class ClientActor extends Actor{
     gameServerActorRef.get ! MatchTopicListenAck()
   }
 
+  //confermo a GameServer ricezione PlayerTurnBegins message
+  private def sendPlayerInTurnAck(): Unit = {
+    println(self + " - Ho inviato sendPlayerInTurnAck")
+    gameServerActorRef.get ! PlayerTurnBeginAck()
+  }
+
+
+  //inoltro la mossa scelta dall'utente al GameServer
+  private def sendUserMove(move:Move): Unit = {
+    println(self + " - Ho inviato Usermove " + move+ "al GameServer")
+    gameServerActorRef.get ! ClientMadeMove(move)
+  }
+
+  //confermo a GameServer ricezione EndTurnUpdate message
+  private def sendEndTurnUpdateAck(): Unit = {
+    println(self + " - Ho inviato EndTurnUpdateAck")
+    gameServerActorRef.get ! EndTurnUpdateAck()
+  }
 
 
 
@@ -150,11 +221,6 @@ class ClientActor extends Actor{
   //comunico alla UI il fatto che il GreetingServer non permetta di stabilire una connessione
   private def handleConnectionFailed(): Unit = {
     //todo comunicare al player che la connessione non può essere stabilita e chiudere
-  }
-
-  //comunica alla UI la mano del player
-  private def sendControllerHand(hand: ArrayBuffer[Card]): Unit = {
-    //todo comunicare al player la propria mano attuale
   }
 
 
