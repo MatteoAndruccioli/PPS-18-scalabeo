@@ -138,7 +138,7 @@ class ClientActor extends Actor{
 
   //attendo che il server mi confermi la ricezione della mossa //todo ricorda di smettere di inviare la mossa scelta una volta ricevuto ack (fatto nei metodi di gestione)
   //todo manca gestione arrivo messaggi in chat
-  def waitingMoveAckFromGameServer: Receive =  UnexpectedShutdown {
+  def waitingMoveAckFromGameServer: Receive =  UnexpectedShutdown orElse {
     case serverAnswer: ClientMoveAck => serverAnswer.moveAckType match {
       case wordAccepted: WordAccepted => onWordAccepted(wordAccepted.hand)
       case _: WordRefused => onWordRefused()
