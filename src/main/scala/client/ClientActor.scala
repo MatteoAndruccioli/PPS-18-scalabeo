@@ -3,7 +3,7 @@ package client
 import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
-import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
+import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
 import model.Card
 import shared.ClientToGameServerMessages.MatchTopicListenAck
 import shared.ClientToGreetingMessages._
@@ -88,6 +88,7 @@ class ClientActor extends Actor{
         case false => {
           //giocatore non pronto alla partita
           println("l'utente non era pronto per joinare la partita")
+          resetMatchInfo() //per sicurezza resetto le informazioni temporanee della partita
           //todo devi portare il giocatore in uno stato di attesa ancora non implementato
         }
       }
@@ -192,26 +193,49 @@ class ClientActor extends Actor{
   //GESTIONE DELLA DISCONNESSIONE DAI SERVER
 
   //controllo se l'utente ha effettuato uno shutdown forzato dell'applicazione
-  def UnexpectedShutdown: Receive = {
+  private def UnexpectedShutdown: Receive = {
     //todo aggiungere controllo su crollo lato UI
-    case deathMessage:Terminated => handleServerUnexpectedShutdown(deathMessage.actor)
+    case deathMessage:Terminated => handleServersUnexpectedShutdown(deathMessage.actor)
   }
 
   //verifico se l'attore che è crollato è un server a me collegato
-  def handleServerUnexpectedShutdown(serverDown: ActorRef): Unit = {
-    //todo se verrà implementato un server di gioco diverso dal greeting come progettato, dovrai controllare che l'attore morto non sia quel server
-    if (serverDown == greetingServerActorRef.get){
-      handleGreetingServerDisconnection
-    } else {
-      println("**************** !!!!\n\n\n HANNO UCCISO QUALCUNO CHE NON CONOSCO: " +serverDown+ " \n\n\n***********")
+  private def handleServersUnexpectedShutdown(serverDown: ActorRef): Unit = {
+    serverDown match {
+      case greetingServerActorRef.get => handleGreetingServerDisconnection
+      case gameServerActorRef.get => handleGameServerDisconnection
+      case _ => println("**************** !!!!\n\n\n HANNO UCCISO QUALCUNO CHE NON CONOSCO: " +serverDown+ " \n\n\n***********")
     }
   }
 
   //se crolla il greeting comunico alla UI e mi stoppo tanto non c'è piu niente da fare
-  def handleGreetingServerDisconnection: Unit = {
+  private def handleGreetingServerDisconnection: Unit = {
     println("**************** !!!!\n\n\n HANNO UCCISO GREETING_SERVER \n\n\n***********")
     //todo comunicare alla UI la morte del Greeting server, valutare se adottare un comportamento differente
     context.stop(self)
+  }
+
+  //gestisco il caso in cui crolla il GameServer
+  private def handleGameServerDisconnection: Unit = {
+    println("**************** !!!!\n\n\n HANNO UCCISO GAME_SERVER \n\n\n***********")
+    if (greetingServerActorRef.nonEmpty) {
+      //todo comunicare alla UI la morte del Greeting server, valutare se adottare un comportamento differente
+      resetMatchInfo()
+      //todo necessario saltare in uno stato in cui faccio scegliere a player che fare: se continuar a giocare o meno
+    }
+  }
+
+  //resetta le variabili temporanee
+  def resetMatchInfo():Unit = {
+    println("invocato metodo resetMatchInfo")
+    if(gameServerActorRef.isDefined){
+      context.unwatch(gameServerActorRef.get)
+    }
+    if (gameServerTopic.isDefined){
+      mediator ! Unsubscribe(gameServerTopic.get, self)
+    }
+    gameServerTopic = None
+    gameServerActorRef = None
+    playerIsReady = false //todo occhio se faccio test finchè non c'è comunicazione con UI questo andrebbe messo a true
   }
 }
 
