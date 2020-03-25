@@ -5,9 +5,10 @@ import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
 import model.Card
+import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
 import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
 import shared.ClientToGreetingMessages._
-import shared.GameServerToClientMessages.{EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins}
+import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins}
 import shared.{ClusterScheduler, CustomScheduler, Move}
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
 import shared.GreetingToClientMessages._
@@ -135,8 +136,18 @@ class ClientActor extends Actor{
     }
   }
 
-  //attendo che il server mi confermi la ricezione della mossa //todo ricorda di smettere di inviare la mossa scelta una volta ricevuto ack
-  def waitingMoveAckFromGameServer: Receive = ???
+  //attendo che il server mi confermi la ricezione della mossa //todo ricorda di smettere di inviare la mossa scelta una volta ricevuto ack (fatto nei metodi di gestione)
+  //todo manca gestione arrivo messaggi in chat
+  def waitingMoveAckFromGameServer: Receive =  UnexpectedShutdown {
+    case serverAnswer: ClientMoveAck => serverAnswer.moveAckType match {
+      case wordAccepted: WordAccepted => onWordAccepted(wordAccepted.hand)
+      case _: WordRefused => onWordRefused()
+      case handSwitchAccepted: HandSwitchRequestAccepted => onHandSwitchAccepted(handSwitchAccepted.hand)
+      case _: HandSwitchRequestRefused => onHandSwitchRefused()
+      case _: PassAck => onPassAck()
+      case _: TimeoutAck => onTimeoutAck()
+    }
+  }
 
 
   //attendo che il GameServer comunichi gli aggiornamenti da compiere //todo manca gestione arrivo messaggi in chat
@@ -202,6 +213,86 @@ class ClientActor extends Actor{
   private def sendEndTurnUpdateAck(): Unit = {
     println(self + " - Ho inviato EndTurnUpdateAck")
     gameServerActorRef.get ! EndTurnUpdateAck()
+  }
+
+
+
+  /*Il GameServer ha accettato la parola composta dall'utente, devo:
+* - smettere di inviare la mossa fatta dall'utente al GameServer
+* - comunicare la nuova mano dell'utente alla UI perchè venga visualizzata
+* - passare allo stato in cui attendo update di fine turno
+* */
+  def onWordAccepted(hand:ArrayBuffer[Card]):Unit = {
+    println("--------------------------------------------------------------------")
+    println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
+    scheduler.stopTask()
+    //todo mostrare la mano al player attraverso UI
+    context.become(waitingTurnEndUpdates)
+  }
+
+  /*Il GameServer NON ha accettato la parola composta dall'utente, devo:
+  * - smettere di inviare la mossa fatta dall'utente al GameServer
+  * - comunicare a UI il fallimento
+  * - passare allo stato in cui una nuova mossa dall'utente
+  * */
+  def onWordRefused():Unit = {
+    println("--------------------------------------------------------------------")
+    println("ricevuto [WordRefused] ack dal GameServer per ricezione mossa utente")
+    scheduler.stopTask()
+    //todo comunicare a UI il fallimento
+    //todo passare in stato di attesa di una nuova mossa da parte dell'utente, non implementato in quanto manca vera interazione con UI
+  }
+
+  /*Il GameServer ha accettato la richiesta di sostituzione della mano fatta dall'utente, devo:
+  * - smettere di inviare la mossa fatta dall'utente al GameServer
+  * - comunicare la nuova mano dell'utente all'UI perchè venga visualizzata
+  * - passare allo stato in cui attendo update di fine turno
+  * */
+  def onHandSwitchAccepted(hand:ArrayBuffer[Card]):Unit = {
+    println("--------------------------------------------------------------------")
+    println("ricevuto [HandSwitchAccepted] ack dal GameServer per ricezione mossa utente")
+    scheduler.stopTask()
+    //todo comunicare a UI nuova mano utente
+    context.become(waitingTurnEndUpdates)
+  }
+
+  /*Il GameServer non ha accettato la richiesta di sostituzione della mano fatta dall'utente, devo:
+  * - smettere di inviare la mossa fatta dall'utente al GameServer
+  * - comunicare all'UI il fallimento
+  * - passare allo stato in cui una nuova mossa dall'utente
+  * */
+  def onHandSwitchRefused():Unit = {
+    println("--------------------------------------------------------------------")
+    println("ricevuto [HandSwitchRefused] ack dal GameServer per ricezione mossa utente")
+    scheduler.stopTask()
+    //todo comunicare a UI il fallimento
+    //todo passare in stato di attesa di una nuova mossa da parte dell'utente, non implementato in quanto manca vera interazione con UI
+  }
+
+  /*Il GameServer ha accettato la richiesta di passare il turno fatta dall'utente, devo:
+  * - smettere di inviare la mossa fatta dall'utente al GameServer
+  * - comunicare all'UI che tutto è andato a buon fine
+  * - passare allo stato in cui attendo update di fine turno
+  * */
+  def onPassAck():Unit = {
+    println("--------------------------------------------------------------------")
+    println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
+    scheduler.stopTask()
+    //todo notificare all'UI che server accetta il passo
+    context.become(waitingTurnEndUpdates)
+  }
+
+  /*Il GameServer ha ricevuto la notifica di timeout, devo:
+  * - smettere di inviare la notifica fatta dall'utente al GameServer
+  * - comunicare all'UI che tutto è andato a buon fine
+  * - passare allo stato in cui attendo update di fine turno
+  * */
+  def onTimeoutAck():Unit = {
+    println("--------------------------------------------------------------------")
+    println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
+    scheduler.stopTask()
+    //todo comunicare all'UI che tutto è andato a buon fine
+    context.become(waitingTurnEndUpdates)
   }
 
 
