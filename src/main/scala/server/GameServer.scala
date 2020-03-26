@@ -7,7 +7,7 @@ import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import model.{LettersBagImpl, LettersHandImpl}
-import shared.ClientToGameServerMessages.MatchTopicListenAck
+import shared.ClientToGameServerMessages.{MatchTopicListenAck, PlayerTurnBeginAck}
 import shared.GameServerToClientMessages.{MatchTopicListenQuery, PlayerTurnBegins}
 import shared.{ClusterScheduler, CustomScheduler}
 
@@ -34,6 +34,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   //variabili ack
   private var ackTopicReceived = 0
+  private var ackTurn = 0
 
   override def receive: Receive = {
     case _: InitGame =>
@@ -43,9 +44,15 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       incrementAckTopic()
       if (ackTopicReceived == nPlayer) {
         scheduler.stopTask()
-        ackTopicReceived = 0
+        resetAckTopic()
         scheduler.replaceBehaviourAndStart(() => sendTurn())
         println("STA A" + gamePlayers(turn).toString() + " IL CUI TURNO è = " + turn)
+      }
+    case _: PlayerTurnBeginAck =>
+      incrementAckTurn()
+      if (ackTurn == nPlayer) {
+        scheduler.stopTask()
+        resetAckTurnCounter()
       }
   }
 
@@ -61,5 +68,14 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   //gestione variabili ack
   private def incrementAckTopic(){
     ackTopicReceived = ackTopicReceived + 1
+  }
+  private def resetAckTopic(): Unit = {
+    ackTopicReceived = 0
+  }
+  private def incrementAckTurn() = {
+    ackTurn = ackTurn + 1
+  }
+  private def resetAckTurnCounter(): Unit = {
+    ackTurn = 0
   }
 }
