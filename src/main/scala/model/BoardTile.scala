@@ -44,10 +44,12 @@ case class BoardTileImpl(_position: Position, _card: Card) extends BoardTile{
 sealed trait Board{
   def boardTiles: List[BoardTile]
   def playedWord: List[BoardTile]
-  def addCard2Tile (card: Card, x:Int, y:Int)
-  def removeCardFromTile(x:Int, y:Int): Card
+  def addCard2Tile (card: Card, x:Int, y:Int, player:Boolean)
+  def removeCardFromTile(x:Int, y:Int, player:Boolean): Card
+  def addPlayedWord(playedWordsList: List[BoardTile])
+  def clearPlayedWords()
+  def clearBoardFromPlayedWords()
 
-  // TODO: metodi per inserimento di una giocata e pulire la board
   // TODO: metodi per il controllo delle parole inserite
   // TODO: metodi per il calcolo del punteggio delle parole inserite
 }
@@ -66,25 +68,37 @@ case class BoardImpl() extends Board {
   private def getTileInAPosition(x:Int, y:Int): BoardTile = _boardTiles.find( boardTile => samePosition(boardTile.position,x, y)).getOrElse(boardConstants.boardTileDefault)
 
   // metodo per aggiungere una card in una posizione del tabellone
-  override def addCard2Tile(card: Card, x:Int, y:Int): Unit =  {
+  override def addCard2Tile(card: Card, x:Int, y:Int, add2PlayedWord:Boolean = true): Unit =  {
     _boardTiles = _boardTiles.map {
-      element => if (element.equals(getTileInAPosition(x, y)))
-        BoardTileImpl(new Position(x, y), card)
+      element => if (element.equals(getTileInAPosition(x, y))){
+        if(add2PlayedWord) _playedWord = BoardTileImpl(new Position(x, y), card) :: _playedWord
+        BoardTileImpl(new Position(x, y), card)}
       else element
     }
   }
 
   // metodo per rimuovere una card in una posizione del tabellone
-  // il parametro removeFromPlayedWord serve per poter gestire corretamente le varie fasi della partita
-  // TODO: controlla il comportamento del paramentro nelle fasi della partita
-  override def removeCardFromTile(x: Int, y: Int): Card = {
+  override def removeCardFromTile(x: Int, y: Int, removeFromPlayedWord:Boolean = true): Card = {
     var card: Card = boardConstants.defaultCard
     _boardTiles = _boardTiles.map {
       element => if (element.equals(getTileInAPosition(x, y))) {
         card = element.card
+        if(removeFromPlayedWord) _playedWord = _playedWord.filter(boardTile => !boardTile.equals(element))
         BoardTileImpl(new Position(x, y), boardConstants.defaultCard)
       }else element
     }
     card
   }
+
+  // metodi per aggiungere e rimuovere una lista di carte
+  override def addPlayedWord(playedWordsList: List[BoardTile]): Unit = {
+    _playedWord = List()
+    _playedWord = _playedWord ++ playedWordsList
+    for(playedWord <- playedWordsList)  addCard2Tile(playedWord.card, playedWord.position.coord._1+1, playedWord.position.coord._2+1, add2PlayedWord = false)
+  }
+  override def clearPlayedWords(): Unit = _playedWord = List()
+  override def clearBoardFromPlayedWords(): Unit = for(playedWord <- _playedWord) removeCardFromTile(playedWord.position.coord._1+1, playedWord.position.coord._2+1, removeFromPlayedWord = false)
+
+
+
 }
