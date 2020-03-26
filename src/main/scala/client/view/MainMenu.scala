@@ -1,6 +1,7 @@
 package client.view
 
 import animatefx.animation.{AnimationFX, FadeIn, SlideOutLeft}
+import client.controller.Messages.ViewToClientMessages.UserReadyToJoin
 import scalafx.application.{JFXApp, Platform}
 import scalafx.scene.control.{Button, Label, ProgressIndicator, TextField}
 import scalafx.scene.image.{Image, ImageView}
@@ -123,7 +124,18 @@ class MainMenu extends JFXApp.PrimaryStage {
   }
 
   def askUserToJoinGame(): Unit = {
-    //TODO: Mostrare una dialog che chieda all'utente di accettare o declinare la partita
+    Platform.runLater(() => {
+      loggedInContainer.children.remove(0)
+      sizeToScene()
+      new Dialog("Match Found, do you want to accept?")
+        .addYesNoButtons(
+          () => View.sendToClient(UserReadyToJoin(true)),
+          () => {
+            View.sendToClient(UserReadyToJoin(false))
+            playButton.disable = false
+          })
+        .show()
+    })
   }
 
   scene = new Scene {

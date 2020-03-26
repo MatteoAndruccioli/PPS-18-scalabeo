@@ -1,6 +1,7 @@
 package client.controller
 
 import akka.actor.ActorRef
+import client.controller.Messages.ViewToClientMessages
 import client.view.View
 
 object Controller {
@@ -21,6 +22,10 @@ object Controller {
     new Thread(() => {
       View.main(Array[String]())
     }).start()
+  }
+
+  def sendToClient(message: ViewToClientMessages): Unit ={
+    clientRef ! message
   }
 
   def onLoginResponse(): Unit = {

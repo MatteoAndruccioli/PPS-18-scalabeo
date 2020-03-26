@@ -1,5 +1,7 @@
 package client.view
 
+import client.controller.Controller
+import client.controller.Messages.ViewToClientMessages
 import scalafx.application.{JFXApp, Platform}
 
 object View extends JFXApp {
@@ -12,6 +14,10 @@ object View extends JFXApp {
   //da chiamare quando il greeting ha confermato il login
   def onLoginResponse(): Unit = {
     mainMenu.onLoginResponse()
+  }
+
+  def sendToClient(message: ViewToClientMessages): Unit = {
+    Controller.sendToClient(message)
   }
 
   //da chiamare quando si può iniziare la partita
