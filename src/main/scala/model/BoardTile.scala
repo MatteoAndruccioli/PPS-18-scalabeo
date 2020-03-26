@@ -24,6 +24,67 @@ package object boardConstants{
     (12, 6) ->constants.wordForTwo, (13, 5) ->constants.wordForTwo, (14, 4) ->constants.wordForTwo,
     (15, 3) ->constants.wordForTwo, (16, 2) ->constants.wordForTwo)
 
+  val defaultCard = CardImpl("NULL")
+  val boardTileDefault = BoardTileImpl(Position(-1, -1), defaultCard)
 }
 
-// TODO implementazione della classe casella e del tabellone
+// BoardTile: casella all'interno del tabellone
+// fa riferimento ad una posizione e poi, quando viene aggiunta, ad una Card
+sealed trait BoardTile{
+  def card: Card
+  def position: Position
+}
+
+case class BoardTileImpl(_position: Position, _card: Card) extends BoardTile{
+  override def position: Position  = _position
+  override def card: Card = _card
+}
+
+// Board: implementazione del modello del tabellone
+sealed trait Board{
+  def boardTiles: List[BoardTile]
+  def playedWord: List[BoardTile]
+  def addCard2Tile (card: Card, x:Int, y:Int)
+  def removeCardFromTile(x:Int, y:Int): Card
+
+  // TODO: metodi per inserimento di una giocata e pulire la board
+  // TODO: metodi per il controllo delle parole inserite
+  // TODO: metodi per il calcolo del punteggio delle parole inserite
+}
+
+case class BoardImpl() extends Board {
+  private var _boardTiles: List[BoardTile] = populateBoard()
+  private var _playedWord: List[BoardTile] = List()
+
+  override def boardTiles: List[BoardTile] = _boardTiles
+  override def playedWord: List[BoardTile] = _playedWord
+
+  private def populateBoard() = (for( x <- 1 to 17; y <- 1 to 17) yield tuple2BoardTile(x, y)).toList
+  private def tuple2BoardTile(tuple: (Int, Int)): BoardTile = BoardTileImpl(Position.apply(tuple._1, tuple._2), boardConstants.defaultCard)
+
+  private def samePosition(position: Position, x: Int, y: Int): Boolean = position.coord._1+1 == x && position.coord._2+1 == y
+  private def getTileInAPosition(x:Int, y:Int): BoardTile = _boardTiles.find( boardTile => samePosition(boardTile.position,x, y)).getOrElse(boardConstants.boardTileDefault)
+
+  // metodo per aggiungere una card in una posizione del tabellone
+  override def addCard2Tile(card: Card, x:Int, y:Int): Unit =  {
+    _boardTiles = _boardTiles.map {
+      element => if (element.equals(getTileInAPosition(x, y)))
+        BoardTileImpl(new Position(x, y), card)
+      else element
+    }
+  }
+
+  // metodo per rimuovere una card in una posizione del tabellone
+  // il parametro removeFromPlayedWord serve per poter gestire corretamente le varie fasi della partita
+  // TODO: controlla il comportamento del paramentro nelle fasi della partita
+  override def removeCardFromTile(x: Int, y: Int): Card = {
+    var card: Card = boardConstants.defaultCard
+    _boardTiles = _boardTiles.map {
+      element => if (element.equals(getTileInAPosition(x, y))) {
+        card = element.card
+        BoardTileImpl(new Position(x, y), boardConstants.defaultCard)
+      }else element
+    }
+    card
+  }
+}

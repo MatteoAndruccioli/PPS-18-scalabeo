@@ -1,7 +1,5 @@
 package model
 
-import model.constants
-import model.CardImpl
 import org.scalatest._
 
 
