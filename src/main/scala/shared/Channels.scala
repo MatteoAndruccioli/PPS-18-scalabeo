@@ -1,8 +1,7 @@
 package shared
 
 object Topic {
-  //il server è in ascolto su questo topic
-  val SERVER_TOPIC: String = "serverTopic"
-  //il client è in ascolto su questo topic
-  val CLIENT_TOPIC: String = "clientTopic"
+  //il greeting server comunica con i client attraverso questo canale
+  val GREETING_SERVER_RECEIVES_TOPIC : String = "GreetingServerReceiveTopic"
+  val GAME_SERVER_SEND_TOPIC : String = "GameServerSendTopic"
 }

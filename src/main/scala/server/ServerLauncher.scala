@@ -12,5 +12,5 @@ object ServerLauncher extends App{
 
   val system = ActorSystem.create("ClusterSystem", config)
 
-  system.actorOf(Props.create(classOf[ServerActor]), "server")
+  system.actorOf(Props.create(classOf[GreetingServer]), "server")
 }
