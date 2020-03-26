@@ -7,9 +7,10 @@ import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import model.{LettersBagImpl, LettersHandImpl}
-import shared.ClientToGameServerMessages.{MatchTopicListenAck, PlayerTurnBeginAck}
-import shared.GameServerToClientMessages.{MatchTopicListenQuery, PlayerTurnBegins}
-import shared.{ClusterScheduler, CustomScheduler}
+import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck}
+import shared.ClientToGameServerMessages.{ClientMadeMove, MatchTopicListenAck, PlayerTurnBeginAck}
+import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins}
+import shared.{ClusterScheduler, CustomScheduler, Move}
 
 import scala.collection.mutable
 
@@ -54,6 +55,34 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
         scheduler.stopTask()
         resetAckTurnCounter()
       }
+    case message: ClientMadeMove => message.move match {
+      case _: Move.Pass =>
+        if (sender().equals(gamePlayers(turn))) {
+          sender ! ClientMoveAck(PassAck())
+          println("IL player " + sender() + " ha passato")
+          scheduler.replaceBehaviourAndStart(() => sendUpdate())
+        }
+      case _: Move.TimeOut =>
+        if (sender().equals(gamePlayers(turn))) {
+          sender ! ClientMoveAck(TimeoutAck())
+          println("IL player " + sender() + " ha fatto passare troppo tempo: TIMEOUT")
+          scheduler.replaceBehaviourAndStart(() => sendUpdate())
+        }
+      case _: Move.Switch =>
+        if(sender().equals(gamePlayers(turn))){
+          if (playersHand(sender()).containsOnlyVowelsOrOnlyConsonants()){
+            //TODO
+            sender ! ClientMoveAck(HandSwitchRequestAccepted(playersHand(sender())._hand))
+            scheduler.replaceBehaviourAndStart(() => sendUpdate())
+          } else {
+            sender ! ClientMoveAck(HandSwitchRequestRefused())
+          }
+        }
+      case _: Move.WordMove =>
+        if(sender().equals(gamePlayers(turn))){
+          //TODO
+        }
+    }
   }
 
   //comportamento dello scheduler
@@ -63,6 +92,10 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   private def sendTurn(): Unit = {
     mediator ! Publish(GAME_SERVER_SEND_TOPIC, PlayerTurnBegins(gamePlayers(turn)))
+  }
+
+  private def sendUpdate(): Unit = {
+    mediator ! Publish(GAME_SERVER_SEND_TOPIC, EndTurnUpdate(???))
   }
 
   //gestione variabili ack
