@@ -1,7 +1,8 @@
 package client.view
 
 import animatefx.animation.{AnimationFX, FadeIn, SlideOutLeft}
-import client.controller.Messages.ViewToClientMessages.UserReadyToJoin
+import client.controller.Controller
+import client.controller.Messages.ViewToClientMessages.{JoinQueue, UserReadyToJoin, UsernameChosen}
 import scalafx.application.{JFXApp, Platform}
 import scalafx.scene.control.{Button, Label, ProgressIndicator, TextField}
 import scalafx.scene.image.{Image, ImageView}
@@ -57,8 +58,8 @@ class MainMenu extends JFXApp.PrimaryStage {
         loading.visible = true
         loginButton.disable = true
       })
-      //TODO: Inviare un messaggio per richiedere il login
-      onLoginResponse()
+      Controller.username_=(usernameInputField.getText)
+      View.sendToClient(UsernameChosen(usernameInputField.getText))
     }
   }
 
@@ -72,10 +73,8 @@ class MainMenu extends JFXApp.PrimaryStage {
   val playButton: Button = new Button (PLAY_BUTTON_LABEL){
     styleClass += MENU_BUTTON_STYLE
     onAction = handle {
-      //TODO: Inviare messaggio di ricerca partita
+      View.sendToClient(JoinQueue())
       startMatchMaking()
-      val board = new GameView
-      board.show()
     }
   }
 
