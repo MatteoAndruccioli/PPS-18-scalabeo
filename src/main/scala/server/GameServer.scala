@@ -6,9 +6,9 @@ import akka.actor.{Actor, ActorRef}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
-import model.{LettersBagImpl, LettersHandImpl}
+import model.{BoardImpl, LettersBagImpl, LettersHandImpl}
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck}
-import shared.ClientToGameServerMessages.{ClientMadeMove, MatchTopicListenAck, PlayerTurnBeginAck}
+import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
 import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins}
 import shared.{ClusterScheduler, CustomScheduler, Move}
 
@@ -26,7 +26,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private val gamePlayers = players
   private val gamePlayersUsername: Map[ActorRef, String] = mapUsername
 
-  private val board = ??? //TODO inserire il tabellone del model
+  private val board = BoardImpl() //TODO inserire il tabellone del model
   private val pouch = LettersBagImpl()
   private var playersHand = mutable.Map[ActorRef, LettersHandImpl]()
   //creo le mani
@@ -36,6 +36,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   //variabili ack
   private var ackTopicReceived = 0
   private var ackTurn = 0
+  private var ackEndTurn = 0
 
   override def receive: Receive = {
     case _: InitGame =>
@@ -82,6 +83,16 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
         if(sender().equals(gamePlayers(turn))){
           //TODO
         }
+
+      case _: EndTurnUpdateAck =>
+        incrementAckEndTurn()
+        if (ackEndTurn == nPlayer) {
+          scheduler.stopTask()
+          resetAckEndTurn()
+          incrementTurn()
+          scheduler.replaceBehaviourAndStart(() => sendTurn())
+          println("STA A " + gamePlayers(turn).toString() + " IL CUI TURNO è = " + turn)
+        }
     }
   }
 
@@ -98,6 +109,11 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
     mediator ! Publish(GAME_SERVER_SEND_TOPIC, EndTurnUpdate(???))
   }
 
+
+  private def incrementTurn(){
+    turn = turn +1
+  }
+
   //gestione variabili ack
   private def incrementAckTopic(){
     ackTopicReceived = ackTopicReceived + 1
@@ -110,5 +126,11 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   }
   private def resetAckTurnCounter(): Unit = {
     ackTurn = 0
+  }
+  private def incrementAckEndTurn(): Unit ={
+    ackEndTurn = ackEndTurn + 1
+  }
+  private def resetAckEndTurn(): Unit = {
+    ackEndTurn = 0
   }
 }
