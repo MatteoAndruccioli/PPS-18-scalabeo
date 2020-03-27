@@ -26,6 +26,10 @@ package object boardConstants{
 
   val defaultCard = CardImpl("NULL")
   val boardTileDefault = BoardTileImpl(Position(-1, -1), defaultCard)
+
+  val horizontal  = "H"
+  val vertical = "V"
+  val diagonal = "D"
 }
 
 // BoardTile: casella all'interno del tabellone
@@ -49,6 +53,7 @@ sealed trait Board{
   def addPlayedWord(playedWordsList: List[BoardTile])
   def clearPlayedWords()
   def clearBoardFromPlayedWords()
+  def checkGoodWordDirection(): Boolean
 
   // TODO: metodi per il controllo delle parole inserite
   // TODO: metodi per il calcolo del punteggio delle parole inserite
@@ -99,6 +104,16 @@ case class BoardImpl() extends Board {
   override def clearPlayedWords(): Unit = _playedWord = List()
   override def clearBoardFromPlayedWords(): Unit = for(playedWord <- _playedWord) removeCardFromTile(playedWord.position.coord._1+1, playedWord.position.coord._2+1, removeFromPlayedWord = false)
 
+  // metodo per controllare che lettere siano in prizzontale o in verticale
+  def checkGoodWordDirection(): Boolean = !(wordDirection(_playedWord) == boardConstants.diagonal)
 
-
+  // metodo per controllare che le lettere inserite siano tutte nella stessa direzione
+  private def wordDirection(wordList: List[BoardTile]): String = {
+    if (wordList.forall(boardTiles => boardTiles.position.coord._1 == wordList.head.position.coord._1))
+      boardConstants.vertical
+    else if (wordList.forall(boardTiles => boardTiles.position.coord._2 == wordList.head.position.coord._2))
+      boardConstants.horizontal
+    else
+      boardConstants.diagonal
+  }
 }

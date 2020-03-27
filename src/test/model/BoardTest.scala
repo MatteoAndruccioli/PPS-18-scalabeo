@@ -65,4 +65,25 @@ class BoardTest extends FlatSpec {
     board.clearBoardFromPlayedWords()
     assert(!board.boardTiles.contains(listBoardTile))
   }
+
+  "A list of card played " should " be insert in the same row or in the same column" in {
+    val card = CardImpl("A")
+    val boardTile = BoardTileImpl(new Position(1,3), card)
+    val boardTile1 = BoardTileImpl(new Position(1,2), card)
+    val listBoardTile = List(boardTile,boardTile1)
+    val board = BoardImpl()
+    board.addPlayedWord(listBoardTile)
+    assert(board.checkGoodWordDirection())
+    board.clearBoardFromPlayedWords()
+    val boardTile2 = BoardTileImpl(new Position(1,1), card)
+    val boardTile3 = BoardTileImpl(new Position(2,1), card)
+    val listBoardTile2 = List(boardTile2,boardTile3)
+    board.addPlayedWord(listBoardTile2)
+    assert(board.checkGoodWordDirection())
+    val boardTile4 = BoardTileImpl(new Position(1,1), card)
+    val boardTile5 = BoardTileImpl(new Position(2,2), card)
+    val listBoardTile3 = List(boardTile4,boardTile5)
+    board.addPlayedWord(listBoardTile3)
+    assert(!board.checkGoodWordDirection())
+  }
 }
