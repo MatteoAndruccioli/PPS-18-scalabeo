@@ -5,7 +5,7 @@ import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
 import client.controller.Controller
-import client.controller.Messages.ViewToClientMessages.{JoinQueue, UserExited, UserReadyToJoin, UsernameChosen}
+import client.controller.Messages.ViewToClientMessages.{JoinQueue, UserExited, UserMadeHisMove, UserReadyToJoin, UsernameChosen}
 import model.Card
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
 import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
@@ -157,8 +157,8 @@ class ClientActor extends Actor{
                 todo devi notificare all'UI l'inizio del turno del player ed in teoria attendere una mossa del player,
                  ma per ora la implemento direttamente e salto la fase in cui attendo mossa dall'UI
              */
-            scheduler.replaceBehaviourAndStart(()=>sendUserMove(FakeMove())) //todo da eliminare
-            context.become(waitingMoveAckFromGameServer) //todo questo salto dovrà andare verso uno stato intermedio di attesa mossa da parte di UI
+            Controller.userTurnBegins()
+            context.become(waitingUserMakingMove)
           }
           case _ => {
             // è il turno di un avversario, devo mettermi in attesa degli aggiornamenti di fine turno
@@ -168,6 +168,17 @@ class ClientActor extends Actor{
         }
         sendPlayerInTurnAck() //invio ack al GameServer
       }
+    }
+  }
+
+
+  //attendo che l'utente faccia la sua mossa per poi comunicarla al GameServer //todo manca gestione arrivo messaggi in chat
+  def waitingUserMakingMove: Receive = UnexpectedShutdown orElse {
+    case message :UserMadeHisMove =>{
+      println("--------------------------------------------------------------------")
+      println("utente ha indicato la sua mossa: " + message.move)
+      scheduler.replaceBehaviourAndStart(()=>sendUserMove(message.move))
+      context.become(waitingMoveAckFromGameServer)
     }
   }
 
@@ -189,7 +200,7 @@ class ClientActor extends Actor{
   def waitingTurnEndUpdates: Receive = UnexpectedShutdown orElse {
     case endTurnUpdateMessage :EndTurnUpdate =>{
       println("ricevuti aggironamenti di fine turno dal GameServer [EndTurnUpdate]")
-      //todo dovrò probabilmente aggiornare UI
+      Controller.turnEndUpdates()//todo dovrò probabilmente inviare informazioni per aggiornare UI
       sendEndTurnUpdateAck()
       context.become(waitingInTurnPlayerNomination)
     }
