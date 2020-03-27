@@ -121,7 +121,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   }
 
   private def sendUpdate(): Unit = {
-    mediator ! Publish(GAME_SERVER_SEND_TOPIC, EndTurnUpdate(???))
+    mediator ! Publish(GAME_SERVER_SEND_TOPIC, EndTurnUpdate(board.playedWord))
   }
 
   //metodi utilità
