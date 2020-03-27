@@ -416,11 +416,21 @@ class ClientActor extends Actor{
 
   //verifico se l'attore che è crollato è un server a me collegato
   private def handleServersUnexpectedShutdown(serverDown: ActorRef): Unit = {
+    if(serverDown == greetingServerActorRef.get){
+      handleGreetingServerDisconnection
+    }else if (serverDown==gameServerActorRef.get){
+      handleGameServerDisconnection
+    }else {
+      println("**************** !!!!\n\n\n HANNO UCCISO QUALCUNO CHE NON CONOSCO: " +serverDown+ " \n\n\n***********")
+    }
+    /*
+    //questa implementazione tira errori perchè greetingServerActorRef.get non è un identificatore stabile
     serverDown match {
       case greetingServerActorRef.get => handleGreetingServerDisconnection
       case gameServerActorRef.get => handleGameServerDisconnection
       case _ => println("**************** !!!!\n\n\n HANNO UCCISO QUALCUNO CHE NON CONOSCO: " +serverDown+ " \n\n\n***********")
     }
+    */
   }
 
   //se crolla il greeting comunico alla UI e mi stoppo tanto non c'è piu niente da fare
