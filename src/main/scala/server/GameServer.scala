@@ -6,13 +6,14 @@ import akka.actor.{Actor, ActorRef}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
-import model.{BoardImpl, LettersBagImpl, LettersHandImpl}
-import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck}
+import model.{BoardImpl, BoardTile, CardImpl, LettersBagImpl, LettersHandImpl}
+import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted}
 import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
 import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins}
 import shared.{ClusterScheduler, CustomScheduler, Move}
 
 import scala.collection.mutable
+import scala.collection.mutable.ArrayBuffer
 
 class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) extends Actor {
 
@@ -31,6 +32,9 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private var playersHand = mutable.Map[ActorRef, LettersHandImpl]()
   //creo le mani
   gamePlayers.foreach(p => playersHand+=(p -> LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(8).get : _*))))
+  private var playedWord : ArrayBuffer[BoardTile] = ArrayBuffer[BoardTile]()
+  private var numberOfPlayedTileInHand = 0
+
   private var turn = 0
 
   //variabili ack
@@ -81,9 +85,18 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
             sender ! ClientMoveAck(HandSwitchRequestRefused())
           }
         }
-      case _: Move.WordMove =>
+      case message: Move.WordMove =>
         if(sender().equals(gamePlayers(turn))){
-          //TODO
+          message.word.foreach(boardTile => playedWord.insert(0,boardTile))
+          println("RICEVUTA MOSSA: "+ playedWord.toString +" da "+ sender())
+          board.addPlayedWord(List.concat(playedWord))
+          println(board.boardTiles.toString)
+          //inserire check validità giocata
+          replaceHand()
+          sender ! ClientMoveAck(WordAccepted(playersHand(sender())._hand))
+          scheduler.replaceBehaviourAndStart(() => sendUpdate())
+
+          playedWord.clear()
         }
 
       case _: EndTurnUpdateAck =>
@@ -111,9 +124,18 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
     mediator ! Publish(GAME_SERVER_SEND_TOPIC, EndTurnUpdate(???))
   }
 
-
+  //metodi utilità
   private def incrementTurn(){
     turn = turn +1
+  }
+  private def replaceHand() : Unit = {
+    for(boardTile <- playedWord){
+      playersHand(sender()).playLetter(playersHand(sender())._hand.indexOf(CardImpl(boardTile.card.letter)))
+      numberOfPlayedTileInHand = numberOfPlayedTileInHand + 1
+    }
+    val drawnTiles = pouch.takeRandomElementFromBagOfLetters(numberOfPlayedTileInHand).getOrElse(List())
+    for(i <- drawnTiles.indices) playersHand(sender()).putLetter(playersHand(sender()).hand.size,CardImpl(drawnTiles(i).letter))
+    numberOfPlayedTileInHand = 0
   }
 
   //gestione variabili ack
