@@ -4,6 +4,8 @@ import akka.actor.{Actor, ActorRef, Props, Terminated}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
+import client.controller.Controller
+import client.controller.Messages.ViewToClientMessages.{JoinQueue, UserExited, UserReadyToJoin, UsernameChosen}
 import model.Card
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
 import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
@@ -31,49 +33,81 @@ class ClientActor extends Actor{
   //contiene lo username scelto dall'utente
   private var username: Option[String] = None
   //l'utente è disposto a giocare
-  private var playerIsReady:Boolean = true //todo andrà settato a false quando interazione con UI sarà pronta
+  private var playerIsReady:Boolean = false
 
   mediator ! Subscribe(GREETING_SERVER_RECEIVES_TOPIC, self)
 
-  override def receive: Receive = waitingRequestForGameModeFromGreetingServer
+  override def receive: Receive = waitingUsernameFromUser
 
-  //todo: dovrei attendere che l'utente mi passi il nome, per ora lo genero io e parto dalla fase dell'invio
-  scheduler.replaceBehaviourAndStart(()=>estabilishConnectionToGreetingServer())
 
-  //attendo che il Greeting mi richieda il GameMode
-  def waitingRequestForGameModeFromGreetingServer: Receive = UnexpectedShutdown orElse {
-    case connection: ConnectionAnswer => connection.connected match {
-      case true =>{
-        scheduler.stopTask()
-        greetingServerActorRef = Some(sender)
-        context.watch(sender) //mi metto in ascolto di una eventuale morte del GreetingServer
-        println("Client " + self + " ricevuto ConnectionAnswer positiva ["+ connection.connected +"] dal GreetingServer "+ greetingServerActorRef.get)
-        context.become(waitingReadyToJoinRequestFromGreetingServer)
-      }
-      case false => {
-        scheduler.stopTask()
-        handleConnectionFailed()
-        println("Client " + self + " ricevuto ConnectionAnswer negativa ["+ connection.connected +"] dal GreetingServer "+ greetingServerActorRef.get)
+  //attendo che l'utente scelga il proprio nome dopodichè lo memorizzo
+  def waitingUsernameFromUser: Receive = {
+    case message : UsernameChosen => {
+      username = Some(message.username)
+      println(self + " ricevuto messaggio con username da MainMenu" + username.getOrElse("errore-username !!!!"))
+      Controller.onLoginResponse()
+      context.become(waitingUserQueueRequest)
+    }
+    case _:UserExited => stopSelf()
+  }
+
+  // attendo che giocatore richieda di giocare nuova partita per contattare il server
+  def waitingUserQueueRequest: Receive = {
+    case _: JoinQueue => {
+      scheduler.replaceBehaviourAndStart(()=>estabilishConnectionToGreetingServer())
+      context.become(waitingAckOnUserQueueRequest)
+    }
+    case _:UserExited => stopSelf()
+  }
+
+
+  //attendo che il Greeting risponda alla richiesta del client di esser messo in coda
+  def waitingAckOnUserQueueRequest: Receive = UnexpectedShutdown orElse {
+    case connection: ConnectionAnswer => {
+      scheduler.stopTask()
+      connection.connected match {
+        case true =>{
+          greetingServerActorRef = Some(sender)
+          context.watch(sender) //mi metto in ascolto di una eventuale morte del GreetingServer
+          println("Client " + self + " ricevuto ConnectionAnswer positiva ["+ connection.connected +"] dal GreetingServer "+ greetingServerActorRef.get)
+          context.become(waitingReadyToJoinRequestFromGreetingServer)
+        }
+        case false => {
+          //todo comunicare al player che la connessione non può essere stabilita e chiudere
+          println("Client " + self + " ricevuto ConnectionAnswer negativa ["+ connection.connected +"] dal GreetingServer "+ greetingServerActorRef.get)
+        }
       }
     }
   }
+
 
   //attendo richiesta di join partita da parte del greeting server
   def waitingReadyToJoinRequestFromGreetingServer: Receive = UnexpectedShutdown orElse {
     case _: ReadyToJoinQuery => {
       println("--------------------------------------------------------------------")
       println(self + " - Ricevuto richiesta di join match dal GreetingServer = " +sender())
-      askUserToJoinGame() //chiedo all'UI di chiedere all'utente se è ancora disposto a giocare
+      Controller.askUserToJoinGame()//chiedo all'UI di chiedere all'utente se è ancora disposto a giocare
+      context.become(waitingReadyToJoinAnswerFromUser)
+    }
+  }
 
-      /*
-        todo in teoria dovrei saltare in uno stato in cui attendo la risposta dell'UI
-         ma per ora salto questo passaggio: rispondo direttamente si e salto
-         nello stato di attesa dell'ack da parte del GreetingServer
-       */
-      scheduler.replaceBehaviourAndStart(()=>responseToJoinMatchRequest())
+
+  //in attesa che l'utente risponda se è pronto
+  def waitingReadyToJoinAnswerFromUser:Receive = UnexpectedShutdown orElse {
+    case message: UserReadyToJoin => {
+      println("--------------------------------------------------------------------")
+      println(self + " L'utente " + sender() + " dice di essere pronto(" + message.ready + ")")
+      println(self + " Inoltro risposta al greeting")
+      //memorizzo risposta dell'utente per valutare in futuro cosa sia necessario gestire
+      playerIsReady = message.ready
+      //comunico al greeting la disponibilità dell'utante
+      scheduler.replaceBehaviourAndStart(() => responseToJoinMatchRequest())
       context.become(waitingReadyToJoinAckFromGreetingServer)
     }
   }
+
+
+
 
   //attendo che GreetingServer confermi ricezione di join partita da parte del greeting server
   def waitingReadyToJoinAckFromGreetingServer: Receive = UnexpectedShutdown orElse {
@@ -91,7 +125,8 @@ class ClientActor extends Actor{
           //giocatore non pronto alla partita
           println("l'utente non era pronto per joinare la partita")
           resetMatchInfo() //per sicurezza resetto le informazioni temporanee della partita
-          //todo devi portare il giocatore in uno stato di attesa ancora non implementato
+          Controller.onLoginResponse()
+          context.become(waitingUserQueueRequest)
         }
       }
     }
@@ -104,7 +139,7 @@ class ClientActor extends Actor{
       updateGameServerReference(sender())
       updateGameServerTopic(topicMessage.gameServerTopic)
       //todo forse in questo momento vorresti ricevere e gestire tutte info da mostrare a giocatore in partita tra cui lista dei giocatori e chat
-      //todo comunicare al player la propria mano attuale attraverso la UI
+      Controller.onMatchStart()//todo comunicare al player la propria mano attuale attraverso la UI, nota ancora non posso comunicare i parametri
       sendGameServerTopicReceived()
       context.become(waitingInTurnPlayerNomination)
   }
@@ -302,23 +337,6 @@ class ClientActor extends Actor{
 
 
 
-  // GESTIONE RAPPORTO CON UI
-
-  //richiedo all'UI che l'utente dica se è pronto o meno per partecipare a una partita
-  private def askUserToJoinGame():Unit = {
-    //todo girare domanda all'utente attraverso UI: l'utente è pronto a giocare?
-  }
-
-  //comunico alla UI il fatto che il GreetingServer non permetta di stabilire una connessione
-  private def handleConnectionFailed(): Unit = {
-    //todo comunicare al player che la connessione non può essere stabilita e chiudere
-  }
-
-
-
-
-
-
 
 
   //GESTIONE COLLOQUIO CON GREETING_SERVER
@@ -347,13 +365,43 @@ class ClientActor extends Actor{
 
 
 
-  //GESTIONE DELLA DISCONNESSIONE DAI SERVER
+  //GESTIONE DELLA DISCONNESSIONE DAI SERVER O DISCONNESSIONE DELL'UTENTE
 
   //controllo se l'utente ha effettuato uno shutdown forzato dell'applicazione
   private def UnexpectedShutdown: Receive = {
-    //todo aggiungere controllo su crollo lato UI
+    case _:UserExited => onUserExited()
     case deathMessage:Terminated => handleServersUnexpectedShutdown(deathMessage.actor)
   }
+
+  //dice se l'utente sta giocando, l'idea è che se è in partita allora ci sarà un GameServer registrato
+  private def isPaying:Boolean = gameServerActorRef.nonEmpty
+
+  //gestione dell'uscita forzata dell'utente
+  private def onUserExited() : Unit = {
+    isPaying match {
+      case true => notifyDisconnectionToGameServer
+      case _    => notifyDisconnectionToGreetingServer
+    }
+    //todo gestire stop dello scheduler e attesa dell'ack da parte dei server, non terminare bruscamente come accade ora
+    stopSelf()//todo rimuovi
+  }
+
+  //l'attore client termina se stesso //todo nota viene usato nei primi due stati finchè non vuoi cancellare quella print
+  private def stopSelf(): Unit = {
+    println("l'utente si è disconnesso, mi stoppo")
+    context.stop(self)
+  }
+
+  //chiamato dopo che l'utente si è disconnesso inaspettatamente e non era in partita => comunico il fatto a GreetingServer
+  def notifyDisconnectionToGreetingServer: Unit = {
+    //todo sarà necessario notificare il GreetingServer usando scheduler
+  }
+
+  //chiamato dopo che l'utente si è disconnesso inaspettatamente ed era in partita => comunico il fatto a GameServer
+  def notifyDisconnectionToGameServer: Unit = {
+    //todo sarà necessario notificare il GameServer usando scheduler
+  }
+
 
   //verifico se l'attore che è crollato è un server a me collegato
   private def handleServersUnexpectedShutdown(serverDown: ActorRef): Unit = {
@@ -382,7 +430,7 @@ class ClientActor extends Actor{
   }
 
   //resetta le variabili temporanee
-  def resetMatchInfo():Unit = {
+  private def resetMatchInfo():Unit = {
     println("invocato metodo resetMatchInfo")
     if(gameServerActorRef.isDefined){
       context.unwatch(gameServerActorRef.get)
