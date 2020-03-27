@@ -72,7 +72,9 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       case _: Move.Switch =>
         if(sender().equals(gamePlayers(turn))){
           if (playersHand(sender()).containsOnlyVowelsOrOnlyConsonants()){
-            //TODO
+            val nCard = playersHand(sender())._hand.size
+            pouch.reinsertCardInBag(playersHand(sender())._hand)
+            playersHand(sender()) = LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(nCard).get : _*))
             sender ! ClientMoveAck(HandSwitchRequestAccepted(playersHand(sender())._hand))
             scheduler.replaceBehaviourAndStart(() => sendUpdate())
           } else {
