@@ -1,7 +1,7 @@
 package model
 
 import org.scalatest._
-import model.BoardImpl
+import scala.collection.mutable.ArrayBuffer
 
 class BoardTest extends FlatSpec {
 
@@ -86,4 +86,43 @@ class BoardTest extends FlatSpec {
     board.addPlayedWord(listBoardTile3)
     assert(!board.checkGoodWordDirection())
   }
+
+  "The list of check words" should "be the cross of the card that is played" in {
+    val board = BoardImpl()
+    val boardTileE = BoardTileImpl(new Position(2,3), CardImpl("E"))
+    val listOfWords = List(ArrayBuffer((CardImpl("B"),"DEFAULT"), (CardImpl("E"),"DEFAULT"), (CardImpl("G"),"2P")), ArrayBuffer((CardImpl("D"),"2P"), (CardImpl("E"),"DEFAULT"), (CardImpl("F"),"DEFAULT")))
+    board.addCard2Tile(CardImpl("B"), 1, 3)
+    board.addCard2Tile(CardImpl("D"), 2, 2)
+    board.addCard2Tile(CardImpl("F"), 2, 4)
+    board.addCard2Tile(CardImpl("G"), 3,3)
+    board.addPlayedWord(List(boardTileE))
+    assert(board.takeCardToCalculatePoints().equals(listOfWords))
+  }
+
+  "The list of check words from vertical cards" should "contain also the horizontal crossings" in {
+    val board = BoardImpl()
+    val boardTileE = BoardTileImpl(new Position(2,3), CardImpl("E"))
+    val boardTileB = BoardTileImpl(new Position(1,3), CardImpl("B"))
+    val listOfWords = List(ArrayBuffer((CardImpl("D"),"2P"), (CardImpl("E"),"DEFAULT"), (CardImpl("F"),"DEFAULT")), ArrayBuffer((CardImpl("B"),"DEFAULT"), (CardImpl("E"),"DEFAULT")), ArrayBuffer((CardImpl("A"),"DEFAULT"), (CardImpl("B"),"DEFAULT"), (CardImpl("C"),"DEFAULT")))
+    board.addCard2Tile(CardImpl("A"), 1, 2)
+    board.addCard2Tile(CardImpl("D"), 2, 2)
+    board.addCard2Tile(CardImpl("C"), 1,4)
+    board.addCard2Tile(CardImpl("F"), 2,4)
+    board.addPlayedWord(List(boardTileB,boardTileE))
+    assert(board.takeCardToCalculatePoints().equals(listOfWords))
+  }
+
+  "The list of check words from horizontal cards" should "contain also the vertical crossings" in {
+    val board = BoardImpl()
+    val boardTileE = BoardTileImpl(new Position(2,2), CardImpl("C"))
+    val boardTileB = BoardTileImpl(new Position(2,3), CardImpl("D"))
+    val listOfWords = List(ArrayBuffer((CardImpl("A"),"DEFAULT"), (CardImpl("C"),"2P"), (CardImpl("E"),"DEFAULT")), ArrayBuffer((CardImpl("B"),"DEFAULT"), (CardImpl("D"),"DEFAULT"), (CardImpl("F"),"2P")), ArrayBuffer((CardImpl("C"),"2P"), (CardImpl("D"),"DEFAULT")))
+    board.addCard2Tile(CardImpl("A"), 1, 2)
+    board.addCard2Tile(CardImpl("B"), 1, 3)
+    board.addCard2Tile(CardImpl("E"), 3,2)
+    board.addCard2Tile(CardImpl("F"), 3,3)
+    board.addPlayedWord(List(boardTileB,boardTileE))
+    assert(board.takeCardToCalculatePoints().equals(listOfWords))
+  }
+
 }

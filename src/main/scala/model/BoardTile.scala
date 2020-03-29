@@ -1,5 +1,7 @@
 package model
 
+import scala.collection.mutable.ArrayBuffer
+
 package object boardConstants{
   val boardBonus: Map[(Int, Int), String] = Map((1, 5) -> constants.letterForTwo, (1, 13) -> constants.letterForTwo, (3, 8) -> constants.letterForTwo,
     (3, 10) -> constants.letterForTwo, (4, 9) -> constants.letterForTwo, (5, 1) ->constants.letterForTwo,
@@ -54,8 +56,8 @@ sealed trait Board{
   def clearPlayedWords()
   def clearBoardFromPlayedWords()
   def checkGoodWordDirection(): Boolean
+  def takeCardToCalculatePoints():  List[ArrayBuffer[(Card, String)]]
 
-  // TODO: metodi per il controllo delle parole inserite
   // TODO: metodi per il calcolo del punteggio delle parole inserite
 }
 
@@ -116,4 +118,49 @@ case class BoardImpl() extends Board {
     else
       boardConstants.diagonal
   }
+
+  // metodo per ottenere parole formate con le card inserite dall'utente in un turno
+  override def takeCardToCalculatePoints(): List[ArrayBuffer[(Card, String)]] = {
+    var listOfWords: List[ArrayBuffer[(Card, String)]] = List()
+
+    // per la testa della lista controllo in tutti e due i versi
+    listOfWords = (tileBoardsInADirection(Directions.N, _playedWord.head)++ ArrayBuffer(boardTails2Tuple(_playedWord.head)) ++ tileBoardsInADirection(Directions.S, _playedWord.head)) :: listOfWords
+    listOfWords = (tileBoardsInADirection(Directions.W, _playedWord.head)++ ArrayBuffer(boardTails2Tuple(_playedWord.head)) ++ tileBoardsInADirection(Directions.E, _playedWord.head)) :: listOfWords
+    // se le carte giocate sono di più allora devo cercare anche le parole formate dagli incroci
+    if (_playedWord.length > 1) {
+      if (wordDirection(_playedWord) == boardConstants.horizontal) {
+        // le carte messe sono in orizzontale
+        // cerco gli incroci in S/N (verticale)
+        for(boardTile <- _playedWord.tail){
+          listOfWords = (tileBoardsInADirection(Directions.N, boardTile)++ ArrayBuffer(boardTails2Tuple(boardTile)) ++ tileBoardsInADirection(Directions.S, boardTile)) :: listOfWords
+        }
+      } else if (wordDirection(_playedWord) == boardConstants.vertical) {
+        // le carte messe sono in verticale
+        // cerco gli incroci in W/E (orizzontale)
+        for(boardTile <- _playedWord.tail) {
+          listOfWords = (tileBoardsInADirection(Directions.W, boardTile) ++ ArrayBuffer(boardTails2Tuple(boardTile)) ++ tileBoardsInADirection(Directions.E, boardTile)) :: listOfWords
+        }
+      }
+    }
+    listOfWords.filter(array => array.length > 1)
+  }
+
+  // metodo per ottenere da una data posizione le carte inserite in una direzione
+  private def tileBoardsInADirection(direction: Direction, boardTile: BoardTile): ArrayBuffer[(Card, String)] = {
+    var wordReturn: ArrayBuffer[(Card,String)] = ArrayBuffer()
+    var actualBoardTile = getTileInAPosition(boardTile.position.coord._1+1+direction.shift._1, boardTile.position.coord._2+1+direction.shift._2)
+    while(!actualBoardTile.card.equals(boardConstants.defaultCard) && actualBoardTile.position.isValidPosition()){
+      if(direction.equals(Directions.N) || direction.equals(Directions.W)) {
+        wordReturn = (actualBoardTile.card, actualBoardTile.position.bonus) +: wordReturn
+      } else if (direction.equals(Directions.S) || direction.equals(Directions.E)) {
+        wordReturn = wordReturn :+ (actualBoardTile.card, actualBoardTile.position.bonus)
+      }
+      actualBoardTile = getTileInAPosition(actualBoardTile.position.coord._1+1+direction.shift._1, actualBoardTile.position.coord._2+1+direction.shift._2)
+    }
+    wordReturn
+  }
+
+  // metodo di utilità per ottenere da una BoardTile una tupla (Card, String)
+  private def boardTails2Tuple(boardTile: BoardTile): (Card, String) = (boardTile.card, boardTile.position.bonus)
+
 }
