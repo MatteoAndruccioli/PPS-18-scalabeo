@@ -1,17 +1,21 @@
 package client.controller
 
+import shared.Move
+
 object Messages {
   sealed trait ViewToClientMessages
   object ViewToClientMessages {
-    //message sent after user entered his username
+    //messaggio contenente lo username scelto dal giocatore
     case class UsernameChosen(username: String) extends ViewToClientMessages
-    //message specifying the request to join the queue
+    //giocatore chiede di essere messo in coda per giocare
     case class JoinQueue() extends ViewToClientMessages
-    //player answer to ready to join request
+    //giocatore esprime disponibilità a entrare in una partita
     case class UserReadyToJoin(ready:Boolean) extends ViewToClientMessages
-    //player wants to play again
+    //giocatore vuole giocare una nuova partita
     case class PlayAgain(userWantsToPlay:Boolean) extends ViewToClientMessages
-    //player exited
+    //il giocatore ha chiuso il gioco forzatamente
     case class UserExited() extends  ViewToClientMessages
+    //giocatore indica la propria mossa
+    case class UserMadeHisMove(move: Move) extends ViewToClientMessages
   }
 }
