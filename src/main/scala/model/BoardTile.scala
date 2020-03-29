@@ -163,4 +163,9 @@ case class BoardImpl() extends Board {
   // metodo di utilità per ottenere da una BoardTile una tupla (Card, String)
   private def boardTails2Tuple(boardTile: BoardTile): (Card, String) = (boardTile.card, boardTile.position.bonus)
 
+  // metodo per ottenere la parola in formato stringa dalla lista di parole trovate con takeCardToCalculatePoints
+  def getWordsFromLetters(words: List[ArrayBuffer[(Card, String)]]): List[String] = for( word <- words) yield getWordFromLetters(word)
+  private def getWordFromLetters(word: ArrayBuffer[(Card, String)]): String =
+    (for (tuple <- word; playedWord <- tuple._1.letter) yield playedWord).mkString("").toLowerCase
+
 }
