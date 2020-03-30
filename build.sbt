@@ -16,5 +16,6 @@ libraryDependencies ++= Seq(
   "com.typesafe.akka" %% "akka-cluster-tools" % akkaVersion,
   "com.typesafe.akka" %% "akka-multi-node-testkit" % akkaVersion,
   "org.scalatest" %% "scalatest" % "3.1.1" % "test",
-  "com.typesafe.akka" %% "akka-testkit" % "2.6.3" % "test"
+  "com.typesafe.akka" %% "akka-testkit" % "2.6.3" % "test",
+  "eu.hansolo" % "Medusa" % "8.3"
 )

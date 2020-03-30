@@ -1,6 +1,7 @@
 package client
 
 import akka.actor.{ActorSystem, Props}
+import client.controller.Controller
 import com.typesafe.config.ConfigFactory
 
 //launcher del client
@@ -11,5 +12,7 @@ object ClientLauncher extends App{
 
   val system = ActorSystem.create("ClusterSystem", config)
 
-  system.actorOf(Props.create(classOf[ClientActor]), "client")
+  val client = system.actorOf(Props.create(classOf[ClientActor]), "client")
+
+  Controller.init(client)
 }

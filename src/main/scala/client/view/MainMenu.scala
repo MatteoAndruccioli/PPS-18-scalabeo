@@ -1,6 +1,8 @@
 package client.view
 
 import animatefx.animation.{AnimationFX, FadeIn, SlideOutLeft}
+import client.controller.Controller
+import client.controller.Messages.ViewToClientMessages.{JoinQueue, UserReadyToJoin, UsernameChosen}
 import scalafx.application.{JFXApp, Platform}
 import scalafx.scene.control.{Button, Label, ProgressIndicator, TextField}
 import scalafx.scene.image.{Image, ImageView}
@@ -56,8 +58,8 @@ class MainMenu extends JFXApp.PrimaryStage {
         loading.visible = true
         loginButton.disable = true
       })
-      //TODO: Inviare un messaggio per richiedere il login
-      onLoginResponse()
+      Controller.username_=(usernameInputField.getText)
+      View.sendToClient(UsernameChosen(usernameInputField.getText))
     }
   }
 
@@ -71,14 +73,8 @@ class MainMenu extends JFXApp.PrimaryStage {
   val playButton: Button = new Button (PLAY_BUTTON_LABEL){
     styleClass += MENU_BUTTON_STYLE
     onAction = handle {
-      //TODO: Inviare messaggio di ricerca partita
+      View.sendToClient(JoinQueue())
       startMatchMaking()
-      val board = new Stage
-      board.scene = new Scene() {
-        root = new BoardAndPlayerPanel
-
-      }
-      board.show()
     }
   }
 
@@ -127,7 +123,18 @@ class MainMenu extends JFXApp.PrimaryStage {
   }
 
   def askUserToJoinGame(): Unit = {
-    //TODO: Mostrare una dialog che chieda all'utente di accettare o declinare la partita
+    Platform.runLater(() => {
+      loggedInContainer.children.remove(0)
+      sizeToScene()
+      new Dialog("Match Found, do you want to accept?")
+        .addYesNoButtons(
+          () => View.sendToClient(UserReadyToJoin(true)),
+          () => {
+            View.sendToClient(UserReadyToJoin(false))
+            playButton.disable = false
+          })
+        .show()
+    })
   }
 
   scene = new Scene {

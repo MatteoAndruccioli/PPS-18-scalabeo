@@ -27,7 +27,7 @@ class BoardTile(size: Double, val row: Int, val column: Int) extends BorderPane 
   }
 
   onMousePressed = handle {
-    //TODO: Gestire l'inserimento di una lettera
+    BoardInteraction.insert(this)
   }
 }
 
