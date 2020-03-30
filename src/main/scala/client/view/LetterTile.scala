@@ -1,10 +1,14 @@
 package client.view
 
+import client.controller.Controller
 import client.view.LetterStatus.LetterStatus
+import scalafx.application.Platform
 import scalafx.scene.Node
 import scalafx.scene.image.{Image, ImageView}
+import scalafx.scene.input.MouseEvent
 import scalafx.scene.layout.{HBox, StackPane}
 import scalafx.scene.text.Text
+import scalafx.Includes._
 
 case class LetterTile(size: Double, letter: String, letterValue: String, var position: Int = 0, var letterStatus: LetterStatus = LetterStatus.inHand) extends StackPane {
   maxWidth = size
@@ -34,6 +38,20 @@ case class LetterTile(size: Double, letter: String, letterValue: String, var pos
   }
 
   children = List(valueContainer, letterText)
+
+  onMousePressed = (e: MouseEvent)  => {
+    BoardInteraction.select(this)
+    if (Controller.isMyTurn && (letterStatus == LetterStatus.inHand)) {
+      this.translateY = -10
+    }
+    e.consume()
+  }
+
+  def unselect(): Unit = {
+    Platform.runLater(() => {
+      this.translateY = 0
+    })
+  }
 
 }
 
