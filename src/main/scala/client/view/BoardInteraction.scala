@@ -1,8 +1,9 @@
 package client.view
 
 import client.controller.Controller
+import javafx.scene.layout.Pane
 import scalafx.application.Platform
-import scalafx.scene.layout.{HBox, Pane}
+import scalafx.scene.layout.HBox
 
 import scala.collection.mutable
 import scala.collection.mutable.ArrayBuffer
@@ -30,10 +31,10 @@ object BoardInteraction {
   def insert(boardTile: BoardTile): Unit = {
     if(Controller.isMyTurn && _selection != null && boardTile.getChildren.isEmpty) {
       _selection.getParent.asInstanceOf[Pane].getChildren.remove(_selection)
-      _thisTurnInsertions.put(_selection, (boardTile.x, boardTile.y))
+      _thisTurnInsertions.put(_selection, (boardTile.row, boardTile.column))
       boardTile.center = _selection
       _selection.letterStatus = LetterStatus.inserted
-      Controller.addCardToTile(_selection.position, boardTile.x, boardTile.y)
+      Controller.addCardToTile(_selection.position, boardTile.row, boardTile.column)
       _selection.unselect()
       _selection = null
     }

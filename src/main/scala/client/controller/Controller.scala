@@ -2,7 +2,6 @@ package client.controller
 
 import akka.actor.ActorRef
 import client.controller.Messages.ViewToClientMessages
-import client.model.GameManager
 import client.view.View
 
 object Controller {

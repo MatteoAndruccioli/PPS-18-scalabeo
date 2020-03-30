@@ -1,6 +1,6 @@
-package client.model
+package client.controller
 
-import model.{Board, BoardImpl, BoardTile, Card, LettersHand, LettersHandImpl}
+import model._
 
 import scala.collection.mutable.ArrayBuffer
 
