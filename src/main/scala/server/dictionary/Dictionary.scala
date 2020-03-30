@@ -1,21 +1,27 @@
 package server.dictionary
 
-object Dictionary {
+import scala.io.Source
+import scala.util.matching.Regex
 
-  import DictionaryUtils._
-
-  val DICTIONARY_FILE_NAME: String = "/dictionary/dictionary.txt"
-
-  var dictionary: Set[String] = uploadDictionary(DICTIONARY_FILE_NAME)
-
-  //permette di indicare una lista di stringhe come nuovo dizionario
-  def replaceDefaultDictionary(set: Set[String]): Unit = {
-    dictionary = set
+object RegexUtils {
+  implicit class RichRegex(val underlying: Regex) extends AnyVal {
+    def matches(s: String): Boolean = underlying.pattern.matcher(s).matches
   }
+}
 
-  //permette di indicare un file txt da cui caricare il dizionario
-  //il file txt deve contenere tutte parole ognune su una linea diversa
-  def replaceDefaultDictionary(databasePath: String): Unit = {
-    dictionary = uploadDictionary(databasePath)
-  }
+sealed trait Dictionary {
+  def dictionaryPath: String
+  def dictionarySet: Set[String]
+  def checkWords(filter: List[String]): Boolean
+}
+
+class DictionaryImpl(val _dictionaryPath: String) extends Dictionary {
+
+  import RegexUtils._
+
+  override def dictionaryPath: String = _dictionaryPath
+  override def dictionarySet: Set[String] = populateDictionary()
+  private def populateDictionary(): Set[String] = Source.fromInputStream(getClass.getResourceAsStream(dictionaryPath)).getLines().toSet
+  override def checkWords(listToCheck: List[String]): Boolean = listToCheck.forall(word => checkWord(word))
+  private def checkWord(filter: String): Boolean = dictionarySet.exists(dictionaryWord => filter.r matches dictionaryWord)
 }
