@@ -1,7 +1,7 @@
 package shared
 
 import akka.actor.ActorRef
-import model.Card
+import model.{BoardTile, Card}
 
 import scala.collection.mutable.ArrayBuffer
 
