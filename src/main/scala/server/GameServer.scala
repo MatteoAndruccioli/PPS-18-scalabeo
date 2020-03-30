@@ -7,6 +7,7 @@ import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import model.{BoardImpl, BoardTile, CardImpl, LettersBagImpl, LettersHandImpl}
+import server.dictionary.DictionaryImpl
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted}
 import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
 import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins}
@@ -27,13 +28,16 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private val gamePlayers = players
   private val gamePlayersUsername: Map[ActorRef, String] = mapUsername
 
-  private val board = BoardImpl() //TODO inserire il tabellone del model
+  private val board = BoardImpl()
   private val pouch = LettersBagImpl()
   private var playersHand = mutable.Map[ActorRef, LettersHandImpl]()
   //creo le mani
   gamePlayers.foreach(p => playersHand+=(p -> LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(8).get : _*))))
   private var playedWord : ArrayBuffer[BoardTile] = ArrayBuffer[BoardTile]()
   private var numberOfPlayedTileInHand = 0
+  //creo il dizionario
+  private val dictionaryPath: String = "/dictionary/dictionary.txt"
+  private val dictionary: DictionaryImpl = new DictionaryImpl(dictionaryPath)
 
   private var turn = 0
 
@@ -91,9 +95,11 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
           println("RICEVUTA MOSSA: "+ playedWord.toString +" da "+ sender())
           board.addPlayedWord(List.concat(playedWord))
           println(board.boardTiles.toString)
-          //inserire check validità giocata
-          replaceHand()
-          sender ! ClientMoveAck(WordAccepted(playersHand(sender())._hand))
+          //inserire check validità parole in futuro
+          if(board.checkGoodWordDirection()) {
+            replaceHand()
+            sender ! ClientMoveAck(WordAccepted(playersHand(sender())._hand))
+          }
           scheduler.replaceBehaviourAndStart(() => sendUpdate())
 
           playedWord.clear()
