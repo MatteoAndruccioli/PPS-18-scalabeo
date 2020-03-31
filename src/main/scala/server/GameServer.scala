@@ -6,9 +6,8 @@ import akka.actor.{Actor, ActorRef}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
-import model.{BoardImpl, BoardTile, CardImpl, LettersBagImpl, LettersHandImpl}
-import server.dictionary.DictionaryImpl
-import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted}
+import model._
+import shared.ClientMoveAckType._
 import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
 import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins}
 import shared.{ClusterScheduler, CustomScheduler, Move}
