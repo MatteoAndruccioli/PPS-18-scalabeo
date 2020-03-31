@@ -1,7 +1,8 @@
-package server.dictionary
+package model
 
 import scala.io.Source
 import scala.util.matching.Regex
+import RegexUtils._
 
 object RegexUtils {
   implicit class RichRegex(val underlying: Regex) extends AnyVal {
@@ -16,9 +17,6 @@ sealed trait Dictionary {
 }
 
 class DictionaryImpl(val _dictionaryPath: String) extends Dictionary {
-
-  import RegexUtils._
-
   override def dictionaryPath: String = _dictionaryPath
   override def dictionarySet: Set[String] = populateDictionary()
   private def populateDictionary(): Set[String] = Source.fromInputStream(getClass.getResourceAsStream(dictionaryPath)).getLines().toSet

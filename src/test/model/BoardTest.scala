@@ -128,7 +128,6 @@ class BoardTest extends FlatSpec {
   "The word" should "be extracted from the list of Card" in {
     val board = BoardImpl()
     val listOfWords: List[ArrayBuffer[(Card,String)]] = List(ArrayBuffer((CardImpl("O"),"DEFAULT"), (CardImpl("C"),"2P"), (CardImpl("A"),"DEFAULT")))
-    println(board.getWordsFromLetters(listOfWords))
     assert(board.getWordsFromLetters(listOfWords).contains("oca"))
   }
 

@@ -3,7 +3,7 @@ package model
 import org.scalatest.FlatSpec
 import scala.collection.mutable.ArrayBuffer
 
-class LettersBagImplTest extends FlatSpec {
+class LettersBagTest extends FlatSpec {
   "tuple2Cards from lettersScoresCardinalities " should " create a list of letter from constant" in {
     val lettersBagImpl = LettersBagImpl()
     val cardList = lettersBagImpl.tuple2Cards(constants.lettersScoresCardinalities.head)
