@@ -12,6 +12,8 @@ object ClientToGameServerMessages {
   case class PlayerTurnBeginAck() extends ClientToGameServerMessages
   case class ClientMadeMove(move:Move) extends ClientToGameServerMessages
   case class EndTurnUpdateAck() extends ClientToGameServerMessages
+  //ack per ricezione del messaggio di fine partita
+  case class GameEndedAck() extends ClientToGameServerMessages
 }
 
 sealed trait Move
@@ -30,6 +32,8 @@ object GameServerToClientMessages {
   case class PlayerTurnBegins(playerInTurn:ActorRef) extends GameServerToClientMessages
   case class ClientMoveAck(moveAckType:ClientMoveAckType) extends GameServerToClientMessages
   case class EndTurnUpdate(board:List[BoardTile]) extends GameServerToClientMessages
+  //messaggio di termine partita: inviato quando qualcuno lascia il gioco o vince
+  case class GameEnded(actorRef: ActorRef, name: String) extends GameServerToClientMessages
 }
 
 sealed trait ClientMoveAckType
