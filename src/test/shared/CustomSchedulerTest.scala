@@ -1,19 +1,20 @@
 package shared
 
 import java.util.concurrent.TimeUnit
-
 import akka.actor.{ActorRef, ActorSystem}
 import akka.cluster.Cluster
 import akka.testkit.{ImplicitSender, TestKit, TestProbe}
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.must.Matchers
-
 import scala.concurrent.duration.FiniteDuration
 
 
 object Constants {
   val testMessage: String = "testMessage"
+  val testMessage2: String = "testMessage2"
+  val testMessage3: String = "testMessage3"
+  val testMessage4: String = "testMessage4"
   val times: Int = 5
   val secondsWithoutMessages: Int = 5
 }
@@ -75,6 +76,22 @@ class CustomSchedulerTest extends TestKit(ActorSystem("test-system"))
     }
 
     /*
+  - simile a testMultipleTimesTask
+      ma usa il metodo replaceBehaviourAndStart per rimpiazzare il task precedente
+  - non stoppa il task
+ */
+    def replaceMultipletestTask(scheduler:CustomScheduler, times:Int, testerTask:Runnable, newTask:Runnable):Unit = {
+      scheduler.replaceBehaviourAndStart(newTask)
+      runMultipleTimes(times, testerTask)
+    }
+
+    // come replaceMultipletestTask, ma chiama stop sul task dopo aver eseguito tutti i test
+    def replaceMultipletestStopTask(scheduler:CustomScheduler, times:Int, testerTask:Runnable, newTask:Runnable):Unit = {
+      replaceMultipletestTask(scheduler, times, testerTask, newTask)
+      scheduler.stopTask()
+    }
+
+    /*
       restituisce un task che valuta se il messaggio ricevuto dal receiver:
       - è di tipo String
       - contiene la stringa indicata
@@ -106,6 +123,33 @@ questo test:
     val receiver = TestProbe()
     val scheduler: CustomScheduler = istantiateEmptyScheduler(Cluster.get(system), Some(createTask(receiver.ref, testMessage)))
     testMultipleTimesTask(scheduler, times, checkMessageReceived(testMessage,receiver))
+    expectNoMessage(new FiniteDuration(secondsWithoutMessages,TimeUnit.SECONDS))
+  }
+
+
+  /*
+  test sul metodo replaceBehaviourAndStart:
+    - si tratta di verificare la possibilità di riassegnare il task allo scheduler
+    - voglio verificare che il task assegnato precedentemente allo scheduler venga interrotto ed assegnato il nuovo task
+    - verifica che non sia necessario sospendere il task precedente manualmente
+ */
+
+  "Scheduler.replaceBehaviourAndRun" should "let user change task running with a new one and run the latest" in {
+    import Constants._
+    import UtilityFunctions._
+
+    val receiver = TestProbe()
+    val scheduler: CustomScheduler = istantiateEmptyScheduler(Cluster.get(system), Some(createTask(receiver.ref, testMessage))) //creo scheduler con task 1 (invio ping msg)
+
+    scheduler.startTask()
+    runMultipleTimes(times, checkMessageReceived(testMessage,receiver))//controlli su ricezione ping msg
+    //nota quà non stoppo il task corrente
+
+    replaceMultipletestTask(scheduler, times, checkMessageReceived(testMessage2,receiver), createTask(receiver.ref, testMessage2))
+    //nota quà non stoppo il task corrente
+    replaceMultipletestStopTask(scheduler, times, checkMessageReceived(testMessage3,receiver), createTask(receiver.ref, testMessage3))
+    //nota quà stoppo il task corrente => non dovrebbero più arrivare messaggi dopo lo stop
+
     expectNoMessage(new FiniteDuration(secondsWithoutMessages,TimeUnit.SECONDS))
   }
 
