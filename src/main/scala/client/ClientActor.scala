@@ -5,12 +5,12 @@ import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
 import client.controller.Controller
-import client.controller.Messages.ViewToClientMessages.{JoinQueue, UserExited, UserMadeHisMove, UserReadyToJoin, UsernameChosen}
+import client.controller.Messages.ViewToClientMessages.{JoinQueue, PlayAgain, UserExited, UserMadeHisMove, UserReadyToJoin, UsernameChosen}
 import model.Card
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
-import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
+import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck}
 import shared.ClientToGreetingMessages._
-import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins}
+import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins}
 import shared.{ClusterScheduler, CustomScheduler, Move}
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
 import shared.GreetingToClientMessages._
@@ -168,6 +168,14 @@ class ClientActor extends Actor{
         }
         sendPlayerInTurnAck() //invio ack al GameServer
       }
+      case gameEndedMessage: GameEnded => {
+        println("--------------------------------------------------------------------")
+        println(self + " Ricevuto messaggio di finepartita da GameServer; chiedo all'utente se vuole fare un altra partita; dico al GameServer di smettere di inviarmi messaggi GameEnded")
+        sendGameEndedAck()
+        //todo comunicare a Controller terminazione partita
+        resetMatchInfo()
+        context.become(waitingUserChoosingWheterPlayAgainOrClosing)
+      }
     }
   }
 
@@ -198,7 +206,7 @@ class ClientActor extends Actor{
 
   //attendo che il GameServer comunichi gli aggiornamenti da compiere //todo manca gestione arrivo messaggi in chat
   def waitingTurnEndUpdates: Receive = UnexpectedShutdown orElse {
-    case endTurnUpdateMessage :EndTurnUpdate =>{
+    case _ :EndTurnUpdate =>{
       println("ricevuti aggironamenti di fine turno dal GameServer [EndTurnUpdate]")
       Controller.turnEndUpdates()//todo dovrò probabilmente inviare informazioni per aggiornare UI
       sendEndTurnUpdateAck()
@@ -206,6 +214,38 @@ class ClientActor extends Actor{
     }
   }
 
+
+  //stato in cui attendo che il controller mi comunichi se l'utente vuole giocare una nuova partita o uscire //todo manca gestione arrivo messaggi in chat
+  def waitingUserChoosingWheterPlayAgainOrClosing: Receive = UnexpectedShutdown orElse {
+    case message: PlayAgain => {
+      println("--------------------------------------------------------------------")
+      println("utente dice che vuole continuare a giocare ("+message.userWantsToPlay+")")
+      message.userWantsToPlay match {
+        case true => {
+          resetMatchInfo()
+          Controller.onLoginResponse()
+          context.become(waitingUserQueueRequest)
+        }
+        case false => {
+          println(self + " Invio richiesta di stop")
+          scheduler.replaceBehaviourAndStart(()=>tearDownConnectionToGreetingServer())
+          context.become(waitingDisconnectionAck)
+        }
+      }
+    }
+  }
+
+  //attendo che GreetingServer confermi ricezione messaggio di disconnessione //todo manca gestione arrivo messaggi in chat
+  def waitingDisconnectionAck: Receive = {
+    case _: DisconnectionAck => {
+      println("--------------------------------------------------------------------")
+      println(self + " - Ricevuto ack di richiesta disconnessione dal Greeting Server = " +sender())
+      println(self + " Muoro felicio")
+      scheduler.stopTask()
+      //todo forse dovrò comunicare al controller la riuscita terminazione
+      context.stop(self)
+    }
+  }
 
 
 
@@ -341,6 +381,12 @@ class ClientActor extends Actor{
     context.become(waitingTurnEndUpdates)
   }
 
+  //comunico a GameServer ricezione del messaggio di terminazione della partita
+  private def sendGameEndedAck(): Unit = {
+    println(self + " - Ho inviato sendGameEndedAck")
+    gameServerActorRef.get !  GameEndedAck()
+  }
+
 
 
 
@@ -352,18 +398,23 @@ class ClientActor extends Actor{
 
   //GESTIONE COLLOQUIO CON GREETING_SERVER
 
-  //runnable sending connection request to GreetingServer
+  //stabilisce la connessione con il greeting server
   private def estabilishConnectionToGreetingServer(): Unit = {
     println(self + " - Ho inviato ConnectionToGreetingQuery; name" +username.getOrElse("errore-username1"))
     mediator ! Publish(GREETING_SERVER_RECEIVES_TOPIC, ConnectionToGreetingQuery(username.getOrElse("default-name"))) //questo deve rimanere su topic
   }
 
-  //client tells GreetingServer whether he wants to join match
+  //utente conferma di voler partecipare alla partita o meno
   private def responseToJoinMatchRequest():Unit = {
     println(self + " - Ho inviato PlayerReadyAnswer: " + playerIsReady)
     greetingServerActorRef.get ! PlayerReadyAnswer(playerIsReady)
   }
 
+  //invia al GreetingServer una notifica di disconnessione
+  private def tearDownConnectionToGreetingServer(): Unit = {
+    println(self + " - Ho inviato DisonnectionToGreetingNotification")
+    greetingServerActorRef.get ! DisconnectionToGreetingNotification()
+  }
 
 
 
