@@ -153,5 +153,27 @@ questo test:
     expectNoMessage(new FiniteDuration(secondsWithoutMessages,TimeUnit.SECONDS))
   }
 
+  /*
+    test sul metodo replaceBehaviourAndStart:
+      - verifico che partendo da uno scheduler creato con un Option(task) == None, posso sfruttando questo metodo assegnare un
+        primo task e avviare lo scheduler
+  */
+  "Scheduler.replaceBehaviourAndRun" should "let user set & run a task for a scheduler " +
+    "instantiated with a Option(task) == None " in {
+    import Constants._
+    import UtilityFunctions._
+
+    val receiver = TestProbe()
+    val scheduler: CustomScheduler = istantiateEmptyScheduler(Cluster.get(system), None) //creo scheduler con task 1 (invio ping msg)
+
+    replaceMultipletestTask(scheduler, times, checkMessageReceived(testMessage,receiver), createTask(receiver.ref, testMessage))
+    //nota quà non stoppo il task corrente
+    replaceMultipletestTask(scheduler, times, checkMessageReceived(testMessage2,receiver), createTask(receiver.ref, testMessage2))
+    //nota quà non stoppo il task corrente
+    replaceMultipletestStopTask(scheduler, times, checkMessageReceived(testMessage3,receiver), createTask(receiver.ref, testMessage3))
+    //nota quà stoppo il task corrente => non dovrebbero più arrivare messaggi dopo lo stop
+
+    expectNoMessage(new FiniteDuration(secondsWithoutMessages,TimeUnit.SECONDS))
+  }
 
 }
