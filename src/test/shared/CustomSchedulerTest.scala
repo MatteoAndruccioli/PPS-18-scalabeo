@@ -176,4 +176,28 @@ questo test:
     expectNoMessage(new FiniteDuration(secondsWithoutMessages,TimeUnit.SECONDS))
   }
 
+
+  /*
+  test sul metodo replaceBehaviourAndStart:
+    - verifico che partendo da uno scheduler su cui è già stato chiamato stopQuerying()
+      la chiamata a  replaceBehaviourAndRun(newRunnable: Runnable) funziona correttamente:
+      ovvero consente assegnazione di nuovo task e sua esecuzione
+*/
+
+  "Scheduler.replaceBehaviourAndRun" should "let user change stopped task with a new one and run the latest" in {
+    import Constants._
+    import UtilityFunctions._
+
+    val receiver = TestProbe()
+    val scheduler: CustomScheduler = istantiateEmptyScheduler(Cluster.get(system), None) //creo scheduler con task 1 (invio ping msg)
+
+    replaceMultipletestStopTask(scheduler, times, checkMessageReceived(testMessage,receiver), createTask(receiver.ref, testMessage))
+    //nota quà stoppo il task corrente
+    replaceMultipletestTask(scheduler, times, checkMessageReceived(testMessage2,receiver), createTask(receiver.ref, testMessage2))
+    //nota quà non stoppo il task corrente
+    replaceMultipletestStopTask(scheduler, times, checkMessageReceived(testMessage3,receiver), createTask(receiver.ref, testMessage3))
+    //nota quà stoppo il task corrente => non dovrebbero più arrivare messaggi dopo lo stop
+    expectNoMessage(new FiniteDuration(secondsWithoutMessages,TimeUnit.SECONDS))
+  }
+
 }
