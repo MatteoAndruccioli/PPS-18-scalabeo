@@ -177,7 +177,17 @@ case class BoardImpl() extends Board {
   }
 
   // TODO: algoritmo per il calcolo del punteggio di una parola
-  private def calculateWordScore(word: ArrayBuffer[(Card, String)]): Int =  ???
+  private def calculateWordScore(word: ArrayBuffer[(Card, String)]): Int =  {
+    var letterValue: Int = 0
+    var multiplier: Int = 0
+    val letterPoints = for (tuple <- word;
+                            multiplierBonus = getWordMultiplier(tuple._2);
+                            letterValue = getLetterMultiplier(tuple._2) * tuple._1.score) yield (letterValue, multiplierBonus)
+    letterPoints.foreach({letterValue += _._1})
+    letterPoints.foreach({multiplier += _._2})
+    if(multiplier == 0) multiplier=1
+    letterValue * multiplier + lenghtBonus(word)
+  }
 
   // metodo per il bonus che ritorna il moltiplicatore del punteggio della parola
   private def getWordMultiplier(positionBonus: String): Int = positionBonus match{

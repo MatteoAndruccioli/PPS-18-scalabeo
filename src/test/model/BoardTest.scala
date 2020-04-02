@@ -131,4 +131,15 @@ class BoardTest extends FlatSpec {
     assert(board.getWordsFromLetters(listOfWords).contains("oca"))
   }
 
+  "The word point" should "respect the Scarabeo rules" in {
+    val board = BoardImpl()
+    val aspectedPoints = (4+1+1+1)*2
+    val boardTile = BoardTileImpl(new Position(1,2), CardImpl("F"))
+    val boardTile1 = BoardTileImpl(new Position(2,2), CardImpl("I"))
+    val boardTile2 = BoardTileImpl(new Position(3,2), CardImpl("C"))
+    val boardTile7 = BoardTileImpl(new Position(4,2), CardImpl("O"))
+    board.addPlayedWord(List(boardTile,boardTile1,boardTile2, boardTile7))
+    assert(board.calculateTurnPoints(board.takeCardToCalculatePoints()) == aspectedPoints)
+  }
+
 }
