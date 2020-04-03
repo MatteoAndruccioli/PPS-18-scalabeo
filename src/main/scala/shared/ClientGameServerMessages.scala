@@ -14,6 +14,8 @@ object ClientToGameServerMessages {
   case class EndTurnUpdateAck() extends ClientToGameServerMessages
   //ack per ricezione del messaggio di fine partita
   case class GameEndedAck() extends ClientToGameServerMessages
+  //messaggio di disconnessione inviato al server in seguito a chiusura forzata UI
+  case class DisconnectionToGameServerNotification() extends ClientToGameServerMessages
 }
 
 sealed trait Move

@@ -9,7 +9,7 @@ import client.controller.Messages.ViewToClientMessages.{JoinQueue, PlayAgain, Us
 import client.controller.MoveOutcome._
 import model.Card
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
-import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck}
+import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameServerNotification, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck}
 import shared.ClientToGreetingMessages._
 import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins}
 import shared.{ClusterScheduler, CustomScheduler, Move}
@@ -445,8 +445,7 @@ class ClientActor extends Actor{
       case true => notifyDisconnectionToGameServer
       case _    => notifyDisconnectionToGreetingServer
     }
-    //todo gestire stop dello scheduler e attesa dell'ack da parte dei server, non terminare bruscamente come accade ora
-    stopSelf()//todo rimuovi
+    context.become(waitingDisconnectionAck)
   }
 
   //l'attore client termina se stesso //todo nota viene usato nei primi due stati finchè non vuoi cancellare quella print
@@ -457,12 +456,26 @@ class ClientActor extends Actor{
 
   //chiamato dopo che l'utente si è disconnesso inaspettatamente e non era in partita => comunico il fatto a GreetingServer
   def notifyDisconnectionToGreetingServer: Unit = {
-    //todo sarà necessario notificare il GreetingServer usando scheduler
+    println("--------------------------------------------------------------------")
+    println(self + " -Ricevuta richiesta di disconnessione dall'utente = " +sender())
+    println(self + " Invio richiesta di stop al Greeting")
+    scheduler.replaceBehaviourAndStart(()=>tearDownConnectionToGreetingServer())
   }
 
   //chiamato dopo che l'utente si è disconnesso inaspettatamente ed era in partita => comunico il fatto a GameServer
   def notifyDisconnectionToGameServer: Unit = {
-    //todo sarà necessario notificare il GameServer usando scheduler
+    //todo occhio quà potrebbe mancare un passaggio: mi disconnetto dal gameServer ma non dal greeting, se il greeting mi ha in memoria è un problema se no no???!
+    println("--------------------------------------------------------------------")
+    println(self + " -Ricevuta richiesta di disconnessione dall'utente = " +sender())
+    println(self + " Invio richiesta di stop al GameServer")
+    scheduler.replaceBehaviourAndStart(()=>tearDownConnectionToGameServer())
+  }
+
+
+  //invio notifica di disconnessione al GameServer in seguito a UI chiusa forzatamente
+  private def tearDownConnectionToGameServer(): Unit = {
+    println(self + " - Ho inviato DisconnectionToGameServerNotification")
+    gameServerActorRef.get ! DisconnectionToGameServerNotification()
   }
 
 
@@ -513,7 +526,7 @@ class ClientActor extends Actor{
     }
     gameServerTopic = None
     gameServerActorRef = None
-    playerIsReady = false //todo occhio se faccio test finchè non c'è comunicazione con UI questo andrebbe messo a true
+    playerIsReady = false
   }
 }
 
