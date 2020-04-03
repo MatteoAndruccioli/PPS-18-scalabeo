@@ -6,15 +6,17 @@ import scalafx.scene.{Group, Scene}
 
 import scala.collection.mutable.ArrayBuffer
 
-class GameView extends PrimaryStage {
+class GameView(users: List[String]) extends PrimaryStage {
 
   private val utilityPanel: UtilityPanel = new UtilityPanel
   private val boardAndPlayerPanel: BoardAndPlayerPanel = new BoardAndPlayerPanel(ArrayBuffer(("s", 1), ("c", 1), ("a", 1), ("l", 1), ("a", 1), ("b", 1), ("e", 1), ("o", 1)))
+  private val legendPanel = new LegendPanel(users)
   title = "Scalabeo"
   scene = new Scene(1280, 720) {
     root = new Group() {
       children = new GridPane() {
-        add(utilityPanel, 1, 0)
+        add(legendPanel, 1, 0)
+        add(utilityPanel, 2, 0)
         add(boardAndPlayerPanel, 0, 0)
       }
     }

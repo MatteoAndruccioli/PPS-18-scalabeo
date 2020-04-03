@@ -8,6 +8,6 @@ import scala.collection.mutable.ArrayBuffer
 
 object LaunchTest extends JFXApp {
   View.onMatchStart()
-  Controller.userTurnBegins()
+  //Controller.userTurnBegins()
   GameManager.newGame(ArrayBuffer(CardImpl("s"), CardImpl("c"), CardImpl("a"), CardImpl("l"), CardImpl("a"), CardImpl("b"), CardImpl("e"), CardImpl("o")))
 }

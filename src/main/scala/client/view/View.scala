@@ -25,8 +25,9 @@ object View extends JFXApp {
   //da chiamare quando si può iniziare la partita
   def onMatchStart(): Unit = {
     Platform.runLater(() => {
-      stage.close()
-      gameBoard = new GameView()
+      if(stage != null)
+        stage.close()
+      gameBoard = new GameView(List("Ciao", "Peppe", "Giukio", "Carlo"))
       //updateHand(cards)
     })
   }
