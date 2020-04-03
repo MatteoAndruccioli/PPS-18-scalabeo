@@ -148,16 +148,11 @@ class ClientActor extends Actor{
   //attendo che il GameServer decida di chi è il turno //todo manca gestione arrivo messaggi in chat
   def waitingInTurnPlayerNomination: Receive = {
     UnexpectedShutdown orElse{
-      //todo in questo momento mi aspetto eventualmente un messaggio di terminazione della partita
       case message: PlayerTurnBegins => {
         message.playerInTurn match {
           case self => {
             //caso in cui spetta a me giocare
             println("ricevuto PlayerTurnBegins - è il mio turno: self=" + self + " === attore in turno = " + message.playerInTurn)
-            /*
-                todo devi notificare all'UI l'inizio del turno del player ed in teoria attendere una mossa del player,
-                 ma per ora la implemento direttamente e salto la fase in cui attendo mossa dall'UI
-             */
             Controller.userTurnBegins()
             context.become(waitingUserMakingMove)
           }
@@ -191,16 +186,19 @@ class ClientActor extends Actor{
     }
   }
 
-  //attendo che il server mi confermi la ricezione della mossa //todo ricorda di smettere di inviare la mossa scelta una volta ricevuto ack (fatto nei metodi di gestione)
+  //attendo che il server mi confermi la ricezione della mossa
   //todo manca gestione arrivo messaggi in chat
   def waitingMoveAckFromGameServer: Receive =  UnexpectedShutdown orElse {
-    case serverAnswer: ClientMoveAck => serverAnswer.moveAckType match {
-      case wordAccepted: WordAccepted => onWordAccepted(wordAccepted.hand)
-      case _: WordRefused => onWordRefused()
-      case handSwitchAccepted: HandSwitchRequestAccepted => onHandSwitchAccepted(handSwitchAccepted.hand)
-      case _: HandSwitchRequestRefused => onHandSwitchRefused()
-      case _: PassAck => onPassAck()
-      case _: TimeoutAck => onTimeoutAck()
+    case serverAnswer: ClientMoveAck => {
+      scheduler.stopTask()
+      serverAnswer.moveAckType match {
+        case wordAccepted: WordAccepted => onWordAccepted(wordAccepted.hand)
+        case _: WordRefused => onWordRefused()
+        case handSwitchAccepted: HandSwitchRequestAccepted => onHandSwitchAccepted(handSwitchAccepted.hand)
+        case _: HandSwitchRequestRefused => onHandSwitchRefused()
+        case _: PassAck => onPassAck()
+        case _: TimeoutAck => onTimeoutAck()
+      }
     }
   }
 
@@ -268,13 +266,13 @@ class ClientActor extends Actor{
   //memorizza l'actorRef del GameServer e si registra per esser informato di un suo crollo
   private def updateGameServerReference(gameServer: ActorRef): Unit ={
     gameServerActorRef = Some(gameServer)
-    context.watch(gameServer)  //todo a fine partita devo smettere di ascoltarlo
+    context.watch(gameServer)
   }
 
   //memorizza il topic relativo al GameServer e si registra per esser informato di un suo crollo
   private def updateGameServerTopic(topic: String): Unit ={
     gameServerTopic = Some(topic)
-    mediator ! Subscribe(gameServerTopic.get, self)  //todo a fine partita devo disiscrivermi
+    mediator ! Subscribe(gameServerTopic.get, self)
   }
 
   //confermo a GameServer ricezione messaggio MatchTopicListenQuery
@@ -312,7 +310,6 @@ class ClientActor extends Actor{
   def onWordAccepted(hand:ArrayBuffer[Card]):Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
     Controller.moveOutcome(AcceptedWord(hand))
     context.become(waitingTurnEndUpdates)
   }
@@ -325,7 +322,6 @@ class ClientActor extends Actor{
   def onWordRefused():Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [WordRefused] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
     Controller.moveOutcome(RefusedWord())
     context.become(waitingUserMakingMove)
   }
@@ -338,7 +334,6 @@ class ClientActor extends Actor{
   def onHandSwitchAccepted(hand:ArrayBuffer[Card]):Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [HandSwitchAccepted] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
     Controller.moveOutcome(HandSwitchAccepted(hand))
     context.become(waitingTurnEndUpdates)
   }
@@ -351,7 +346,6 @@ class ClientActor extends Actor{
   def onHandSwitchRefused():Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [HandSwitchRefused] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
     Controller.moveOutcome(HandSwitchRefused())
     context.become(waitingUserMakingMove)
   }
@@ -364,7 +358,6 @@ class ClientActor extends Actor{
   def onPassAck():Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
     Controller.moveOutcome(PassReceived())
     context.become(waitingTurnEndUpdates)
   }
@@ -377,7 +370,6 @@ class ClientActor extends Actor{
   def onTimeoutAck():Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
     Controller.moveOutcome(TimeoutReceived())
     context.become(waitingTurnEndUpdates)
   }
@@ -488,14 +480,6 @@ class ClientActor extends Actor{
     }else {
       println("**************** !!!!\n\n\n HANNO UCCISO QUALCUNO CHE NON CONOSCO: " +serverDown+ " \n\n\n***********")
     }
-    /*
-    //questa implementazione tira errori perchè greetingServerActorRef.get non è un identificatore stabile
-    serverDown match {
-      case greetingServerActorRef.get => handleGreetingServerDisconnection
-      case gameServerActorRef.get => handleGameServerDisconnection
-      case _ => println("**************** !!!!\n\n\n HANNO UCCISO QUALCUNO CHE NON CONOSCO: " +serverDown+ " \n\n\n***********")
-    }
-    */
   }
 
   //se crolla il greeting comunico alla UI e mi stoppo tanto non c'è piu niente da fare
