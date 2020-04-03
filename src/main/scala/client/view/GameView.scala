@@ -22,5 +22,35 @@ class GameView extends PrimaryStage {
   resizable = false
   sizeToScene()
   show()
+
+  def updateBoard(word: List[(LetterTile, Int, Int)]): Unit = {
+    boardAndPlayerPanel.updateBoard(word)
+  }
+
+  def disableMulliganButton(condition: Boolean): Unit = {
+    utilityPanel.disableMulliganButton(condition)
+  }
+
+  def startTurn(): Unit = {
+    utilityPanel.startTurn()
+  }
+
+  def restartTimer(): Unit = {
+    utilityPanel.restartTimer()
+  }
+
+  def pauseTimer(): Unit = {
+    utilityPanel.pauseTimer()
+  }
+
+  def resumeTimer(): Unit = {
+    utilityPanel.resumeTimer()
+  }
+
+  def updateLeaderboard(ranking: List[(String, Int)]): Unit = {
+    //TODO: Update the leaderboard
+  }
+
+
 }
 

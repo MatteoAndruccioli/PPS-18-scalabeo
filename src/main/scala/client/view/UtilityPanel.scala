@@ -1,8 +1,11 @@
 package client.view
 
+import client.controller.Controller
+import client.controller.Messages.ViewToClientMessages.UserMadeHisMove
 import scalafx.scene.control.Button
 import scalafx.scene.layout.{GridPane, HBox, VBox}
 import scalafx.Includes.{handle, _}
+import shared.Move.{Pass, Switch}
 
 class UtilityPanel extends GridPane {
   stylesheets = List("/style/UtilityPanel.css")
@@ -14,8 +17,15 @@ class UtilityPanel extends GridPane {
 
   val mulliganButton: Button = new Button("Mulligan") {
     onAction = handle {
-      //TODO: Fare in modo che il tasto sia cliccabile solo durante il mio turno
+      if(Controller.isMyTurn) {
         println("Switchato")
+        timerPanel.pauseTimer()
+        Controller.endMyTurn()
+        View.sendToClient(UserMadeHisMove(Switch()))
+        mulliganButton.disable = true
+      } else {
+        println("Non è il mio turno!!!!!!!!!!!!!")
+      }
     }
   }
 
@@ -28,25 +38,57 @@ class UtilityPanel extends GridPane {
     styleClass += "button-container"
     children = List(new Button("Submit") {
       onAction = handle {
-        //TODO: Fare in modo che il tasto sia cliccabile solo durante il mio turno
+        if(Controller.isMyTurn) {
           println("Giocato")
+          timerPanel.pauseTimer()
+          Controller.endMyTurn()
+          Controller.playWord()
+        } else {
+          println("Non è il mio turno!!!!!!!!!!!!!")
+        }
       }
     },
       new Button("PASS") {
         onAction = handle {
-          //TODO: Fare in modo che il tasto sia cliccabile solo durante il mio turno
+          if(Controller.isMyTurn) {
             println("Passato")
+            timerPanel.pauseTimer()
+            View.sendToClient(UserMadeHisMove(Pass()))
+          } else {
+            println("Non è il mio turno!!!!!!!!!!!!!")
+          }
         }
       },
       mulliganButton,
       new Button("Get Letters Back") {
         onAction = handle {
           println("Ritiro le lettere giocate questo turno")
+          Controller.collectLetters()
+          BoardInteraction.collectLetters()
         }
       }
     )
   }, 0, 1)
 
+  def disableMulliganButton(condition: Boolean): Unit = {
+    mulliganButton.disable = condition
+  }
+
+  def startTurn(): Unit = {
+    timerPanel.startTurn()
+  }
+
+  def restartTimer(): Unit = {
+    timerPanel.restartTimer()
+  }
+
+  def pauseTimer(): Unit = {
+    timerPanel.pauseTimer()
+  }
+
+  def resumeTimer(): Unit = {
+    timerPanel.resumeTimer()
+  }
 }
 
 
