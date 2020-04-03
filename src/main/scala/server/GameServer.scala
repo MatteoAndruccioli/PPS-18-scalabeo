@@ -6,7 +6,6 @@ import akka.actor.{Actor, ActorRef}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
-import com.sun.webkit.dom.CounterImpl
 import model._
 import shared.ClientMoveAckType._
 import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
@@ -14,7 +13,7 @@ import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, MatchTop
 import shared.{ClusterScheduler, CustomScheduler, Move}
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) extends Actor {
 
@@ -38,6 +37,8 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   //creo il dizionario
   private val dictionaryPath: String = "/dictionary/dictionary.txt"
   private val dictionary: DictionaryImpl = new DictionaryImpl(dictionaryPath)
+
+  private val ranking : Ranking = new RankingImpl(players)
 
   private var turn = 0
 
@@ -96,12 +97,15 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
           board.addPlayedWord(List.concat(playedWord))
           println(board.boardTiles.toString)
           //inserire check validità parole in futuro
-          if(board.checkGoodWordDirection()) {
+          if(board.checkGoodWordDirection() && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints()))) {
+            ranking.updatePoints(sender(),board.calculateTurnPoints(board.takeCardToCalculatePoints()))
             replaceHand()
             sender ! ClientMoveAck(WordAccepted(playersHand(sender())._hand))
+            scheduler.replaceBehaviourAndStart(() => sendUpdate())
+          } else {
+            board.clearBoardFromPlayedWords()
+            sender ! ClientMoveAck(WordRefused())
           }
-          scheduler.replaceBehaviourAndStart(() => sendUpdate())
-
           playedWord.clear()
         }
 
@@ -119,7 +123,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   //comportamento dello scheduler
   private def sendTopic(): Unit = {
-    gamePlayers.foreach(player => player ! MatchTopicListenQuery(GAME_SERVER_SEND_TOPIC, playersHand(player)._hand))
+    gamePlayers.foreach(player => player ! MatchTopicListenQuery(GAME_SERVER_SEND_TOPIC, playersHand(player)._hand, gamePlayersUsername.values.toList))
   }
 
   private def sendTurn(): Unit = {
@@ -127,7 +131,11 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   }
 
   private def sendUpdate(): Unit = {
-    mediator ! Publish(GAME_SERVER_SEND_TOPIC, EndTurnUpdate(board.playedWord))
+    val rankingTuples : ListBuffer[(String, Int)] = ListBuffer()
+    for( player <- gamePlayers){
+      rankingTuples.insert(0,(gamePlayersUsername(player), ranking.ranking(player)))
+    }
+    mediator ! Publish(GAME_SERVER_SEND_TOPIC, EndTurnUpdate(rankingTuples.toList, board.playedWord))
   }
 
   //metodi utilità

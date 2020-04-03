@@ -30,10 +30,10 @@ object Move {
 //tipo dei messaggi inviati da GameServe a Client
 sealed trait GameServerToClientMessages
 object GameServerToClientMessages {
-  case class MatchTopicListenQuery(gameServerTopic:String, playerHand: ArrayBuffer[Card]) extends GameServerToClientMessages
+  case class MatchTopicListenQuery(gameServerTopic:String, playerHand: ArrayBuffer[Card], playersList: List[String]) extends GameServerToClientMessages
   case class PlayerTurnBegins(playerInTurn:ActorRef) extends GameServerToClientMessages
   case class ClientMoveAck(moveAckType:ClientMoveAckType) extends GameServerToClientMessages
-  case class EndTurnUpdate(board:List[BoardTile]) extends GameServerToClientMessages
+  case class EndTurnUpdate(playersRanking:List[(String,Int)], board:List[BoardTile]) extends GameServerToClientMessages
   //messaggio di termine partita: inviato quando qualcuno lascia il gioco o vince
   case class GameEnded(actorRef: ActorRef, name: String) extends GameServerToClientMessages
 }
