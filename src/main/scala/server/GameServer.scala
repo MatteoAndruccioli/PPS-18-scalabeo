@@ -6,6 +6,7 @@ import akka.actor.{Actor, ActorRef}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
+import com.sun.webkit.dom.CounterImpl
 import model._
 import shared.ClientMoveAckType._
 import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
@@ -41,27 +42,27 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private var turn = 0
 
   //variabili ack
-  private var ackTopicReceived = 0
-  private var ackTurn = 0
-  private var ackEndTurn = 0
+  private var ackTopicReceived = CounterImpl(nPlayer)
+  private var ackTurn = CounterImpl(nPlayer)
+  private var ackEndTurn = CounterImpl(nPlayer)
 
   override def receive: Receive = {
     case _: InitGame =>
       scheduler.replaceBehaviourAndStart(() => sendTopic())
       greetingServerRef = sender()
     case _: MatchTopicListenAck =>
-      incrementAckTopic()
-      if (ackTopicReceived == nPlayer) {
+      ackTopicReceived.increment()
+      if (ackTopicReceived.isFull()) {
         scheduler.stopTask()
-        resetAckTopic()
+        ackTopicReceived.reset()
         scheduler.replaceBehaviourAndStart(() => sendTurn())
         println("STA A" + gamePlayers(turn).toString() + " IL CUI TURNO è = " + turn)
       }
     case _: PlayerTurnBeginAck =>
-      incrementAckTurn()
-      if (ackTurn == nPlayer) {
+      ackTurn.increment()
+      if (ackTurn.isFull()) {
         scheduler.stopTask()
-        resetAckTurnCounter()
+        ackTurn.reset()
       }
     case message: ClientMadeMove => message.move match {
       case _: Move.Pass =>
@@ -105,10 +106,10 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
         }
 
       case _: EndTurnUpdateAck =>
-        incrementAckEndTurn()
-        if (ackEndTurn == nPlayer) {
+        ackEndTurn.increment()
+        if (ackEndTurn.isFull()) {
           scheduler.stopTask()
-          resetAckEndTurn()
+          ackEndTurn.reset()
           incrementTurn()
           scheduler.replaceBehaviourAndStart(() => sendTurn())
           println("STA A " + gamePlayers(turn).toString() + " IL CUI TURNO è = " + turn)
@@ -141,25 +142,5 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
     val drawnTiles = pouch.takeRandomElementFromBagOfLetters(numberOfPlayedTileInHand).getOrElse(List())
     for(i <- drawnTiles.indices) playersHand(sender()).putLetter(playersHand(sender()).hand.size,CardImpl(drawnTiles(i).letter))
     numberOfPlayedTileInHand = 0
-  }
-
-  //gestione variabili ack
-  private def incrementAckTopic(){
-    ackTopicReceived = ackTopicReceived + 1
-  }
-  private def resetAckTopic(): Unit = {
-    ackTopicReceived = 0
-  }
-  private def incrementAckTurn() = {
-    ackTurn = ackTurn + 1
-  }
-  private def resetAckTurnCounter(): Unit = {
-    ackTurn = 0
-  }
-  private def incrementAckEndTurn(): Unit ={
-    ackEndTurn = ackEndTurn + 1
-  }
-  private def resetAckEndTurn(): Unit = {
-    ackEndTurn = 0
   }
 }

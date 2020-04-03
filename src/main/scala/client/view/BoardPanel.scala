@@ -1,5 +1,6 @@
 package client.view
 
+import scalafx.application.Platform
 import scalafx.scene.layout.{ColumnConstraints, GridPane, RowConstraints}
 
 class BoardPanel extends GridPane {
@@ -18,6 +19,12 @@ class BoardPanel extends GridPane {
       add(boardTile, row - 1, column - 1)
       board(row - 1)(column - 1) = boardTile
     }
+  }
+
+  def updateBoard(word: List[(LetterTile, Int, Int)]): Unit = {
+    Platform.runLater(() => {
+      word.foreach(l => board(l._2 - 1)(l._3 - 1).center = l._1)
+    })
   }
 
 }
