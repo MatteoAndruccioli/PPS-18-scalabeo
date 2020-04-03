@@ -186,8 +186,6 @@ case class BoardImpl() extends Board {
     letterPoints.foreach({letterValue += _._1})
     letterPoints.foreach({multiplier += _._2})
     if(multiplier == 0) multiplier=1
-    println(lenghtBonus(word))
-    println(word)
     letterValue * multiplier * firstWord+ lenghtBonus(word) + wordIsScarabeoBonus(word)
   }
 
@@ -215,10 +213,6 @@ case class BoardImpl() extends Board {
 
   private def isThereScarabeoCard(word: ArrayBuffer[(Card, String)]): Int =
     if (word exists (tuple => tuple._1.letter == constants.scarabeo)) 0 else constants.bonusWithoutScarabeo
-  private def wordIsScarabeoBonus(word: ArrayBuffer[(Card, String)]): Int =  if (getWordFromLetters(word).equals(constants.scarabeoWord)) {
-    println(getWordFromLetters(word))
-    constants.bonusScarabeoWord} else {
-    println(getWordFromLetters(word))
-    0}
+  private def wordIsScarabeoBonus(word: ArrayBuffer[(Card, String)]): Int =  if (getWordFromLetters(word).equals(constants.scarabeoWord)) constants.bonusScarabeoWord else 0
   private def firstWord(): Int = if(_firstWord){_firstWord = false; constants.firstWordBonus} else 1
 }

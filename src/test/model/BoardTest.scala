@@ -130,7 +130,8 @@ class BoardTest extends FlatSpec {
     val listOfWords: List[ArrayBuffer[(Card,String)]] = List(ArrayBuffer((CardImpl("O"),"DEFAULT"), (CardImpl("C"),"2P"), (CardImpl("A"),"DEFAULT")))
     assert(board.getWordsFromLetters(listOfWords).contains("oca"))
   }
-  
+
+
   "The word points" should "respect the rules of Scarabeo" in {
     val board = BoardImpl()
     val aspectedPoints = 28
