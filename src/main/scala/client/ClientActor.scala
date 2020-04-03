@@ -6,6 +6,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
 import client.controller.Controller
 import client.controller.Messages.ViewToClientMessages.{JoinQueue, PlayAgain, UserExited, UserMadeHisMove, UserReadyToJoin, UsernameChosen}
+import client.controller.MoveOutcome._
 import model.Card
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
 import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck}
@@ -312,7 +313,7 @@ class ClientActor extends Actor{
     println("--------------------------------------------------------------------")
     println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
     scheduler.stopTask()
-    //todo mostrare la mano al player attraverso UI
+    Controller.moveOutcome(AcceptedWord(hand))
     context.become(waitingTurnEndUpdates)
   }
 
@@ -325,8 +326,8 @@ class ClientActor extends Actor{
     println("--------------------------------------------------------------------")
     println("ricevuto [WordRefused] ack dal GameServer per ricezione mossa utente")
     scheduler.stopTask()
-    //todo comunicare a UI il fallimento
-    //todo passare in stato di attesa di una nuova mossa da parte dell'utente, non implementato in quanto manca vera interazione con UI
+    Controller.moveOutcome(RefusedWord())
+    context.become(waitingUserMakingMove)
   }
 
   /*Il GameServer ha accettato la richiesta di sostituzione della mano fatta dall'utente, devo:
@@ -338,7 +339,7 @@ class ClientActor extends Actor{
     println("--------------------------------------------------------------------")
     println("ricevuto [HandSwitchAccepted] ack dal GameServer per ricezione mossa utente")
     scheduler.stopTask()
-    //todo comunicare a UI nuova mano utente
+    Controller.moveOutcome(HandSwitchAccepted(hand))
     context.become(waitingTurnEndUpdates)
   }
 
@@ -351,8 +352,8 @@ class ClientActor extends Actor{
     println("--------------------------------------------------------------------")
     println("ricevuto [HandSwitchRefused] ack dal GameServer per ricezione mossa utente")
     scheduler.stopTask()
-    //todo comunicare a UI il fallimento
-    //todo passare in stato di attesa di una nuova mossa da parte dell'utente, non implementato in quanto manca vera interazione con UI
+    Controller.moveOutcome(HandSwitchRefused())
+    context.become(waitingUserMakingMove)
   }
 
   /*Il GameServer ha accettato la richiesta di passare il turno fatta dall'utente, devo:
@@ -364,7 +365,7 @@ class ClientActor extends Actor{
     println("--------------------------------------------------------------------")
     println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
     scheduler.stopTask()
-    //todo notificare all'UI che server accetta il passo
+    Controller.moveOutcome(PassReceived())
     context.become(waitingTurnEndUpdates)
   }
 
@@ -377,7 +378,7 @@ class ClientActor extends Actor{
     println("--------------------------------------------------------------------")
     println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
     scheduler.stopTask()
-    //todo comunicare all'UI che tutto è andato a buon fine
+    Controller.moveOutcome(TimeoutReceived())
     context.become(waitingTurnEndUpdates)
   }
 
