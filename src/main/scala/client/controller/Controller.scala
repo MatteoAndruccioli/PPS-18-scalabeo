@@ -2,9 +2,11 @@ package client.controller
 
 import akka.actor.ActorRef
 import client.controller.Messages.ViewToClientMessages
+import client.controller.Messages.ViewToClientMessages.UserMadeHisMove
 import client.controller.MoveOutcome.{AcceptedWord, HandSwitchAccepted, HandSwitchRefused, PassReceived, RefusedWord, TimeoutReceived}
-import client.view.View
-import model.Card
+import client.view.{LetterStatus, LetterTile, View}
+import model.{BoardTile, Card}
+import shared.Move.WordMove
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -57,7 +59,10 @@ object Controller {
     this._myTurn = false
   }
 
-  def turnEndUpdates(): Unit = {
+  def turnEndUpdates(ranking: List[(String,Int)], board:List[BoardTile]): Unit = {
+    View.updateLeaderboard(ranking)
+    GameManager.addPlayedWordAndConfirm(board)
+    View.turnEndUpdates(board.map(b => (LetterTile(60, b.card.letter, b.card.score.toString, 0, LetterStatus.insertedConfirmed), b.position.row, b.position.col)))
   }
 
   def addCardToTile(position: Int, x: Int, y: Int): Unit = {
@@ -68,14 +73,41 @@ object Controller {
     GameManager.collectLetters()
   }
 
+  def playWord(): Unit = {
+    val playedWord = GameManager.getPlayedWord
+    playedWord.foreach(b => {
+      print(b.card.letter)
+    })
+    sendToClient(UserMadeHisMove(WordMove(playedWord)))
+  }
+
   //metodo attraverso cui il Client comunica al controller l'esito della mossa inviata al GameServer
   def moveOutcome[A >: MoveOutcome](outcome: A):Unit = outcome match {
-    case _: RefusedWord => _
-    case _: HandSwitchRefused => _
-    case _: AcceptedWord => _
-    case _: HandSwitchAccepted => _
-    case _: PassReceived => _
-    case _: TimeoutReceived => _
+    case _: RefusedWord => {takeLettersBackInHand(); userTurnContinues()}
+    case _: HandSwitchRefused => {userTurnContinues()}
+    case _: AcceptedWord => {updateHand(outcome.asInstanceOf[AcceptedWord].hand); View.confirmPlay(); GameManager.confirmPlay()}
+    case _: HandSwitchAccepted => {updateHand(outcome.asInstanceOf[HandSwitchAccepted].hand); endMyTurn()}
+    case _: PassReceived => {endMyTurn()}
+    case _: TimeoutReceived => {endMyTurn()}
+  }
+
+  private def updateHand(hand:ArrayBuffer[Card]): Unit = {
+    View.updateHand(hand.map(c => (c.letter, c.score)))
+    GameManager.changeHand(hand)
+  }
+
+  private def takeLettersBackInHand(): Unit = {
+    View.getLettersBackFromBoard();
+    GameManager.collectLetters()
+  }
+
+  def userTurnContinues(): Unit = {
+    _myTurn = true
+    View.userTurnContinues()
+  }
+
+  def isMulliganAvailable: Boolean = {
+    GameManager.isMulliganAvailable()
   }
 
   def onConnectionFailed : Unit = ???
