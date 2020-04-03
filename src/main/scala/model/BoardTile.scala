@@ -65,6 +65,7 @@ sealed trait Board{
 case class BoardImpl() extends Board {
   private var _boardTiles: List[BoardTile] = populateBoard()
   private var _playedWord: List[BoardTile] = List()
+  private var _firstWord: Boolean = true
 
   override def boardTiles: List[BoardTile] = _boardTiles
   override def playedWord: List[BoardTile] = _playedWord
@@ -176,7 +177,6 @@ case class BoardImpl() extends Board {
     result
   }
 
-  // TODO: algoritmo per il calcolo del punteggio di una parola
   private def calculateWordScore(word: ArrayBuffer[(Card, String)]): Int =  {
     var letterValue: Int = 0
     var multiplier: Int = 0
@@ -186,7 +186,9 @@ case class BoardImpl() extends Board {
     letterPoints.foreach({letterValue += _._1})
     letterPoints.foreach({multiplier += _._2})
     if(multiplier == 0) multiplier=1
-    letterValue * multiplier + lenghtBonus(word)
+    println(lenghtBonus(word))
+    println(word)
+    letterValue * multiplier * firstWord+ lenghtBonus(word) + wordIsScarabeoBonus(word)
   }
 
   // metodo per il bonus che ritorna il moltiplicatore del punteggio della parola
@@ -204,11 +206,19 @@ case class BoardImpl() extends Board {
   }
 
   // modoto per il bonus dato dato dalla lunghezza della parola
-  // TODO: implementazione bonus presenza Scarabeo nella parola
   private def lenghtBonus(word: ArrayBuffer[(Card, String)]) : Int = _playedWord.length match{
-    case 8 => constants.bonusLenght8
-    case 7 => constants.bonusLenght7
-    case 6 => constants.bonusLenght6
+    case 8 => constants.bonusLenght8 + isThereScarabeoCard(word)
+    case 7 => constants.bonusLenght7 + isThereScarabeoCard(word)
+    case 6 => constants.bonusLenght6 + isThereScarabeoCard(word)
     case _ => 0
   }
+
+  private def isThereScarabeoCard(word: ArrayBuffer[(Card, String)]): Int =
+    if (word exists (tuple => tuple._1.letter == constants.scarabeo)) 0 else constants.bonusWithoutScarabeo
+  private def wordIsScarabeoBonus(word: ArrayBuffer[(Card, String)]): Int =  if (getWordFromLetters(word).equals(constants.scarabeoWord)) {
+    println(getWordFromLetters(word))
+    constants.bonusScarabeoWord} else {
+    println(getWordFromLetters(word))
+    0}
+  private def firstWord(): Int = if(_firstWord){_firstWord = false; constants.firstWordBonus} else 1
 }

@@ -26,6 +26,7 @@ package object constants {
   val firstWordBonus = 2
   val bonusScarabeoWord = 100
   val bonusWithoutScarabeo = 10
+  val scarabeoWord = "scarabeo"
 }
 
 // interfaccia della Carta: lettera e relativo valore
