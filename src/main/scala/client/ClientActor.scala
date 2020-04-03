@@ -6,9 +6,10 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
 import client.controller.Controller
 import client.controller.Messages.ViewToClientMessages.{JoinQueue, PlayAgain, UserExited, UserMadeHisMove, UserReadyToJoin, UsernameChosen}
+import client.controller.MoveOutcome._
 import model.Card
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
-import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck}
+import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameServerNotification, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck}
 import shared.ClientToGreetingMessages._
 import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins}
 import shared.{ClusterScheduler, CustomScheduler, Move}
@@ -147,16 +148,11 @@ class ClientActor extends Actor{
   //attendo che il GameServer decida di chi è il turno //todo manca gestione arrivo messaggi in chat
   def waitingInTurnPlayerNomination: Receive = {
     UnexpectedShutdown orElse{
-      //todo in questo momento mi aspetto eventualmente un messaggio di terminazione della partita
       case message: PlayerTurnBegins => {
         message.playerInTurn match {
           case self => {
             //caso in cui spetta a me giocare
             println("ricevuto PlayerTurnBegins - è il mio turno: self=" + self + " === attore in turno = " + message.playerInTurn)
-            /*
-                todo devi notificare all'UI l'inizio del turno del player ed in teoria attendere una mossa del player,
-                 ma per ora la implemento direttamente e salto la fase in cui attendo mossa dall'UI
-             */
             Controller.userTurnBegins()
             context.become(waitingUserMakingMove)
           }
@@ -190,16 +186,19 @@ class ClientActor extends Actor{
     }
   }
 
-  //attendo che il server mi confermi la ricezione della mossa //todo ricorda di smettere di inviare la mossa scelta una volta ricevuto ack (fatto nei metodi di gestione)
+  //attendo che il server mi confermi la ricezione della mossa
   //todo manca gestione arrivo messaggi in chat
   def waitingMoveAckFromGameServer: Receive =  UnexpectedShutdown orElse {
-    case serverAnswer: ClientMoveAck => serverAnswer.moveAckType match {
-      case wordAccepted: WordAccepted => onWordAccepted(wordAccepted.hand)
-      case _: WordRefused => onWordRefused()
-      case handSwitchAccepted: HandSwitchRequestAccepted => onHandSwitchAccepted(handSwitchAccepted.hand)
-      case _: HandSwitchRequestRefused => onHandSwitchRefused()
-      case _: PassAck => onPassAck()
-      case _: TimeoutAck => onTimeoutAck()
+    case serverAnswer: ClientMoveAck => {
+      scheduler.stopTask()
+      serverAnswer.moveAckType match {
+        case wordAccepted: WordAccepted => onWordAccepted(wordAccepted.hand)
+        case _: WordRefused => onWordRefused()
+        case handSwitchAccepted: HandSwitchRequestAccepted => onHandSwitchAccepted(handSwitchAccepted.hand)
+        case _: HandSwitchRequestRefused => onHandSwitchRefused()
+        case _: PassAck => onPassAck()
+        case _: TimeoutAck => onTimeoutAck()
+      }
     }
   }
 
@@ -267,13 +266,13 @@ class ClientActor extends Actor{
   //memorizza l'actorRef del GameServer e si registra per esser informato di un suo crollo
   private def updateGameServerReference(gameServer: ActorRef): Unit ={
     gameServerActorRef = Some(gameServer)
-    context.watch(gameServer)  //todo a fine partita devo smettere di ascoltarlo
+    context.watch(gameServer)
   }
 
   //memorizza il topic relativo al GameServer e si registra per esser informato di un suo crollo
   private def updateGameServerTopic(topic: String): Unit ={
     gameServerTopic = Some(topic)
-    mediator ! Subscribe(gameServerTopic.get, self)  //todo a fine partita devo disiscrivermi
+    mediator ! Subscribe(gameServerTopic.get, self)
   }
 
   //confermo a GameServer ricezione messaggio MatchTopicListenQuery
@@ -311,8 +310,7 @@ class ClientActor extends Actor{
   def onWordAccepted(hand:ArrayBuffer[Card]):Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
-    //todo mostrare la mano al player attraverso UI
+    Controller.moveOutcome(AcceptedWord(hand))
     context.become(waitingTurnEndUpdates)
   }
 
@@ -324,9 +322,8 @@ class ClientActor extends Actor{
   def onWordRefused():Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [WordRefused] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
-    //todo comunicare a UI il fallimento
-    //todo passare in stato di attesa di una nuova mossa da parte dell'utente, non implementato in quanto manca vera interazione con UI
+    Controller.moveOutcome(RefusedWord())
+    context.become(waitingUserMakingMove)
   }
 
   /*Il GameServer ha accettato la richiesta di sostituzione della mano fatta dall'utente, devo:
@@ -337,8 +334,7 @@ class ClientActor extends Actor{
   def onHandSwitchAccepted(hand:ArrayBuffer[Card]):Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [HandSwitchAccepted] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
-    //todo comunicare a UI nuova mano utente
+    Controller.moveOutcome(HandSwitchAccepted(hand))
     context.become(waitingTurnEndUpdates)
   }
 
@@ -350,9 +346,8 @@ class ClientActor extends Actor{
   def onHandSwitchRefused():Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [HandSwitchRefused] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
-    //todo comunicare a UI il fallimento
-    //todo passare in stato di attesa di una nuova mossa da parte dell'utente, non implementato in quanto manca vera interazione con UI
+    Controller.moveOutcome(HandSwitchRefused())
+    context.become(waitingUserMakingMove)
   }
 
   /*Il GameServer ha accettato la richiesta di passare il turno fatta dall'utente, devo:
@@ -363,8 +358,7 @@ class ClientActor extends Actor{
   def onPassAck():Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
-    //todo notificare all'UI che server accetta il passo
+    Controller.moveOutcome(PassReceived())
     context.become(waitingTurnEndUpdates)
   }
 
@@ -376,8 +370,7 @@ class ClientActor extends Actor{
   def onTimeoutAck():Unit = {
     println("--------------------------------------------------------------------")
     println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
-    scheduler.stopTask()
-    //todo comunicare all'UI che tutto è andato a buon fine
+    Controller.moveOutcome(TimeoutReceived())
     context.become(waitingTurnEndUpdates)
   }
 
@@ -444,8 +437,7 @@ class ClientActor extends Actor{
       case true => notifyDisconnectionToGameServer
       case _    => notifyDisconnectionToGreetingServer
     }
-    //todo gestire stop dello scheduler e attesa dell'ack da parte dei server, non terminare bruscamente come accade ora
-    stopSelf()//todo rimuovi
+    context.become(waitingDisconnectionAck)
   }
 
   //l'attore client termina se stesso //todo nota viene usato nei primi due stati finchè non vuoi cancellare quella print
@@ -456,12 +448,26 @@ class ClientActor extends Actor{
 
   //chiamato dopo che l'utente si è disconnesso inaspettatamente e non era in partita => comunico il fatto a GreetingServer
   def notifyDisconnectionToGreetingServer: Unit = {
-    //todo sarà necessario notificare il GreetingServer usando scheduler
+    println("--------------------------------------------------------------------")
+    println(self + " -Ricevuta richiesta di disconnessione dall'utente = " +sender())
+    println(self + " Invio richiesta di stop al Greeting")
+    scheduler.replaceBehaviourAndStart(()=>tearDownConnectionToGreetingServer())
   }
 
   //chiamato dopo che l'utente si è disconnesso inaspettatamente ed era in partita => comunico il fatto a GameServer
   def notifyDisconnectionToGameServer: Unit = {
-    //todo sarà necessario notificare il GameServer usando scheduler
+    //todo occhio quà potrebbe mancare un passaggio: mi disconnetto dal gameServer ma non dal greeting, se il greeting mi ha in memoria è un problema se no no???!
+    println("--------------------------------------------------------------------")
+    println(self + " -Ricevuta richiesta di disconnessione dall'utente = " +sender())
+    println(self + " Invio richiesta di stop al GameServer")
+    scheduler.replaceBehaviourAndStart(()=>tearDownConnectionToGameServer())
+  }
+
+
+  //invio notifica di disconnessione al GameServer in seguito a UI chiusa forzatamente
+  private def tearDownConnectionToGameServer(): Unit = {
+    println(self + " - Ho inviato DisconnectionToGameServerNotification")
+    gameServerActorRef.get ! DisconnectionToGameServerNotification()
   }
 
 
@@ -474,14 +480,6 @@ class ClientActor extends Actor{
     }else {
       println("**************** !!!!\n\n\n HANNO UCCISO QUALCUNO CHE NON CONOSCO: " +serverDown+ " \n\n\n***********")
     }
-    /*
-    //questa implementazione tira errori perchè greetingServerActorRef.get non è un identificatore stabile
-    serverDown match {
-      case greetingServerActorRef.get => handleGreetingServerDisconnection
-      case gameServerActorRef.get => handleGameServerDisconnection
-      case _ => println("**************** !!!!\n\n\n HANNO UCCISO QUALCUNO CHE NON CONOSCO: " +serverDown+ " \n\n\n***********")
-    }
-    */
   }
 
   //se crolla il greeting comunico alla UI e mi stoppo tanto non c'è piu niente da fare
@@ -512,7 +510,7 @@ class ClientActor extends Actor{
     }
     gameServerTopic = None
     gameServerActorRef = None
-    playerIsReady = false //todo occhio se faccio test finchè non c'è comunicazione con UI questo andrebbe messo a true
+    playerIsReady = false
   }
 }
 
