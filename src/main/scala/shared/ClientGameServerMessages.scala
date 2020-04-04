@@ -16,6 +16,7 @@ object ClientToGameServerMessages {
   case class GameEndedAck() extends ClientToGameServerMessages
   //messaggio di disconnessione inviato al server in seguito a chiusura forzata UI
   case class DisconnectionToGameServerNotification() extends ClientToGameServerMessages
+  case class SomeoneDisconnectedAck() extends ClientToGameServerMessages
 }
 
 sealed trait Move
@@ -36,6 +37,8 @@ object GameServerToClientMessages {
   case class EndTurnUpdate(playersRanking:List[(String,Int)], board:List[BoardTile]) extends GameServerToClientMessages
   //messaggio di termine partita: inviato quando qualcuno lascia il gioco o vince
   case class GameEnded(actorRef: ActorRef, name: String) extends GameServerToClientMessages
+  case class DisconnectionToGameServerNotificationAck() extends  GameServerToClientMessages
+  case class SomeoneDisconnected() extends  GameServerToClientMessages
 }
 
 sealed trait ClientMoveAckType

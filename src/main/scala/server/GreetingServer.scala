@@ -4,10 +4,11 @@ import akka.actor.{Actor, ActorRef, Props}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
-import server.GreetingToGameServer.InitGame
-import shared.ClientToGreetingMessages.{ConnectionToGreetingQuery, PlayerReadyAnswer}
+import server.GameServerToGreeting.EndGameToGreeting
+import server.GreetingToGameServer.{EndGameToGreetingAck, InitGame}
+import shared.ClientToGreetingMessages.{ConnectionToGreetingQuery, DisconnectionToGreetingNotification, PlayerReadyAnswer}
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
-import shared.GreetingToClientMessages.{ConnectionAnswer, ReadyToJoinAck, ReadyToJoinQuery}
+import shared.GreetingToClientMessages.{ConnectionAnswer, DisconnectionAck, ReadyToJoinAck, ReadyToJoinQuery}
 
 import scala.collection.mutable
 
@@ -56,6 +57,19 @@ class GreetingServer extends Actor {
       } else {
           listPlayers-=sender()
           mapPlayersName -= sender()
+      }
+
+    //fine di una partita
+    case _ : EndGameToGreeting =>
+      sender() ! EndGameToGreetingAck()
+      if(games.contains(sender())) {
+        games.remove(sender())
+      }
+    //disconnessione di un giocatore
+    case _ : DisconnectionToGreetingNotification =>
+      sender() ! DisconnectionAck()
+      if(listPlayers.contains(sender())) {
+        listPlayers -= sender()
       }
   }
 }

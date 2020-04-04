@@ -1,15 +1,16 @@
 package server
 
 import shared.Topic.GAME_SERVER_SEND_TOPIC
-import server.GreetingToGameServer.InitGame
+import server.GreetingToGameServer.{EndGameToGreetingAck, InitGame}
 import akka.actor.{Actor, ActorRef}
 import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import model._
+import server.GameServerToGreeting.EndGameToGreeting
 import shared.ClientMoveAckType._
-import shared.ClientToGameServerMessages.{ClientMadeMove, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck}
-import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins}
+import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameServerNotification, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck, SomeoneDisconnectedAck}
+import shared.GameServerToClientMessages.{ClientMoveAck, DisconnectionToGameServerNotificationAck, EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins, SomeoneDisconnected}
 import shared.{ClusterScheduler, CustomScheduler, Move}
 
 import scala.collection.mutable
@@ -46,6 +47,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private var ackTopicReceived = CounterImpl(nPlayer)
   private var ackTurn = CounterImpl(nPlayer)
   private var ackEndTurn = CounterImpl(nPlayer)
+  private var ackDisconnection = CounterImpl(nPlayer)
 
   override def receive: Receive = {
     case _: InitGame =>
@@ -118,6 +120,24 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
           scheduler.replaceBehaviourAndStart(() => sendTurn())
           println("STA A " + gamePlayers(turn).toString() + " IL CUI TURNO è = " + turn)
         }
+
+      //gestione disconnessione
+      case _ : DisconnectionToGameServerNotification =>
+        sender ! DisconnectionToGameServerNotificationAck()
+        scheduler.stopTask()
+        ackDisconnection.increment()
+        scheduler.replaceBehaviourAndStart(() => sendDisconnection())
+
+      case _: SomeoneDisconnectedAck =>
+        ackDisconnection.increment()
+        if (ackDisconnection.isFull()) {
+          scheduler.stopTask()
+          ackDisconnection.reset()
+          scheduler.replaceBehaviourAndStart(()=>greetingServerRef ! EndGameToGreeting())
+        }
+      case _ : EndGameToGreetingAck =>
+        scheduler.stopTask()
+        context.stop(self)
     }
   }
 
@@ -136,6 +156,10 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       rankingTuples.insert(0,(gamePlayersUsername(player), ranking.ranking(player)))
     }
     mediator ! Publish(GAME_SERVER_SEND_TOPIC, EndTurnUpdate(rankingTuples.toList, board.playedWord))
+  }
+
+  private def sendDisconnection(): Unit = {
+    mediator ! Publish(GAME_SERVER_SEND_TOPIC, SomeoneDisconnected())
   }
 
   //metodi utilità
