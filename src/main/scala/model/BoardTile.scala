@@ -57,13 +57,15 @@ sealed trait Board{
   def clearBoardFromPlayedWords()
   def checkGoodWordDirection(): Boolean
   def takeCardToCalculatePoints():  List[ArrayBuffer[(Card, String)]]
+  def getWordsFromLetters(word: List[ArrayBuffer[(Card, String)]]): List[String]
+  def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]]): Int
 
-  // TODO: metodi per il calcolo del punteggio delle parole inserite
 }
 
 case class BoardImpl() extends Board {
   private var _boardTiles: List[BoardTile] = populateBoard()
   private var _playedWord: List[BoardTile] = List()
+  private var _firstWord: Boolean = true
 
   override def boardTiles: List[BoardTile] = _boardTiles
   override def playedWord: List[BoardTile] = _playedWord
@@ -168,4 +170,52 @@ case class BoardImpl() extends Board {
   private def getWordFromLetters(word: ArrayBuffer[(Card, String)]): String =
     (for (tuple <- word; playedWord <- tuple._1.letter) yield playedWord).mkString("").toLowerCase
 
+  // metodo per il calcolo del punteggio di tutte le parole inserite
+  override def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]]): Int = {
+    var result:Int = 0
+    words.foreach(result += calculateWordScore(_))
+    result
+  }
+
+  private def calculateWordScore(word: ArrayBuffer[(Card, String)]): Int =  {
+    var letterValue: Int = 0
+    var multiplier: Int = 0
+    val letterPoints = for (tuple <- word;
+                            multiplierBonus = getWordMultiplier(tuple._2);
+                            letterValue = getLetterMultiplier(tuple._2) * tuple._1.score) yield (letterValue, multiplierBonus)
+    letterPoints.foreach({letterValue += _._1})
+    letterPoints.foreach({multiplier += _._2})
+    if(multiplier == 0) multiplier=1
+    letterValue * multiplier * firstWord+ lenghtBonus(word) + wordIsScarabeoBonus(word)
+  }
+
+  // metodo per il bonus che ritorna il moltiplicatore del punteggio della parola
+  private def getWordMultiplier(positionBonus: String): Int = positionBonus match{
+    case constants.wordForTwo => 2
+    case constants.wordForThree => 3
+    case _ => 0
+  }
+
+  // metodo per il moltiplicatore del punteggio della lettera
+  private def getLetterMultiplier(positionBonus: String): Int = positionBonus match{
+    case constants.letterForTwo => 2
+    case constants.letterForThree => 3
+    case _ => 1
+  }
+
+  // medoto per il bonus dato dato dalla lunghezza della parola
+  private def lenghtBonus(word: ArrayBuffer[(Card, String)]) : Int = _playedWord.length match{
+    case 8 => constants.bonusLenght8 + isThereScarabeoCard(word)
+    case 7 => constants.bonusLenght7 + isThereScarabeoCard(word)
+    case 6 => constants.bonusLenght6 + isThereScarabeoCard(word)
+    case _ => 0
+  }
+
+  // metodo per il bonus se nella parola non è stato usato lo scarabeo
+  private def isThereScarabeoCard(word: ArrayBuffer[(Card, String)]): Int =
+    if (word exists (tuple => tuple._1.letter == constants.scarabeo)) 0 else constants.bonusWithoutScarabeo
+  // metodo per il bonus parola == SCARABEO
+  private def wordIsScarabeoBonus(word: ArrayBuffer[(Card, String)]): Int =  if (getWordFromLetters(word).equals(constants.scarabeoWord)) constants.bonusScarabeoWord else 0
+  // bonus prima parola inserita
+  private def firstWord(): Int = if(_firstWord){_firstWord = false; constants.firstWordBonus} else 1
 }
