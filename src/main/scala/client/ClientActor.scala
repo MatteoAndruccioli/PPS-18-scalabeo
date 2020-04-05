@@ -6,6 +6,7 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
 import client.controller.Controller
 import client.controller.Messages.ViewToClientMessages.{JoinQueue, PlayAgain, UserExited, UserMadeHisMove, UserReadyToJoin, UsernameChosen}
+import client.controller.MoveOutcome.ServerDown.{GameServerDown, GreetingServerDown}
 import client.controller.MoveOutcome._
 import model.Card
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
@@ -74,8 +75,8 @@ class ClientActor extends Actor{
           context.become(waitingReadyToJoinRequestFromGreetingServer)
         }
         case false => {
-          //todo comunicare al player che la connessione non può essere stabilita e chiudere (valutare prossime due istruzioni)
-          Controller.onConnectionFailed
+          //comunicare al player che la connessione non può essere stabilita e chiudere (valutare prossime due istruzioni)
+          Controller.onConnectionFailed()
           context.stop(self)
           println("Client " + self + " ricevuto ConnectionAnswer negativa ["+ connection.connected +"] dal GreetingServer "+ greetingServerActorRef.get)
         }
@@ -168,11 +169,11 @@ class ClientActor extends Actor{
       }
       sendPlayerInTurnAck() //invio ack al GameServer
     }
-    case gameEndedMessage: GameEnded => {
+    case message: GameEnded => {
       println("--------------------------------------------------------------------")
       println(self + " Ricevuto messaggio di finepartita da GameServer; chiedo all'utente se vuole fare un altra partita; dico al GameServer di smettere di inviarmi messaggi GameEnded")
       sendGameEndedAck()
-      //todo comunicare a Controller terminazione partita
+      Controller.matchEnded(message.name, message.actorRef==self)
       resetMatchInfo()
       context.become(waitingUserChoosingWheterPlayAgainOrClosing)
     }
@@ -248,7 +249,8 @@ class ClientActor extends Actor{
       println(self + " - Ricevuto ack di richiesta disconnessione dal Greeting Server = " +sender())
       println(self + " Muoro felicio")
       scheduler.stopTask()
-      //todo forse dovrò comunicare al controller la riuscita terminazione
+      //dovrò comunicare al controller la riuscita terminazione
+      Controller.terminate()
       context.stop(self)
     }
   }
@@ -508,7 +510,8 @@ class ClientActor extends Actor{
   //se crolla il greeting comunico alla UI e mi stoppo tanto non c'è piu niente da fare
   private def handleGreetingServerDisconnection: Unit = {
     println("**************** !!!!\n\n\n HANNO UCCISO GREETING_SERVER \n\n\n***********")
-    //todo comunicare alla UI la morte del Greeting server, valutare se adottare un comportamento differente
+    //comunicare alla UI la morte del Greeting server, valutare se adottare un comportamento differente
+    Controller.serversDown(GreetingServerDown())
     context.stop(self)
   }
 
@@ -516,9 +519,11 @@ class ClientActor extends Actor{
   private def handleGameServerDisconnection: Unit = {
     println("**************** !!!!\n\n\n HANNO UCCISO GAME_SERVER \n\n\n***********")
     if (greetingServerActorRef.nonEmpty) {
-      //todo comunicare alla UI la morte del Greeting server, valutare se adottare un comportamento differente
+      //comunicare alla UI la morte del Game server, valutare se adottare un comportamento differente
+      Controller.serversDown(GameServerDown())
       resetMatchInfo()
-      //todo necessario saltare in uno stato in cui faccio scegliere a player che fare: se continuar a giocare o meno
+      //necessario saltare in uno stato in cui faccio scegliere a player che fare: se continuar a giocare o meno
+      context.become(waitingUserQueueRequest)
     }
   }
 
