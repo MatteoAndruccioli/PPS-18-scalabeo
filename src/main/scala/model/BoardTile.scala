@@ -204,7 +204,7 @@ case class BoardImpl() extends Board {
   }
 
   // medoto per il bonus dato dato dalla lunghezza della parola
-  private def lenghtBonus(word: ArrayBuffer[(Card, String)]) : Int = _playedWord.length match{
+  private def lenghtBonus(word: ArrayBuffer[(Card, String)]) : Int = word.length match{
     case 8 => constants.bonusLenght8 + isThereScarabeoCard(word)
     case 7 => constants.bonusLenght7 + isThereScarabeoCard(word)
     case 6 => constants.bonusLenght6 + isThereScarabeoCard(word)
@@ -214,7 +214,8 @@ case class BoardImpl() extends Board {
   // metodo per il bonus se nella parola non è stato usato lo scarabeo
   private def isThereScarabeoCard(word: ArrayBuffer[(Card, String)]): Int =
     if (word exists (tuple => tuple._1.letter == constants.scarabeo)) 0 else constants.bonusWithoutScarabeo
-  // metodo per il bonus parola == SCARABEO
+  // metodo per il bonus parol
+  //a == SCARABEO
   private def wordIsScarabeoBonus(word: ArrayBuffer[(Card, String)]): Int =  if (getWordFromLetters(word).equals(constants.scarabeoWord)) constants.bonusScarabeoWord else 0
   // bonus prima parola inserita
   private def firstWord(): Int = if(_firstWord){_firstWord = false; constants.firstWordBonus} else 1
