@@ -6,12 +6,13 @@ import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
 import client.controller.Controller
 import client.controller.Messages.ViewToClientMessages.{JoinQueue, PlayAgain, UserExited, UserMadeHisMove, UserReadyToJoin, UsernameChosen}
+import client.controller.MoveOutcome.ServerDown.{GameServerDown, GreetingServerDown}
 import client.controller.MoveOutcome._
 import model.Card
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
-import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameServerNotification, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck}
+import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameServerNotification, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck, SomeoneDisconnectedAck}
 import shared.ClientToGreetingMessages._
-import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins}
+import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins, SomeoneDisconnected}
 import shared.{ClusterScheduler, CustomScheduler, Move}
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
 import shared.GreetingToClientMessages._
@@ -74,7 +75,9 @@ class ClientActor extends Actor{
           context.become(waitingReadyToJoinRequestFromGreetingServer)
         }
         case false => {
-          //todo comunicare al player che la connessione non può essere stabilita e chiudere
+          //comunicare al player che la connessione non può essere stabilita e chiudere (valutare prossime due istruzioni)
+          Controller.onConnectionFailed()
+          context.stop(self)
           println("Client " + self + " ricevuto ConnectionAnswer negativa ["+ connection.connected +"] dal GreetingServer "+ greetingServerActorRef.get)
         }
       }
@@ -134,7 +137,8 @@ class ClientActor extends Actor{
   }
 
   //attendo che il GameServer mi invii il messaggio con le informazioni per impostare la partita lato client
-  def waitingGameServerTopic: Receive = UnexpectedShutdown orElse {
+  def waitingGameServerTopic: Receive = UnexpectedShutdown orElse
+    opponentLefted orElse {
     case topicMessage: MatchTopicListenQuery =>
 
       updateGameServerReference(sender())
@@ -146,38 +150,40 @@ class ClientActor extends Actor{
   }
 
   //attendo che il GameServer decida di chi è il turno //todo manca gestione arrivo messaggi in chat
-  def waitingInTurnPlayerNomination: Receive = {
-    UnexpectedShutdown orElse{
-      case message: PlayerTurnBegins => {
-        message.playerInTurn match {
-          case self => {
-            //caso in cui spetta a me giocare
-            println("ricevuto PlayerTurnBegins - è il mio turno: self=" + self + " === attore in turno = " + message.playerInTurn)
-            Controller.userTurnBegins()
-            context.become(waitingUserMakingMove)
-          }
-          case _ => {
-            // è il turno di un avversario, devo mettermi in attesa degli aggiornamenti di fine turno
-            println("ricevuto PlayerTurnBegins - NON è il mio turno: self=" + self + " !== attore in turno = " + message.playerInTurn)
-            context.become(waitingTurnEndUpdates)
-          }
+  def waitingInTurnPlayerNomination: Receive =
+    UnexpectedShutdown orElse
+    opponentLefted orElse {
+    case message: PlayerTurnBegins => {
+      message.playerInTurn match {
+        case self => {
+          //caso in cui spetta a me giocare
+          println("ricevuto PlayerTurnBegins - è il mio turno: self=" + self + " === attore in turno = " + message.playerInTurn)
+          Controller.userTurnBegins()
+          context.become(waitingUserMakingMove)
         }
-        sendPlayerInTurnAck() //invio ack al GameServer
+        case _ => {
+          // è il turno di un avversario, devo mettermi in attesa degli aggiornamenti di fine turno
+          println("ricevuto PlayerTurnBegins - NON è il mio turno: self=" + self + " !== attore in turno = " + message.playerInTurn)
+          context.become(waitingTurnEndUpdates)
+        }
       }
-      case gameEndedMessage: GameEnded => {
-        println("--------------------------------------------------------------------")
-        println(self + " Ricevuto messaggio di finepartita da GameServer; chiedo all'utente se vuole fare un altra partita; dico al GameServer di smettere di inviarmi messaggi GameEnded")
-        sendGameEndedAck()
-        //todo comunicare a Controller terminazione partita
-        resetMatchInfo()
-        context.become(waitingUserChoosingWheterPlayAgainOrClosing)
-      }
+      sendPlayerInTurnAck() //invio ack al GameServer
+    }
+    case message: GameEnded => {
+      println("--------------------------------------------------------------------")
+      println(self + " Ricevuto messaggio di finepartita da GameServer; chiedo all'utente se vuole fare un altra partita; dico al GameServer di smettere di inviarmi messaggi GameEnded")
+      sendGameEndedAck()
+      Controller.matchEnded(message.name, message.actorRef==self)
+      resetMatchInfo()
+      context.become(waitingUserChoosingWheterPlayAgainOrClosing)
     }
   }
 
 
+
   //attendo che l'utente faccia la sua mossa per poi comunicarla al GameServer //todo manca gestione arrivo messaggi in chat
-  def waitingUserMakingMove: Receive = UnexpectedShutdown orElse {
+  def waitingUserMakingMove: Receive = UnexpectedShutdown orElse
+    opponentLefted orElse {
     case message :UserMadeHisMove =>{
       println("--------------------------------------------------------------------")
       println("utente ha indicato la sua mossa: " + message.move)
@@ -188,7 +194,8 @@ class ClientActor extends Actor{
 
   //attendo che il server mi confermi la ricezione della mossa
   //todo manca gestione arrivo messaggi in chat
-  def waitingMoveAckFromGameServer: Receive =  UnexpectedShutdown orElse {
+  def waitingMoveAckFromGameServer: Receive =  UnexpectedShutdown orElse
+    opponentLefted orElse {
     case serverAnswer: ClientMoveAck => {
       scheduler.stopTask()
       serverAnswer.moveAckType match {
@@ -204,10 +211,11 @@ class ClientActor extends Actor{
 
 
   //attendo che il GameServer comunichi gli aggiornamenti da compiere //todo manca gestione arrivo messaggi in chat
-  def waitingTurnEndUpdates: Receive = UnexpectedShutdown orElse {
-    case _ :EndTurnUpdate =>{
+  def waitingTurnEndUpdates: Receive = UnexpectedShutdown orElse
+    opponentLefted orElse {
+    case message :EndTurnUpdate =>{
       println("ricevuti aggironamenti di fine turno dal GameServer [EndTurnUpdate]")
-      Controller.turnEndUpdates()//todo dovrò probabilmente inviare informazioni per aggiornare UI
+      Controller.turnEndUpdates(message.playersRanking, message.board)
       sendEndTurnUpdateAck()
       context.become(waitingInTurnPlayerNomination)
     }
@@ -241,7 +249,8 @@ class ClientActor extends Actor{
       println(self + " - Ricevuto ack di richiesta disconnessione dal Greeting Server = " +sender())
       println(self + " Muoro felicio")
       scheduler.stopTask()
-      //todo forse dovrò comunicare al controller la riuscita terminazione
+      //dovrò comunicare al controller la riuscita terminazione
+      Controller.terminate()
       context.stop(self)
     }
   }
@@ -422,6 +431,22 @@ class ClientActor extends Actor{
 
   //GESTIONE DELLA DISCONNESSIONE DAI SERVER O DISCONNESSIONE DELL'UTENTE
 
+  private def opponentLefted: Receive = {
+    case _: SomeoneDisconnected => {
+      resetMatchInfo()
+      //todo notifica Controller
+      sendAckOnOpponentDisconnection()
+      context.become(waitingUserQueueRequest)
+    }
+  }
+
+  //invio conferma ricezione notifica avversario disconnesso
+  private def sendAckOnOpponentDisconnection(): Unit = {
+    println(self + " - Ho inviato SomeoneDisconnectedAck")
+    gameServerActorRef.get ! SomeoneDisconnectedAck()
+  }
+
+
   //controllo se l'utente ha effettuato uno shutdown forzato dell'applicazione
   private def UnexpectedShutdown: Receive = {
     case _:UserExited => onUserExited()
@@ -485,7 +510,8 @@ class ClientActor extends Actor{
   //se crolla il greeting comunico alla UI e mi stoppo tanto non c'è piu niente da fare
   private def handleGreetingServerDisconnection: Unit = {
     println("**************** !!!!\n\n\n HANNO UCCISO GREETING_SERVER \n\n\n***********")
-    //todo comunicare alla UI la morte del Greeting server, valutare se adottare un comportamento differente
+    //comunicare alla UI la morte del Greeting server, valutare se adottare un comportamento differente
+    Controller.serversDown(GreetingServerDown())
     context.stop(self)
   }
 
@@ -493,9 +519,11 @@ class ClientActor extends Actor{
   private def handleGameServerDisconnection: Unit = {
     println("**************** !!!!\n\n\n HANNO UCCISO GAME_SERVER \n\n\n***********")
     if (greetingServerActorRef.nonEmpty) {
-      //todo comunicare alla UI la morte del Greeting server, valutare se adottare un comportamento differente
+      //comunicare alla UI la morte del Game server, valutare se adottare un comportamento differente
+      Controller.serversDown(GameServerDown())
       resetMatchInfo()
-      //todo necessario saltare in uno stato in cui faccio scegliere a player che fare: se continuar a giocare o meno
+      //necessario saltare in uno stato in cui faccio scegliere a player che fare: se continuar a giocare o meno
+      context.become(waitingUserQueueRequest)
     }
   }
 
