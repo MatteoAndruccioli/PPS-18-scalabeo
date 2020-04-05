@@ -3,7 +3,8 @@ package client.controller
 import akka.actor.ActorRef
 import client.controller.Messages.ViewToClientMessages
 import client.controller.Messages.ViewToClientMessages.UserMadeHisMove
-import client.controller.MoveOutcome.{AcceptedWord, HandSwitchAccepted, HandSwitchRefused, PassReceived, RefusedWord, TimeoutReceived}
+import client.controller.MoveOutcome.ServerDown.{GameServerDown, GreetingServerDown}
+import client.controller.MoveOutcome.{AcceptedWord, HandSwitchAccepted, HandSwitchRefused, PassReceived, RefusedWord, ServerDown, TimeoutReceived}
 import client.view.{LetterStatus, LetterTile, View}
 import model.{BoardTile, Card}
 import shared.Move.WordMove
@@ -110,8 +111,15 @@ object Controller {
     GameManager.isMulliganAvailable()
   }
 
-  def onConnectionFailed : Unit = ???
+  def onConnectionFailed(): Unit = ???
 
+  def serversDown(server: ServerDown):Unit = ???
+
+  def matchEnded(player: String, playerWon:Boolean): Unit =  ???
+
+  def terminate(): Unit = ???
+
+  def connectionFailed(): Unit = ???
 }
 
 // tipo dell'esito di una mossa, contiene informazioni che indicano la risposta del server alla mossa compiuta dall'utente
