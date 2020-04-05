@@ -74,7 +74,9 @@ class ClientActor extends Actor{
           context.become(waitingReadyToJoinRequestFromGreetingServer)
         }
         case false => {
-          //todo comunicare al player che la connessione non può essere stabilita e chiudere
+          //todo comunicare al player che la connessione non può essere stabilita e chiudere (valutare prossime due istruzioni)
+          Controller.onConnectionFailed
+          context.stop(self)
           println("Client " + self + " ricevuto ConnectionAnswer negativa ["+ connection.connected +"] dal GreetingServer "+ greetingServerActorRef.get)
         }
       }
@@ -205,9 +207,9 @@ class ClientActor extends Actor{
 
   //attendo che il GameServer comunichi gli aggiornamenti da compiere //todo manca gestione arrivo messaggi in chat
   def waitingTurnEndUpdates: Receive = UnexpectedShutdown orElse {
-    case _ :EndTurnUpdate =>{
+    case message :EndTurnUpdate =>{
       println("ricevuti aggironamenti di fine turno dal GameServer [EndTurnUpdate]")
-      Controller.turnEndUpdates()//todo dovrò probabilmente inviare informazioni per aggiornare UI
+      Controller.turnEndUpdates(message.playersRanking, message.board)
       sendEndTurnUpdateAck()
       context.become(waitingInTurnPlayerNomination)
     }
