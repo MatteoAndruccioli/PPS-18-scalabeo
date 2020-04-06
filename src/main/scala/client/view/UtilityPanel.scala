@@ -13,7 +13,6 @@ class UtilityPanel extends GridPane {
   prefWidth = 310
   prefHeight = 720
   val timerPanel: TimerPanel = new TimerPanel
-  timerPanel.startTurn()
 
   val mulliganButton: Button = new Button("Mulligan") {
     onAction = handle {
