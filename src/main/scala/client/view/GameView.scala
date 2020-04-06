@@ -51,7 +51,7 @@ class GameView(users: List[String]) extends PrimaryStage {
   }
 
   def updateLeaderboard(ranking: List[(String, Int)]): Unit = {
-    //TODO: Update the leaderboard
+    legendPanel.updateLeaderboard(ranking)
   }
 
   def matchEnded(player: String):Unit = {
