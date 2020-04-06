@@ -115,7 +115,7 @@ class MainMenu extends JFXApp.PrimaryStage {
   }
 
   onCloseRequest = handle {
-    //TODO: Gestire la chiusura del programma
+    View.terminate()
   }
 
   def onLoginResponse(): Unit = {

@@ -2,6 +2,7 @@ package client.view
 
 import client.controller.Controller
 import client.controller.Messages.ViewToClientMessages
+import client.controller.Messages.ViewToClientMessages.UserExited
 import scalafx.application.{JFXApp, Platform}
 
 import scala.collection.mutable.ArrayBuffer
@@ -81,6 +82,10 @@ object View extends JFXApp {
 
   def matchEnded(player: String): Unit = {
     gameBoard.matchEnded(player)
+  }
+
+  def terminate(): Unit  = {
+    View.sendToClient(UserExited())
   }
 
 }

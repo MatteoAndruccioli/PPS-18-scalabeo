@@ -113,13 +113,21 @@ object Controller {
 
   def onConnectionFailed(): Unit = ???
 
-  def serversDown(server: ServerDown):Unit = ???
+  def serversDown(server: ServerDown):Unit = {
+    server match {
+      case _: GreetingServerDown => //TODO far visualizzare terminazione della partita a causa di un errore, chiudere partita
+      case _: GameServerDown => //TODO far visualizzare terminazione della partita a causa di un errore, tornare a schermata scelta modalità
+    }
+    println("**** Errore: " + server + " crollato")
+  }
 
   def matchEnded(player: String, playerWon:Boolean): Unit =  {
     View.matchEnded(player)
   }
 
-  def terminate(): Unit = ???
+  def terminate(): Unit = {
+    View.terminate()
+  }
 
   def connectionFailed(): Unit = ???
 }

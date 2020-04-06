@@ -4,6 +4,7 @@ import scalafx.application.JFXApp.PrimaryStage
 import scalafx.application.Platform
 import scalafx.scene.layout.GridPane
 import scalafx.scene.{Group, Scene}
+import scalafx.Includes._
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -60,6 +61,8 @@ class GameView(users: List[String]) extends PrimaryStage {
     })
   }
 
-
+  onCloseRequest = handle {
+    View.terminate()
+  }
 }
 
