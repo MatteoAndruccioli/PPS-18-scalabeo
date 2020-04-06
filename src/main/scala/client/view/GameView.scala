@@ -8,10 +8,10 @@ import scalafx.Includes._
 
 import scala.collection.mutable.ArrayBuffer
 
-class GameView(users: List[String]) extends PrimaryStage {
+class GameView(cards: ArrayBuffer[(String, Int)], users: List[String]) extends PrimaryStage {
 
   private val utilityPanel: UtilityPanel = new UtilityPanel
-  private val boardAndPlayerPanel: BoardAndPlayerPanel = new BoardAndPlayerPanel(ArrayBuffer(("s", 1), ("c", 1), ("a", 1), ("l", 1), ("a", 1), ("b", 1), ("e", 1), ("o", 1)))
+  private val boardAndPlayerPanel: BoardAndPlayerPanel = new BoardAndPlayerPanel(cards)
   private val legendPanel = new LegendPanel(users)
   title = "Scalabeo"
   scene = new Scene(1280, 720) {

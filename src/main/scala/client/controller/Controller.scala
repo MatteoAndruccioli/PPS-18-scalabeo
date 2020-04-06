@@ -43,8 +43,9 @@ object Controller {
     View.askUserToJoinGame()
   }
 
-  def onMatchStart(): Unit = {
-    View.onMatchStart()
+  def onMatchStart(hand:ArrayBuffer[Card], players: List[String]): Unit = {
+    View.onMatchStart(hand.map(c => (c.letter, c.score)), players)
+    GameManager.newGame(hand)
   }
 
   def isMyTurn: Boolean = {
