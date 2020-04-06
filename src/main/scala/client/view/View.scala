@@ -79,6 +79,10 @@ object View extends JFXApp {
     BoardInteraction.confirmPlay()
   }
 
+  def matchEnded(player: String): Unit = {
+    gameBoard.matchEnded(player)
+  }
+
 }
 
 class View {}
