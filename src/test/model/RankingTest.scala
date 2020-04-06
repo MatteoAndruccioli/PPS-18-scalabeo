@@ -9,7 +9,7 @@ import com.typesafe.config.ConfigFactory
 
 class RankingTest extends FlatSpec {
 
-  val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2551)
+  val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 0)
     .withFallback(ConfigFactory.parseString("akka.cluster.roles = [serverRole]")).withFallback(ConfigFactory.load())
   val system = ActorSystem.create(name="ClusterSystem", config)
   val actorRef1 : ActorRef = system.actorOf(Props.create(classOf[GreetingServer]), name="Actor1")
