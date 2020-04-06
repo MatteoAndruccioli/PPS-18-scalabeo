@@ -1,0 +1,14 @@
+language: scala
+
+jdk: openjdk11
+
+scala:
+  - 2.12.9
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION test
+
+branches:
+  only:
+    - master
+    - travis-debug
