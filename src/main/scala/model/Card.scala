@@ -14,6 +14,8 @@ package object constants {
     ("S",1,7),  ("T",1,7), ("U",4,4), ("V",4,4),
     ("Z",8,2),  ("[a-zA-Z]",1,2))
 
+  val lettersScoresCardinalitiesTest = List(("I",1,8), ("S",1,8))
+
   // bonus che può avere una card
   val letterForTwo: String = "2L"
   val letterForThree: String = "3L"
@@ -73,6 +75,10 @@ case class LettersBagImpl() extends LettersBag {
         Some(shuffledList.slice(0, lettersToTake))
       }
   }
+}
+
+case class LettersBagImplTest() extends LettersBagImpl{
+  private var _bag: List[Card] = populateBag(constants.lettersScoresCardinalitiesTest)
 }
 
 // mano delle card di ogni giocatore
