@@ -115,7 +115,9 @@ object Controller {
 
   def serversDown(server: ServerDown):Unit = ???
 
-  def matchEnded(player: String, playerWon:Boolean): Unit =  ???
+  def matchEnded(player: String, playerWon:Boolean): Unit =  {
+    View.matchEnded(player)
+  }
 
   def terminate(): Unit = ???
 

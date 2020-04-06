@@ -1,6 +1,7 @@
 package client.view
 
 import scalafx.application.JFXApp.PrimaryStage
+import scalafx.application.Platform
 import scalafx.scene.layout.GridPane
 import scalafx.scene.{Group, Scene}
 
@@ -50,7 +51,13 @@ class GameView(users: List[String]) extends PrimaryStage {
   }
 
   def updateLeaderboard(ranking: List[(String, Int)]): Unit = {
-    //TODO: Update the leaderboard
+    legendPanel.updateLeaderboard(ranking)
+  }
+
+  def matchEnded(player: String):Unit = {
+    Platform.runLater(() => {
+      new Dialog(player + " ha vinto, tra poco sarai riportato al menu principale").autoClose(Option(this)).show()
+    })
   }
 
 
