@@ -144,7 +144,7 @@ class ClientActor extends Actor{
       updateGameServerReference(sender())
       updateGameServerTopic(topicMessage.gameServerTopic)
       //todo forse in questo momento vorresti ricevere e gestire tutte info da mostrare a giocatore in partita tra cui lista dei giocatori e chat
-      Controller.onMatchStart()//todo comunicare al player la propria mano attuale attraverso la UI, nota ancora non posso comunicare i parametri
+      Controller.onMatchStart(topicMessage.playerHand, topicMessage.playersList)//todo comunicare al player la propria mano attuale attraverso la UI, nota ancora non posso comunicare i parametri
       sendGameServerTopicReceived()
       context.become(waitingInTurnPlayerNomination)
   }
