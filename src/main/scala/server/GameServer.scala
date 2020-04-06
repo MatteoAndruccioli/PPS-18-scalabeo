@@ -7,10 +7,11 @@ import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import model._
+import server.GameServerToGameServer.EndGameInit
 import server.GameServerToGreeting.EndGameToGreeting
 import shared.ClientMoveAckType._
-import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameServerNotification, EndTurnUpdateAck, MatchTopicListenAck, PlayerTurnBeginAck, SomeoneDisconnectedAck}
-import shared.GameServerToClientMessages.{ClientMoveAck, DisconnectionToGameServerNotificationAck, EndTurnUpdate, MatchTopicListenQuery, PlayerTurnBegins, SomeoneDisconnected}
+import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameServerNotification, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck, SomeoneDisconnectedAck}
+import shared.GameServerToClientMessages.{ClientMoveAck, DisconnectionToGameServerNotificationAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins, SomeoneDisconnected}
 import shared.{ClusterScheduler, CustomScheduler, Move}
 
 import scala.collection.mutable
@@ -47,6 +48,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private var ackTopicReceived = CounterImpl(nPlayer)
   private var ackTurn = CounterImpl(nPlayer)
   private var ackEndTurn = CounterImpl(nPlayer)
+  private var ackEndGame = CounterImpl(nPlayer)
   private var ackDisconnection = CounterImpl(nPlayer)
 
   override def receive: Receive = {
@@ -103,6 +105,16 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
             ranking.updatePoints(sender(),board.calculateTurnPoints(board.takeCardToCalculatePoints()))
             replaceHand()
             sender ! ClientMoveAck(WordAccepted(playersHand(sender())._hand))
+            //controllo se è finito il game
+            if(playersHand(sender()).hand.isEmpty && pouch.bag.isEmpty){
+              //toglieere i punti a tutti per le tessere nella propria mano e aggiungerli al vincitore
+              for(player <- gamePlayers) {
+                ranking.removePoints(player, playersHand(player).calculateHandPoint)
+                ranking.updatePoints(sender(), playersHand(player).calculateHandPoint)
+              }
+              context.become(EndGame)
+              self ! EndGameInit()
+            }
             scheduler.replaceBehaviourAndStart(() => sendUpdate())
           } else {
             board.clearBoardFromPlayedWords()
@@ -135,10 +147,34 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
           ackDisconnection.reset()
           scheduler.replaceBehaviourAndStart(()=>greetingServerRef ! EndGameToGreeting())
         }
+
       case _ : EndGameToGreetingAck =>
         scheduler.stopTask()
         context.stop(self)
     }
+  }
+
+  def EndGame : Receive = {
+    case _ : EndGameInit =>
+      scheduler.replaceBehaviourAndStart(() => mediator ! Publish(GAME_SERVER_SEND_TOPIC,GameEnded(sender(),mapUsername(sender()))))
+    case  _ : GameEndedAck =>
+      ackEndGame.increment()
+      if (ackEndGame.isFull()) {
+        ackEndGame.reset()
+        scheduler.stopTask()
+        scheduler.replaceBehaviourAndStart(()=>greetingServerRef ! EndGameToGreeting())
+      }
+    //se qualcuno si disconnette ora lo considero come un ack
+    case _ : DisconnectionToGameServerNotification =>
+      ackEndGame.increment()
+      if (ackEndGame.isFull()) {
+        ackEndGame.reset()
+        scheduler.stopTask()
+        scheduler.replaceBehaviourAndStart(()=>greetingServerRef ! EndGameToGreeting())
+      }
+    case _ : EndGameToGreetingAck =>
+      scheduler.stopTask()
+      context.stop(self)
   }
 
   //comportamento dello scheduler
