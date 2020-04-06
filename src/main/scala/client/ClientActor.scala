@@ -154,18 +154,15 @@ class ClientActor extends Actor{
     UnexpectedShutdown orElse
     opponentLefted orElse {
     case message: PlayerTurnBegins => {
-      message.playerInTurn match {
-        case self => {
-          //caso in cui spetta a me giocare
-          println("ricevuto PlayerTurnBegins - è il mio turno: self=" + self + " === attore in turno = " + message.playerInTurn)
-          Controller.userTurnBegins()
-          context.become(waitingUserMakingMove)
-        }
-        case _ => {
-          // è il turno di un avversario, devo mettermi in attesa degli aggiornamenti di fine turno
-          println("ricevuto PlayerTurnBegins - NON è il mio turno: self=" + self + " !== attore in turno = " + message.playerInTurn)
-          context.become(waitingTurnEndUpdates)
-        }
+      if (message.playerInTurn == self){
+        //caso in cui spetta a me giocare
+        println("ricevuto PlayerTurnBegins - è il mio turno: self=" + self + " === attore in turno = " + message.playerInTurn)
+        Controller.userTurnBegins()
+        context.become(waitingUserMakingMove)
+      } else {
+        // è il turno di un avversario, devo mettermi in attesa degli aggiornamenti di fine turno
+        println("ricevuto PlayerTurnBegins - NON è il mio turno: self=" + self + " !== attore in turno = " + message.playerInTurn)
+        context.become(waitingTurnEndUpdates)
       }
       sendPlayerInTurnAck() //invio ack al GameServer
     }
