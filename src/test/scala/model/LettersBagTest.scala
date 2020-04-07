@@ -1,6 +1,7 @@
 package model
 
 import org.scalatest.FlatSpec
+
 import scala.collection.mutable.ArrayBuffer
 
 class LettersBagTest extends FlatSpec {

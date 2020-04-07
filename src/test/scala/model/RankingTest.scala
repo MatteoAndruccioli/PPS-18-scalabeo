@@ -1,10 +1,11 @@
 package model
 
-import scala.collection.mutable.ArrayBuffer
-import org.scalatest._
-import server.GreetingServer
 import akka.actor.{ActorRef, ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
+import org.scalatest._
+import server.GreetingServer
+
+import scala.collection.mutable.ArrayBuffer
 
 
 class RankingTest extends FlatSpec {
