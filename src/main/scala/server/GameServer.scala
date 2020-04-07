@@ -83,11 +83,11 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
           scheduler.replaceBehaviourAndStart(() => sendUpdate())
         }
       case _: Move.Switch =>
-        if(sender().equals(gamePlayers(turn))){
-          if (playersHand(sender()).containsOnlyVowelsOrOnlyConsonants()){
+        if (sender().equals(gamePlayers(turn))) {
+          if (playersHand(sender()).containsOnlyVowelsOrOnlyConsonants()) {
             val nCard = playersHand(sender())._hand.size
             pouch.reinsertCardInBag(playersHand(sender())._hand)
-            playersHand(sender()) = LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(nCard).get : _*))
+            playersHand(sender()) = LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(nCard).get: _*))
             sender ! ClientMoveAck(HandSwitchRequestAccepted(playersHand(sender())._hand))
             scheduler.replaceBehaviourAndStart(() => sendUpdate())
           } else {
@@ -95,20 +95,20 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
           }
         }
       case message: Move.WordMove =>
-        if(sender().equals(gamePlayers(turn))){
-          message.word.foreach(boardTile => playedWord.insert(0,boardTile))
-          println("RICEVUTA MOSSA: "+ playedWord.toString +" da "+ sender())
+        if (sender().equals(gamePlayers(turn))) {
+          message.word.foreach(boardTile => playedWord.insert(0, boardTile))
+          println("RICEVUTA MOSSA: " + playedWord.toString + " da " + sender())
           board.addPlayedWord(List.concat(playedWord))
           println(board.boardTiles.toString)
           //inserire check validità parole in futuro
-          if(board.checkGoodWordDirection() && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints()))) {
-            ranking.updatePoints(sender(),board.calculateTurnPoints(board.takeCardToCalculatePoints()))
+          if (board.checkGoodWordDirection() && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints()))) {
+            ranking.updatePoints(sender(), board.calculateTurnPoints(board.takeCardToCalculatePoints()))
             replaceHand()
             sender ! ClientMoveAck(WordAccepted(playersHand(sender())._hand))
             //controllo se è finito il game
-            if(playersHand(sender()).hand.isEmpty && pouch.bag.isEmpty){
+            if (playersHand(sender()).hand.isEmpty && pouch.bag.isEmpty) {
               //toglieere i punti a tutti per le tessere nella propria mano e aggiungerli al vincitore
-              for(player <- gamePlayers) {
+              for (player <- gamePlayers) {
                 ranking.removePoints(player, playersHand(player).calculateHandPoint)
                 ranking.updatePoints(sender(), playersHand(player).calculateHandPoint)
               }
@@ -122,36 +122,36 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
           }
           playedWord.clear()
         }
-
-      case _: EndTurnUpdateAck =>
-        ackEndTurn.increment()
-        if (ackEndTurn.isFull()) {
-          scheduler.stopTask()
-          ackEndTurn.reset()
-          incrementTurn()
-          scheduler.replaceBehaviourAndStart(() => sendTurn())
-          println("STA A " + gamePlayers(turn).toString() + " IL CUI TURNO è = " + turn)
-        }
-
-      //gestione disconnessione
-      case _ : DisconnectionToGameServerNotification =>
-        sender ! DisconnectionToGameServerNotificationAck()
-        scheduler.stopTask()
-        ackDisconnection.increment()
-        scheduler.replaceBehaviourAndStart(() => sendDisconnection())
-
-      case _: SomeoneDisconnectedAck =>
-        ackDisconnection.increment()
-        if (ackDisconnection.isFull()) {
-          scheduler.stopTask()
-          ackDisconnection.reset()
-          scheduler.replaceBehaviourAndStart(()=>greetingServerRef ! EndGameToGreeting())
-        }
-
-      case _ : EndGameToGreetingAck =>
-        scheduler.stopTask()
-        context.stop(self)
     }
+
+    case _: EndTurnUpdateAck =>
+      ackEndTurn.increment()
+      if (ackEndTurn.isFull()) {
+        scheduler.stopTask()
+        ackEndTurn.reset()
+        incrementTurn()
+        scheduler.replaceBehaviourAndStart(() => sendTurn())
+        println("STA A " + gamePlayers(turn).toString() + " IL CUI TURNO è = " + turn)
+      }
+
+    //gestione disconnessione
+    case _ : DisconnectionToGameServerNotification =>
+      sender ! DisconnectionToGameServerNotificationAck()
+      scheduler.stopTask()
+      ackDisconnection.increment()
+      scheduler.replaceBehaviourAndStart(() => sendDisconnection())
+
+    case _: SomeoneDisconnectedAck =>
+      ackDisconnection.increment()
+      if (ackDisconnection.isFull()) {
+        scheduler.stopTask()
+        ackDisconnection.reset()
+        scheduler.replaceBehaviourAndStart(()=>greetingServerRef ! EndGameToGreeting())
+      }
+
+    case _ : EndGameToGreetingAck =>
+      scheduler.stopTask()
+      context.stop(self)
   }
 
   def EndGame : Receive = {
@@ -200,7 +200,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   //metodi utilità
   private def incrementTurn(){
-    turn = turn +1
+    turn = (turn + 1) % nPlayer
   }
   private def replaceHand() : Unit = {
     for(boardTile <- playedWord){
