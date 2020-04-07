@@ -28,9 +28,10 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private var greetingServerRef: ActorRef = _
   private val gamePlayers = players
   private val gamePlayersUsername: Map[ActorRef, String] = mapUsername
+  private var winnerRef: ActorRef = _
 
   private val board = BoardImpl()
-  private val pouch = LettersBagImpl()
+  private val pouch = LettersBagImpl(true)
   private var playersHand = mutable.Map[ActorRef, LettersHandImpl]()
   //creo le mani
   gamePlayers.foreach(p => playersHand+=(p -> LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(8).get : _*))))
@@ -108,6 +109,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
             //controllo se è finito il game
             if (playersHand(sender()).hand.isEmpty && pouch.bag.isEmpty) {
               //toglieere i punti a tutti per le tessere nella propria mano e aggiungerli al vincitore
+              winnerRef = sender()
               for (player <- gamePlayers) {
                 ranking.removePoints(player, playersHand(player).calculateHandPoint)
                 ranking.updatePoints(sender(), playersHand(player).calculateHandPoint)
@@ -156,7 +158,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   def EndGame : Receive = {
     case _ : EndGameInit =>
-      scheduler.replaceBehaviourAndStart(() => mediator ! Publish(GAME_SERVER_SEND_TOPIC,GameEnded(sender(),mapUsername(sender()))))
+      scheduler.replaceBehaviourAndStart(() => mediator ! Publish(GAME_SERVER_SEND_TOPIC,GameEnded(winnerRef)))
     case  _ : GameEndedAck =>
       ackEndGame.increment()
       if (ackEndGame.isFull()) {
