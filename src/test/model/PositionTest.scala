@@ -1,7 +1,7 @@
 package model
 
-import model.Directions.E
 import org.scalatest._
+import model.Directions.E
 
 class PositionTest extends FlatSpec {
 

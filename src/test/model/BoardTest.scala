@@ -1,7 +1,6 @@
 package model
 
 import org.scalatest._
-
 import scala.collection.mutable.ArrayBuffer
 
 class BoardTest extends FlatSpec {
