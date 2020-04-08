@@ -59,6 +59,8 @@ sealed trait Board{
   def takeCardToCalculatePoints():  List[ArrayBuffer[(Card, String)]]
   def getWordsFromLetters(word: List[ArrayBuffer[(Card, String)]]): List[String]
   def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]]): Int
+  def playedWordIsOnScarabeo(): Boolean
+  def lettersAreAdjacent(): Boolean
 
 }
 
@@ -219,4 +221,11 @@ case class BoardImpl() extends Board {
   private def wordIsScarabeoBonus(word: ArrayBuffer[(Card, String)]): Int =  if (getWordFromLetters(word).equals(constants.scarabeoWord)) constants.bonusScarabeoWord else 0
   // bonus prima parola inserita
   private def firstWord(): Int = if(_firstWord){_firstWord = false; constants.firstWordBonus} else 1
+
+  override def playedWordIsOnScarabeo(): Boolean = _playedWord exists(boardTile => boardTile.position.coord.equals(9,9))
+
+  override def lettersAreAdjacent(): Boolean =
+    (_playedWord.forall(boardTiles => boardTiles.position.coord._1 == _playedWord.head.position.coord._1+_playedWord.indexWhere(element=> element.equals(boardTiles)))
+      != _playedWord.forall(boardTiles => boardTiles.position.coord._2 == _playedWord.head.position.coord._2+_playedWord.indexWhere(element=> element.equals(boardTiles))))
+  
 }
