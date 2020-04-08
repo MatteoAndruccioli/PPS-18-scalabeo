@@ -158,7 +158,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   def EndGame : Receive = {
     case _ : EndGameInit =>
-      scheduler.replaceBehaviourAndStart(() => mediator ! Publish(GAME_SERVER_SEND_TOPIC,GameEnded(winnerRef)))
+      scheduler.replaceBehaviourAndStart(() => mediator ! Publish(GAME_SERVER_SEND_TOPIC,GameEnded(gamePlayersUsername(winnerRef), winnerRef)))
     case  _ : GameEndedAck =>
       ackEndGame.increment()
       if (ackEndGame.isFull()) {

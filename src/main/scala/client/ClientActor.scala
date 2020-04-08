@@ -170,7 +170,7 @@ class ClientActor extends Actor{
       println("--------------------------------------------------------------------")
       println(self + " Ricevuto messaggio di finepartita da GameServer; chiedo all'utente se vuole fare un altra partita; dico al GameServer di smettere di inviarmi messaggi GameEnded")
       sendGameEndedAck()
-      Controller.matchEnded("nome_vincitore_non_inviato", message.actorRef==self)
+      Controller.matchEnded(message.name, message.actorRef==self)
       resetMatchInfo()
       context.become(waitingUserChoosingWheterPlayAgainOrClosing)
     }
