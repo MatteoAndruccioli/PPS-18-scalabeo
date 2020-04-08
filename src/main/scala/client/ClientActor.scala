@@ -170,7 +170,7 @@ class ClientActor extends Actor{
       println("--------------------------------------------------------------------")
       println(self + " Ricevuto messaggio di finepartita da GameServer; chiedo all'utente se vuole fare un altra partita; dico al GameServer di smettere di inviarmi messaggi GameEnded")
       sendGameEndedAck()
-      Controller.matchEnded(message.name, message.actorRef==self)
+      Controller.matchEnded("nome_vincitore_non_inviato", message.actorRef==self)
       resetMatchInfo()
       context.become(waitingUserChoosingWheterPlayAgainOrClosing)
     }
@@ -363,7 +363,7 @@ class ClientActor extends Actor{
   * */
   def onPassAck():Unit = {
     println("--------------------------------------------------------------------")
-    println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
+    println("ricevuto [onPassAck] ack dal GameServer per ricezione mossa utente")
     Controller.moveOutcome(PassReceived())
     context.become(waitingTurnEndUpdates)
   }
@@ -375,7 +375,7 @@ class ClientActor extends Actor{
   * */
   def onTimeoutAck():Unit = {
     println("--------------------------------------------------------------------")
-    println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
+    println("ricevuto [onTimeoutAck] ack dal GameServer per ricezione mossa utente")
     Controller.moveOutcome(TimeoutReceived())
     context.become(waitingTurnEndUpdates)
   }
