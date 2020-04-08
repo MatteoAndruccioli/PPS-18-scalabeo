@@ -44,6 +44,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private val ranking : Ranking = new RankingImpl(players)
 
   private var turn = 0
+  private var isGameEnded : Boolean = false
 
   //variabili ack
   private var ackTopicReceived = CounterImpl(nPlayer)
@@ -114,8 +115,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
                 ranking.removePoints(player, playersHand(player).calculateHandPoint)
                 ranking.updatePoints(sender(), playersHand(player).calculateHandPoint)
               }
-              context.become(EndGame)
-              self ! EndGameInit()
+              isGameEnded = true
             }
             scheduler.replaceBehaviourAndStart(() => sendUpdate())
           } else {
@@ -131,9 +131,14 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       if (ackEndTurn.isFull()) {
         scheduler.stopTask()
         ackEndTurn.reset()
-        incrementTurn()
-        scheduler.replaceBehaviourAndStart(() => sendTurn())
-        println("STA A " + gamePlayers(turn).toString() + " IL CUI TURNO è = " + turn)
+        if(!isGameEnded) {
+          incrementTurn()
+          scheduler.replaceBehaviourAndStart(() => sendTurn())
+          println("STA A " + gamePlayers(turn).toString() + " IL CUI TURNO è = " + turn)
+        } else {
+          context.become(EndGame)
+          self ! EndGameInit()
+        }
       }
 
     //gestione disconnessione
