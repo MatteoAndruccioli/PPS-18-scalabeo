@@ -49,6 +49,19 @@ object View extends JFXApp {
     })
   }
 
+  def playerLeft(): Unit = {
+    Platform.runLater(() =>{
+      new Dialog("A player left the game, in 5 seconds you will be redirected to the main menu.")
+        .autoClose(Option(gameBoard), () => {
+          mainMenu = new MainMenu
+          mainMenu.onLoginResponse()
+          stage = mainMenu
+          stage.show()
+        })
+        .show()
+    })
+  }
+
   //chiamato quando inizia il turno dell'utente
   def userTurnBegins(): Unit = {
     gameBoard.disableMulliganButton(!Controller.isMulliganAvailable)

@@ -134,7 +134,7 @@ object Controller {
   }
 
   def playerLeft(): Unit = {
-
+    View.playerLeft()
   }
 
   def terminate(): Unit = {

@@ -56,7 +56,7 @@ class Dialog(title: String) extends Stage(StageStyle.Undecorated) {
     this
   }
 
-  def autoClose(stageToClose: Option[Stage]): Dialog = {
+  def autoClose(stageToClose: Option[Stage], onCloseAction: Runnable): Dialog = {
     new Thread(() => {
       Thread.sleep(5000)
       Platform.runLater(() => {
@@ -64,6 +64,7 @@ class Dialog(title: String) extends Stage(StageStyle.Undecorated) {
         if(stageToClose != Option.empty) {
           stageToClose.get.close()
         }
+        onCloseAction.run()
       })
     }).run()
     this
