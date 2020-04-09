@@ -133,6 +133,10 @@ object Controller {
     View.matchEnded(player, playerWon)
   }
 
+  def playerLeft(): Unit = {
+
+  }
+
   def terminate(): Unit = {
     View.terminate()
   }
