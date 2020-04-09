@@ -9,7 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 
 object View extends JFXApp {
 
-  val mainMenu: MainMenu = new MainMenu
+  var mainMenu: MainMenu = new MainMenu
   var gameBoard: GameView = _
   stage = mainMenu
 
@@ -40,8 +40,13 @@ object View extends JFXApp {
 
   //Chiamato quando dalla gameboard si vuole tornare nel mainmenu
   def backToMainMenu(): Unit = {
-    gameBoard.close()
-    stage.show()
+    Platform.runLater(() =>{
+      gameBoard.close()
+      mainMenu = new MainMenu
+      mainMenu.onLoginResponse()
+      stage = mainMenu
+      stage.show()
+    })
   }
 
   //chiamato quando inizia il turno dell'utente
@@ -80,12 +85,13 @@ object View extends JFXApp {
     BoardInteraction.confirmPlay()
   }
 
-  def matchEnded(player: String): Unit = {
-    gameBoard.matchEnded(player)
+  def matchEnded(player: String, playerWon: Boolean): Unit = {
+    gameBoard.matchEnded(player, playerWon)
   }
 
   def terminate(): Unit  = {
     View.sendToClient(UserExited())
+    System.exit(0)
   }
 
 }

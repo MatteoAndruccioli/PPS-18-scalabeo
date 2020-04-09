@@ -12,6 +12,7 @@ import scalafx.stage.{Stage, StageStyle}
 class Dialog(title: String) extends Stage(StageStyle.Undecorated) {
   initStyle(StageStyle.Transparent)
   centerOnScreen()
+  requestFocus()
   val elementsContainer: VBox = new VBox {
     padding = Insets(10)
     alignment = Pos.Center

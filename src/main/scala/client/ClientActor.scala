@@ -228,7 +228,7 @@ class ClientActor extends Actor{
       message.userWantsToPlay match {
         case true => {
           resetMatchInfo()
-          Controller.onLoginResponse()
+          //Controller.onLoginResponse()
           context.become(waitingUserQueueRequest)
         }
         case false => {
