@@ -121,10 +121,9 @@ object Controller {
 
   def serversDown(server: ServerDown):Unit = {
     server match {
-      case _: GreetingServerDown => //TODO far visualizzare terminazione della partita a causa di un errore, chiudere partita
-      case _: GameServerDown => //TODO far visualizzare terminazione della partita a causa di un errore, tornare a schermata scelta modalità
+      case _: GreetingServerDown => View.greetingDisconnected()//TODO far visualizzare terminazione della partita a causa di un errore, chiudere partita
+      case _: GameServerDown => View.gameServerDisconnected()//TODO far visualizzare terminazione della partita a causa di un errore, tornare a schermata scelta modalità
     }
-    println("**** Errore: " + server + " crollato")
   }
 
   def matchEnded(player: String, playerWon:Boolean): Unit =  {
@@ -139,6 +138,10 @@ object Controller {
 
   def terminate(): Unit = {
     View.terminate()
+  }
+
+  def exit(): Unit = {
+    System.exit(0)
   }
 }
 

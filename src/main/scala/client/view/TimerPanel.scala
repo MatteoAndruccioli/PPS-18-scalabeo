@@ -2,6 +2,8 @@ package client.view
 
 import java.util.{Timer, TimerTask}
 
+import client.controller.Controller
+import client.controller.Messages.ViewToClientMessages.UserMadeHisMove
 import eu.hansolo.medusa.Gauge.SkinType
 import eu.hansolo.medusa.{Gauge, GaugeBuilder}
 import scalafx.application.Platform
@@ -9,6 +11,7 @@ import scalafx.geometry.Pos
 import scalafx.scene.layout.GridPane
 import scalafx.scene.paint.Color
 import scalafx.scene.shape.Circle
+import shared.Move.TimeOut
 
 class TimerPanel() extends GridPane {
   prefWidth = 260
@@ -35,10 +38,11 @@ class TimerPanel() extends GridPane {
           if (stopwatch.getSeconds <= 0) {
             Platform.runLater(() => {
               progress.setValue(0)
-              //progress.stop()
             })
             timer.cancel()
-            //TODO: Se il tempo scade passo il turno
+            if (Controller.isMyTurn) {
+              View.sendToClient(UserMadeHisMove(TimeOut()))
+            }
           } else {
             Platform.runLater(() => {
               progress.setValue(stopwatch.getSeconds)
