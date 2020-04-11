@@ -125,14 +125,14 @@ class BoardTest extends FlatSpec {
     assert(board.takeCardToCalculatePoints().equals(listOfWords))
   }
 
-  "Not adjacent lettters" should "not make a word" in {
+  "Not adjacent letters" should "not make a word" in {
     val board = BoardImpl()
     val boardTileC = BoardTileImpl(new Position(3,1), CardImpl("C"))
     val boardTileD = BoardTileImpl(new Position(3,4), CardImpl("D"))
     board.addCard2Tile(CardImpl("A"), 2, 3)
     board.addCard2Tile(CardImpl("B"), 3, 3)
     board.addPlayedWord(List(boardTileC,boardTileD))
-    println(board.takeCardToCalculatePoints())
+    assert(board.takeCardToCalculatePoints().isEmpty)
   }
 
   "The word" should "be extracted from the list of Card" in {
@@ -172,6 +172,22 @@ class BoardTest extends FlatSpec {
     val boardTile3 = BoardTileImpl(new Position(10,10), CardImpl("F"))
     val boardTile4 = BoardTileImpl(new Position(10,11), CardImpl("I"))
     val boardTile5 = BoardTileImpl(new Position(10,12), CardImpl("C"))
+    board.addPlayedWord(List(boardTile3,boardTile4, boardTile5))
+    assert(board.lettersAreAdjacent())
+  }
+
+  "The first letters played" should "be adjacent (played not in order)" in {
+    val board = BoardImpl()
+    val boardTile = BoardTileImpl(new Position(12,10), CardImpl("F"))
+    val boardTile1 = BoardTileImpl(new Position(10,10), CardImpl("I"))
+    val boardTile2 = BoardTileImpl(new Position(11,10), CardImpl("C"))
+    board.addPlayedWord(List(boardTile,boardTile1, boardTile2))
+    assert(board.lettersAreAdjacent())
+    board.addPlayedWord(List(BoardTileImpl(new Position(15,10), CardImpl("C"))))
+    board.clearPlayedWords()
+    val boardTile3 = BoardTileImpl(new Position(10,12), CardImpl("F"))
+    val boardTile4 = BoardTileImpl(new Position(10,10), CardImpl("I"))
+    val boardTile5 = BoardTileImpl(new Position(10,11), CardImpl("C"))
     board.addPlayedWord(List(boardTile3,boardTile4, boardTile5))
     assert(board.lettersAreAdjacent())
   }
