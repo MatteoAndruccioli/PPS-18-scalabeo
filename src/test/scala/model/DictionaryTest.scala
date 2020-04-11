@@ -22,4 +22,10 @@ class DictionaryTest extends FlatSpec {
     assert(dictionary.checkWords(wordsToCheck))
   }
 
+  "A word with no letters" should "not be checked" in {
+    val wordsToCheck = List()
+    val dictionary: DictionaryImpl = new DictionaryImpl("/dictionary/dictionary.txt")
+    assert(!dictionary.checkWords(wordsToCheck))
+  }
+
 }

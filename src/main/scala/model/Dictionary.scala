@@ -20,6 +20,6 @@ class DictionaryImpl(val _dictionaryPath: String) extends Dictionary {
   override def dictionaryPath: String = _dictionaryPath
   override def dictionarySet: Set[String] = populateDictionary()
   private def populateDictionary(): Set[String] = Source.fromInputStream(getClass.getResourceAsStream(dictionaryPath)).getLines().toSet
-  override def checkWords(listToCheck: List[String]): Boolean = listToCheck.forall(word => checkWord(word))
+  override def checkWords(listToCheck: List[String]): Boolean = if(listToCheck.nonEmpty) listToCheck.forall(word => checkWord(word)) else false
   private def checkWord(filter: String): Boolean = dictionarySet.exists(dictionaryWord => filter.r matches dictionaryWord)
 }
