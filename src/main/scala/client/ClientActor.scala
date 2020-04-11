@@ -261,7 +261,7 @@ class ClientActor extends Actor{
     println(self + " Muoro felicio")
     scheduler.stopTask()
     //dovrò comunicare al controller la riuscita terminazione
-    Controller.terminate()
+    Controller.exit()
     context.stop(self)
   }
 
