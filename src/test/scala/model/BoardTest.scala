@@ -125,6 +125,16 @@ class BoardTest extends FlatSpec {
     assert(board.takeCardToCalculatePoints().equals(listOfWords))
   }
 
+  "Not adjacent lettters" should "not make a word" in {
+    val board = BoardImpl()
+    val boardTileC = BoardTileImpl(new Position(3,1), CardImpl("C"))
+    val boardTileD = BoardTileImpl(new Position(3,4), CardImpl("D"))
+    board.addCard2Tile(CardImpl("A"), 2, 3)
+    board.addCard2Tile(CardImpl("B"), 3, 3)
+    board.addPlayedWord(List(boardTileC,boardTileD))
+    println(board.takeCardToCalculatePoints())
+  }
+
   "The word" should "be extracted from the list of Card" in {
     val board = BoardImpl()
     val listOfWords: List[ArrayBuffer[(Card,String)]] = List(ArrayBuffer((CardImpl("O"),"DEFAULT"), (CardImpl("C"),"2P"), (CardImpl("A"),"DEFAULT")))

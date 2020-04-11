@@ -225,7 +225,7 @@ case class BoardImpl() extends Board {
   override def playedWordIsOnScarabeo(): Boolean = _playedWord exists(boardTile => boardTile.position.coord.equals(9,9))
 
   override def lettersAreAdjacent(): Boolean =
-    (_playedWord.forall(boardTiles => boardTiles.position.coord._1 == _playedWord.head.position.coord._1+_playedWord.indexWhere(element=> element.equals(boardTiles)))
-      != _playedWord.forall(boardTiles => boardTiles.position.coord._2 == _playedWord.head.position.coord._2+_playedWord.indexWhere(element=> element.equals(boardTiles))))
+    (_playedWord.forall(boardTiles => boardTiles.position.coord._1 == _playedWord.head.position.coord._1 + _playedWord.indexWhere(element => element.equals(boardTiles)))
+      != _playedWord.forall(boardTiles => boardTiles.position.coord._2 == _playedWord.head.position.coord._2 + _playedWord.indexWhere(element => element.equals(boardTiles))))
   
 }
