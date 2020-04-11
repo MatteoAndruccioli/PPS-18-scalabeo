@@ -59,9 +59,7 @@ sealed trait Board{
   def takeCardToCalculatePoints():  List[ArrayBuffer[(Card, String)]]
   def getWordsFromLetters(word: List[ArrayBuffer[(Card, String)]]): List[String]
   def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]]): Int
-  def playedWordIsOnScarabeo(): Boolean
-  def lettersAreAdjacent(): Boolean
-
+  def checkGameFirstWord(): Boolean
 }
 
 case class BoardImpl() extends Board {
@@ -222,9 +220,11 @@ case class BoardImpl() extends Board {
   // bonus prima parola inserita
   private def firstWord(): Int = if(_firstWord){_firstWord = false; constants.firstWordBonus} else 1
 
-  override def playedWordIsOnScarabeo(): Boolean = _playedWord exists(boardTile => boardTile.position.coord.equals(9,9))
+  override def checkGameFirstWord(): Boolean = playedWordIsOnScarabeo() && lettersAreAdjacent()
 
-  override def lettersAreAdjacent(): Boolean = {
+  private def playedWordIsOnScarabeo(): Boolean = _playedWord exists(boardTile => boardTile.position.coord.equals(9,9))
+
+  private def lettersAreAdjacent(): Boolean = {
     val playedWordOrderedByX = _playedWord.sortWith(_.position.coord._1<_.position.coord._1)
     val playedWordOrderedByY = _playedWord.sortWith(_.position.coord._2<_.position.coord._2)
     (playedWordOrderedByX.forall(boardTiles => boardTiles.position.coord._1 == playedWordOrderedByX.head.position.coord._1 + playedWordOrderedByX.indexWhere(element => element.equals(boardTiles)))
