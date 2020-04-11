@@ -12,7 +12,7 @@ import model.Card
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
 import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameServerNotification, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck, SomeoneDisconnectedAck}
 import shared.ClientToGreetingMessages._
-import shared.GameServerToClientMessages.{ClientMoveAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins, SomeoneDisconnected}
+import shared.GameServerToClientMessages.{ClientMoveAck, DisconnectionToGameServerNotificationAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins, SomeoneDisconnected}
 import shared.{ClusterScheduler, CustomScheduler, Move}
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
 import shared.GreetingToClientMessages._
@@ -143,8 +143,8 @@ class ClientActor extends Actor{
 
       updateGameServerReference(sender())
       updateGameServerTopic(topicMessage.gameServerTopic)
-      //todo forse in questo momento vorresti ricevere e gestire tutte info da mostrare a giocatore in partita tra cui lista dei giocatori e chat
-      Controller.onMatchStart(topicMessage.playerHand, topicMessage.playersList)//todo comunicare al player la propria mano attuale attraverso la UI, nota ancora non posso comunicare i parametri
+      //todo forse in questo momento vorresti ricevere e gestire chat
+      Controller.onMatchStart(topicMessage.playerHand, topicMessage.playersList)
       sendGameServerTopicReceived()
       context.become(waitingInTurnPlayerNomination)
   }
@@ -216,6 +216,7 @@ class ClientActor extends Actor{
       sendEndTurnUpdateAck()
       context.become(waitingInTurnPlayerNomination)
     }
+    case msg => println("SONO IN waitingTurnEndUpdates => MESSAGGIO INATTESO: " + msg.toString())
   }
 
 
@@ -227,7 +228,7 @@ class ClientActor extends Actor{
       message.userWantsToPlay match {
         case true => {
           resetMatchInfo()
-          Controller.onLoginResponse()
+          //Controller.onLoginResponse()
           context.become(waitingUserQueueRequest)
         }
         case false => {
@@ -241,22 +242,28 @@ class ClientActor extends Actor{
 
   //attendo che GreetingServer confermi ricezione messaggio di disconnessione //todo manca gestione arrivo messaggi in chat
   def waitingDisconnectionAck: Receive = {
+    case _: DisconnectionToGameServerNotificationAck => {
+      println("--------------------------------------------------------------------")
+      println(self + " - Ricevuto ack di richiesta disconnessione dal Game Server = " +sender())
+      handleClientStop()
+    }
+
     case _: DisconnectionAck => {
       println("--------------------------------------------------------------------")
       println(self + " - Ricevuto ack di richiesta disconnessione dal Greeting Server = " +sender())
-      println(self + " Muoro felicio")
-      scheduler.stopTask()
-      //dovrò comunicare al controller la riuscita terminazione
-      Controller.terminate()
-      context.stop(self)
+      handleClientStop()
     }
   }
 
 
-
-
-
-
+  //GESTIONE STOP CLIENT
+  private def handleClientStop():Unit = {
+    println(self + " Muoro felicio")
+    scheduler.stopTask()
+    //dovrò comunicare al controller la riuscita terminazione
+    Controller.exit()
+    context.stop(self)
+  }
 
 
 
@@ -363,7 +370,7 @@ class ClientActor extends Actor{
   * */
   def onPassAck():Unit = {
     println("--------------------------------------------------------------------")
-    println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
+    println("ricevuto [onPassAck] ack dal GameServer per ricezione mossa utente")
     Controller.moveOutcome(PassReceived())
     context.become(waitingTurnEndUpdates)
   }
@@ -375,7 +382,7 @@ class ClientActor extends Actor{
   * */
   def onTimeoutAck():Unit = {
     println("--------------------------------------------------------------------")
-    println("ricevuto [WordAccepted] ack dal GameServer per ricezione mossa utente")
+    println("ricevuto [onTimeoutAck] ack dal GameServer per ricezione mossa utente")
     Controller.moveOutcome(TimeoutReceived())
     context.become(waitingTurnEndUpdates)
   }
@@ -430,9 +437,9 @@ class ClientActor extends Actor{
 
   private def opponentLefted: Receive = {
     case _: SomeoneDisconnected => {
-      resetMatchInfo()
-      //todo notifica Controller
       sendAckOnOpponentDisconnection()
+      resetMatchInfo()
+      Controller.playerLeft()
       context.become(waitingUserQueueRequest)
     }
   }
@@ -478,7 +485,6 @@ class ClientActor extends Actor{
 
   //chiamato dopo che l'utente si è disconnesso inaspettatamente ed era in partita => comunico il fatto a GameServer
   def notifyDisconnectionToGameServer: Unit = {
-    //todo occhio quà potrebbe mancare un passaggio: mi disconnetto dal gameServer ma non dal greeting, se il greeting mi ha in memoria è un problema se no no???!
     println("--------------------------------------------------------------------")
     println(self + " -Ricevuta richiesta di disconnessione dall'utente = " +sender())
     println(self + " Invio richiesta di stop al GameServer")
