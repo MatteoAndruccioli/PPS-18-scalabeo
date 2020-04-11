@@ -20,7 +20,8 @@ import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) extends Actor {
 
   val mediator = DistributedPubSub(context.system).mediator
-  mediator ! Subscribe(GAME_SERVER_SEND_TOPIC, self)
+  val serverTopic = GAME_SERVER_SEND_TOPIC+self.toString().substring(50)
+  mediator ! Subscribe(serverTopic, self)
   private val cluster = Cluster.get(context.system)
   private val scheduler: CustomScheduler = ClusterScheduler(cluster)
   private val nPlayer = players.size
@@ -28,9 +29,10 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private var greetingServerRef: ActorRef = _
   private val gamePlayers = players
   private val gamePlayersUsername: Map[ActorRef, String] = mapUsername
+  private var winnerRef: ActorRef = _
 
   private val board = BoardImpl()
-  private val pouch = LettersBagImpl()
+  private val pouch = LettersBagImpl(true)
   private var playersHand = mutable.Map[ActorRef, LettersHandImpl]()
   //creo le mani
   gamePlayers.foreach(p => playersHand+=(p -> LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(8).get : _*))))
@@ -43,6 +45,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private val ranking : Ranking = new RankingImpl(players)
 
   private var turn = 0
+  private var isGameEnded : Boolean = false
 
   //variabili ack
   private var ackTopicReceived = CounterImpl(nPlayer)
@@ -108,12 +111,12 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
             //controllo se è finito il game
             if (playersHand(sender()).hand.isEmpty && pouch.bag.isEmpty) {
               //toglieere i punti a tutti per le tessere nella propria mano e aggiungerli al vincitore
+              winnerRef = sender()
               for (player <- gamePlayers) {
                 ranking.removePoints(player, playersHand(player).calculateHandPoint)
                 ranking.updatePoints(sender(), playersHand(player).calculateHandPoint)
               }
-              context.become(EndGame)
-              self ! EndGameInit()
+              isGameEnded = true
             }
             scheduler.replaceBehaviourAndStart(() => sendUpdate())
           } else {
@@ -129,13 +132,19 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       if (ackEndTurn.isFull()) {
         scheduler.stopTask()
         ackEndTurn.reset()
-        incrementTurn()
-        scheduler.replaceBehaviourAndStart(() => sendTurn())
-        println("STA A " + gamePlayers(turn).toString() + " IL CUI TURNO è = " + turn)
+        if(!isGameEnded) {
+          incrementTurn()
+          scheduler.replaceBehaviourAndStart(() => sendTurn())
+          println("STA A " + gamePlayers(turn).toString() + " IL CUI TURNO è = " + turn)
+        } else {
+          context.become(EndGame)
+          self ! EndGameInit()
+        }
       }
 
     //gestione disconnessione
     case _ : DisconnectionToGameServerNotification =>
+      println("INIZIO PROCEDURA DISCONNESSIONE")
       sender ! DisconnectionToGameServerNotificationAck()
       scheduler.stopTask()
       ackDisconnection.increment()
@@ -143,6 +152,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
     case _: SomeoneDisconnectedAck =>
       ackDisconnection.increment()
+      println("RICEVUTO UN ACK DI DISCONNESSIONE; IL TOTALE: " +ackDisconnection)
       if (ackDisconnection.isFull()) {
         scheduler.stopTask()
         ackDisconnection.reset()
@@ -156,7 +166,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   def EndGame : Receive = {
     case _ : EndGameInit =>
-      scheduler.replaceBehaviourAndStart(() => mediator ! Publish(GAME_SERVER_SEND_TOPIC,GameEnded(sender(),mapUsername(sender()))))
+      scheduler.replaceBehaviourAndStart(() => mediator ! Publish(serverTopic,GameEnded(gamePlayersUsername(winnerRef), winnerRef)))
     case  _ : GameEndedAck =>
       ackEndGame.increment()
       if (ackEndGame.isFull()) {
@@ -179,11 +189,11 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   //comportamento dello scheduler
   private def sendTopic(): Unit = {
-    gamePlayers.foreach(player => player ! MatchTopicListenQuery(GAME_SERVER_SEND_TOPIC, playersHand(player)._hand, gamePlayersUsername.values.toList))
+    gamePlayers.foreach(player => player ! MatchTopicListenQuery(serverTopic, playersHand(player)._hand, gamePlayersUsername.values.toList))
   }
 
   private def sendTurn(): Unit = {
-    mediator ! Publish(GAME_SERVER_SEND_TOPIC, PlayerTurnBegins(gamePlayers(turn)))
+    mediator ! Publish(serverTopic, PlayerTurnBegins(gamePlayers(turn)))
   }
 
   private def sendUpdate(): Unit = {
@@ -191,11 +201,11 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
     for( player <- gamePlayers){
       rankingTuples.insert(0,(gamePlayersUsername(player), ranking.ranking(player)))
     }
-    mediator ! Publish(GAME_SERVER_SEND_TOPIC, EndTurnUpdate(rankingTuples.toList, board.playedWord))
+    mediator ! Publish(serverTopic, EndTurnUpdate(rankingTuples.toList, board.playedWord))
   }
 
   private def sendDisconnection(): Unit = {
-    mediator ! Publish(GAME_SERVER_SEND_TOPIC, SomeoneDisconnected())
+    mediator ! Publish(serverTopic, SomeoneDisconnected())
   }
 
   //metodi utilità

@@ -5,7 +5,7 @@ import client.controller.Messages.ViewToClientMessages
 import client.controller.Messages.ViewToClientMessages.UserMadeHisMove
 import client.controller.MoveOutcome.ServerDown.{GameServerDown, GreetingServerDown}
 import client.controller.MoveOutcome.{AcceptedWord, HandSwitchAccepted, HandSwitchRefused, PassReceived, RefusedWord, ServerDown, TimeoutReceived}
-import client.view.{LetterStatus, LetterTile, View}
+import client.view.{BoardInteraction, LetterStatus, LetterTile, View}
 import model.{BoardTile, Card}
 import shared.Move.WordMove
 
@@ -77,10 +77,13 @@ object Controller {
 
   def playWord(): Unit = {
     val playedWord = GameManager.getPlayedWord
-    playedWord.foreach(b => {
-      print(b.card.letter)
-    })
-    sendToClient(UserMadeHisMove(WordMove(playedWord)))
+    if(!playedWord.isEmpty)
+      {
+        playedWord.foreach(b => {
+          print(b.card.letter)
+        })
+        sendToClient(UserMadeHisMove(WordMove(playedWord)))
+      }
   }
 
   //metodo attraverso cui il Client comunica al controller l'esito della mossa inviata al GameServer
@@ -112,25 +115,34 @@ object Controller {
     GameManager.isMulliganAvailable()
   }
 
-  def onConnectionFailed(): Unit = ???
+  def onConnectionFailed(): Unit = {
+    View.terminate()
+  }
 
   def serversDown(server: ServerDown):Unit = {
     server match {
-      case _: GreetingServerDown => //TODO far visualizzare terminazione della partita a causa di un errore, chiudere partita
-      case _: GameServerDown => //TODO far visualizzare terminazione della partita a causa di un errore, tornare a schermata scelta modalità
+      case _: GreetingServerDown => View.greetingDisconnected()
+      case _: GameServerDown => View.gameServerDisconnected()
     }
-    println("**** Errore: " + server + " crollato")
   }
 
   def matchEnded(player: String, playerWon:Boolean): Unit =  {
-    View.matchEnded(player)
+    endMyTurn()
+    BoardInteraction.reset()
+    View.matchEnded(player, playerWon)
+  }
+
+  def playerLeft(): Unit = {
+    View.playerLeft()
   }
 
   def terminate(): Unit = {
     View.terminate()
   }
 
-  def connectionFailed(): Unit = ???
+  def exit(): Unit = {
+    System.exit(0)
+  }
 }
 
 // tipo dell'esito di una mossa, contiene informazioni che indicano la risposta del server alla mossa compiuta dall'utente

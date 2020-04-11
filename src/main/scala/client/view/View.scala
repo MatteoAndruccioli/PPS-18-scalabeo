@@ -9,7 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 
 object View extends JFXApp {
 
-  val mainMenu: MainMenu = new MainMenu
+  var mainMenu: MainMenu = new MainMenu
   var gameBoard: GameView = _
   stage = mainMenu
 
@@ -40,8 +40,49 @@ object View extends JFXApp {
 
   //Chiamato quando dalla gameboard si vuole tornare nel mainmenu
   def backToMainMenu(): Unit = {
-    gameBoard.close()
-    stage.show()
+    Platform.runLater(() =>{
+      gameBoard.close()
+      mainMenu = new MainMenu
+      mainMenu.onLoginResponse()
+      stage = mainMenu
+      stage.show()
+    })
+  }
+
+  def playerLeft(): Unit = {
+    Platform.runLater(() =>{
+      new Dialog("A player left the game, in 5 seconds you will be redirected to the main menu.")
+        .autoClose(Option(gameBoard), () => {
+          mainMenu = new MainMenu
+          mainMenu.onLoginResponse()
+          stage = mainMenu
+          stage.show()
+        })
+        .show()
+    })
+  }
+
+  def greetingDisconnected(): Unit = {
+    Platform.runLater(() =>{
+      new Dialog("The main server has crashed, the game will exit in 5 seconds.")
+        .autoClose(Option(gameBoard), () => {
+          Controller.exit()
+        })
+        .show()
+    })
+  }
+
+  def gameServerDisconnected(): Unit = {
+    Platform.runLater(() =>{
+      new Dialog("The game server has crashed, in 5 seconds you will be redirected to the main menu.")
+        .autoClose(Option(gameBoard), () => {
+          mainMenu = new MainMenu
+          mainMenu.onLoginResponse()
+          stage = mainMenu
+          stage.show()
+        })
+        .show()
+    })
   }
 
   //chiamato quando inizia il turno dell'utente
@@ -80,8 +121,8 @@ object View extends JFXApp {
     BoardInteraction.confirmPlay()
   }
 
-  def matchEnded(player: String): Unit = {
-    gameBoard.matchEnded(player)
+  def matchEnded(player: String, playerWon: Boolean): Unit = {
+    gameBoard.matchEnded(player, playerWon)
   }
 
   def terminate(): Unit  = {
