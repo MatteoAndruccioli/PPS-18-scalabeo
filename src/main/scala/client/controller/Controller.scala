@@ -121,8 +121,8 @@ object Controller {
 
   def serversDown(server: ServerDown):Unit = {
     server match {
-      case _: GreetingServerDown => View.greetingDisconnected()//TODO far visualizzare terminazione della partita a causa di un errore, chiudere partita
-      case _: GameServerDown => View.gameServerDisconnected()//TODO far visualizzare terminazione della partita a causa di un errore, tornare a schermata scelta modalità
+      case _: GreetingServerDown => View.greetingDisconnected()
+      case _: GameServerDown => View.gameServerDisconnected()
     }
   }
 
