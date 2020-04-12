@@ -1,11 +1,9 @@
 package client.view
 
-import client.controller.Messages.ViewToClientMessages.PlayAgain
+import scalafx.Includes._
 import scalafx.application.JFXApp.PrimaryStage
-import scalafx.application.Platform
 import scalafx.scene.layout.GridPane
 import scalafx.scene.{Group, Scene}
-import scalafx.Includes._
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -54,37 +52,6 @@ class GameView(cards: ArrayBuffer[(String, Int)], users: List[String]) extends P
 
   def updateLeaderboard(ranking: List[(String, Int)]): Unit = {
     legendPanel.updateLeaderboard(ranking)
-  }
-
-  //TODO: Capire dove far tornare il player dopo che ha premuto si.
-  def matchEnded(player: String, playerWon: Boolean):Unit = {
-    if(playerWon) {
-      Platform.runLater(() => {
-        new Dialog("Hai vinto!!! Vuoi giocare di nuovo?")
-          .addYesNoButtons(
-          () => {
-            View.sendToClient(PlayAgain(true))
-            View.backToMainMenu()
-          },
-          () => {
-            View.sendToClient(PlayAgain(false))
-            View.terminate()
-          }).show()
-      })
-    } else {
-      Platform.runLater(() => {
-      new Dialog(player + " ha vinto. Vuoi giocare di nuovo?")
-        .addYesNoButtons(
-          () => {
-            View.sendToClient(PlayAgain(true))
-            View.backToMainMenu()
-          },
-          () => {
-            View.sendToClient(PlayAgain(false))
-            View.terminate()
-          }).show()
-      })
-    }
   }
 
   onCloseRequest = handle {
