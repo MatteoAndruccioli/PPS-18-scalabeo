@@ -109,6 +109,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
             updatePointsAndCheckIfGameEnded(sender())
           } else {
             board.clearBoardFromPlayedWords()
+            board.clearPlayedWords()
             sender ! ClientMoveAck(WordRefused())
           }
           playedWord.clear()
@@ -120,6 +121,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       if (ackEndTurn.isFull()) {
         scheduler.stopTask()
         ackEndTurn.reset()
+        board.clearPlayedWords()
         if(!isGameEnded) {
           incrementTurn()
           scheduler.replaceBehaviourAndStart(() => sendTurn())
@@ -186,6 +188,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
     for( player <- gamePlayers){
       rankingTuples.insert(0,(gamePlayersUsername(player), ranking.ranking(player)))
     }
+    println("L'aggiornamento contiene: " +board.playedWord)
     mediator ! Publish(serverTopic, EndTurnUpdate(rankingTuples.toList, board.playedWord))
   }
 
