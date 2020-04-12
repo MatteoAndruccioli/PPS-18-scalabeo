@@ -230,7 +230,7 @@ case class BoardImpl() extends Board {
 
   override def checkGameFirstWord(): Boolean = playedWordIsOnScarabeo() && lettersAreAdjacent()
 
-  private def playedWordIsOnScarabeo(): Boolean = _playedWord exists(boardTile => boardTile.position.coord.equals(9,9))
+  private def playedWordIsOnScarabeo(): Boolean = _playedWord exists(boardTile => boardTile.position.coord.equals(8,8))
 
   private def lettersAreAdjacent(): Boolean = {
     val playedWordOrderedByX = _playedWord.sortWith(_.position.coord._1<_.position.coord._1)
@@ -239,5 +239,5 @@ case class BoardImpl() extends Board {
       != playedWordOrderedByY.forall(boardTiles => boardTiles.position.coord._2 == playedWordOrderedByY.head.position.coord._2 + playedWordOrderedByY.indexWhere(element => element.equals(boardTiles))))
   }
 
-  
+
 }
