@@ -60,6 +60,7 @@ sealed trait Board{
   def getWordsFromLetters(word: List[ArrayBuffer[(Card, String)]]): List[String]
   def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]]): Int
   def checkGameFirstWord(): Boolean
+  def playedLettersAreInFoundWords(foundWords: List[ArrayBuffer[(Card, String)]]): Boolean
 }
 
 case class BoardImpl() extends Board {
@@ -144,8 +145,15 @@ case class BoardImpl() extends Board {
         }
       }
     }
-    listOfWords.filter(array => array.length > 1)
+    if (playedLettersAreInFoundWords(listOfWords)) listOfWords.filter(array => array.length > 1) else List()
   }
+
+  // meteod per controllare il caso in cui le letere giocate non siano adiacenti e gli spazi non siano occupati dalla board
+  // controlla che in una parola, fra quelle trovate, ci siano tutte le lettere giocate
+  override def playedLettersAreInFoundWords(foundWords: List[ArrayBuffer[(Card, String)]]): Boolean =
+    foundWords.exists(word => {
+      _playedWord.forall(tileBoard => word.contains((tileBoard.card,tileBoard.position.bonus)))
+    })
 
   // metodo per ottenere da una data posizione le carte inserite in una direzione
   private def tileBoardsInADirection(direction: Direction, boardTile: BoardTile): ArrayBuffer[(Card, String)] = {
@@ -230,4 +238,6 @@ case class BoardImpl() extends Board {
     (playedWordOrderedByX.forall(boardTiles => boardTiles.position.coord._1 == playedWordOrderedByX.head.position.coord._1 + playedWordOrderedByX.indexWhere(element => element.equals(boardTiles)))
       != playedWordOrderedByY.forall(boardTiles => boardTiles.position.coord._2 == playedWordOrderedByY.head.position.coord._2 + playedWordOrderedByY.indexWhere(element => element.equals(boardTiles))))
   }
+
+  
 }

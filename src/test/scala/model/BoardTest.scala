@@ -135,6 +135,16 @@ class BoardTest extends FlatSpec {
     assert(board.takeCardToCalculatePoints().isEmpty)
   }
 
+  "Not adjacent letters" should "not make a word (vertical)" in {
+    val board = BoardImpl()
+    val boardTileC = BoardTileImpl(new Position(2,3), CardImpl("S"))
+    val boardTileD = BoardTileImpl(new Position(5,3), CardImpl("I"))
+    board.addCard2Tile(CardImpl("S"), 3, 2)
+    board.addCard2Tile(CardImpl("i"), 3, 3)
+    board.addPlayedWord(List(boardTileC,boardTileD))
+    assert(board.takeCardToCalculatePoints().isEmpty)
+  }
+
   "The word" should "be extracted from the list of Card" in {
     val board = BoardImpl()
     val listOfWords: List[ArrayBuffer[(Card,String)]] = List(ArrayBuffer((CardImpl("O"),"DEFAULT"), (CardImpl("C"),"2P"), (CardImpl("A"),"DEFAULT")))
@@ -245,7 +255,4 @@ class BoardTest extends FlatSpec {
     board.addPlayedWord(List(boardTile,boardTile1,boardTile2, boardTile3, boardTile4,boardTile5,boardTile6, boardTile7))
     assert(board.calculateTurnPoints(board.takeCardToCalculatePoints()) == aspectedPoints+constants.bonusScarabeoWord)
   }
-
-
-
 }
