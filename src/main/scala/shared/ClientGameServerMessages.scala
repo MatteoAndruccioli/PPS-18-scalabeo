@@ -23,7 +23,6 @@ sealed trait Move
 object Move {
   case class Switch() extends Move
   case class WordMove(word: List[BoardTile]) extends Move
-  case class FakeMove() extends Move
   case class Pass() extends Move
   case class TimeOut() extends Move
 }
