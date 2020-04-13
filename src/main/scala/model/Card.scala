@@ -14,6 +14,8 @@ package object constants {
     ("S",1,7),  ("T",1,7), ("U",4,4), ("V",4,4),
     ("Z",8,2),  ("[a-zA-Z]",1,2))
 
+  val lettersScoresCardinalitiesTest = List(("I",1,8), ("S",1,8))
+
   // bonus che può avere una card
   val letterForTwo: String = "2L"
   val letterForThree: String = "3L"
@@ -26,6 +28,7 @@ package object constants {
   val firstWordBonus = 2
   val bonusScarabeoWord = 100
   val bonusWithoutScarabeo = 10
+  val scarabeoWord = "scarabeo"
 }
 
 // interfaccia della Carta: lettera e relativo valore
@@ -45,6 +48,7 @@ case class CardImpl (var _letter : String) extends Card {
 
 // Sacchetto contentenente le lettere da poter usare durante una partita
 sealed trait LettersBag {
+  def test: Boolean
   def bag: List[Card]
   def populateBag(list: List[(String, Int, Int)]): List[Card]
   def tuple2Cards(tuple: (String, Int, Int)): List[Card]
@@ -54,8 +58,9 @@ sealed trait LettersBag {
 
 
 // implementazione LettersBag
-case class LettersBagImpl() extends LettersBag {
-  private var _bag: List[Card] = populateBag(constants.lettersScoresCardinalities)
+case class LettersBagImpl(test: Boolean= false) extends LettersBag {
+  private var _bag: List[Card] = List()
+  if (test) _bag = populateBag(constants.lettersScoresCardinalitiesTest) else _bag = populateBag(constants.lettersScoresCardinalities)
   override def populateBag(list: List[(String, Int, Int)]): List[Card] = list.flatMap(tuple2Cards)
   override def tuple2Cards(tuple: (String, Int, Int)): List[Card] = List.fill(tuple._3)(CardImpl(tuple._1))
   override def bag: List[Card] = _bag

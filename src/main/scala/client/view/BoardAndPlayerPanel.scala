@@ -62,4 +62,8 @@ class BoardAndPlayerPanel(cards: ArrayBuffer[(String, Int)]) extends BorderPane 
   right = opponentHandRight
   top = opponentHandTop
   bottom = myHand
+
+  def updateBoard(word: List[(LetterTile, Int, Int)]): Unit = {
+    board.updateBoard(word)
+  }
 }

@@ -1,0 +1,34 @@
+.leaderboard {
+    -fx-padding: 0 20;
+    -fx-font-weight: 700;
+    -fx-alignment: center-left;
+    -fx-background-color: #9c88ff;
+}
+
+.title {
+    -fx-font-size: 30;
+}
+
+.player-container {
+    -fx-spacing: 5;
+}
+
+.player-text {
+    -fx-font-size: 20;
+    -fx-font-weight: 500;
+}
+
+.legend {
+-fx-background-color: #dcdde1;
+}
+
+.legend-entry {
+    -fx-alignment: center;
+    -fx-text-alignment: center;
+    -fx-font-size: 30;
+}
+
+.img {
+    -fx-fit-to-height: 30;
+    -fx-fill-width: 30;
+}

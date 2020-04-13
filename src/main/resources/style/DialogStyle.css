@@ -1,0 +1,32 @@
+.dialog {
+    -fx-border-radius: 20;
+    -fx-background-radius: 20;
+    /*-fx-effect: dropshadow(gaussian, rgba(0, 0, 0, 0.4), 10, 0.5, 0.0, 0.0);*/
+}
+
+.menu-button {
+    -fx-padding: 0.7em 0.57em;
+    -fx-font-size: 15px;
+    -jfx-button-type: RAISED;
+    -fx-background-color: white;
+    -fx-pref-width: 210;
+    -fx-border-radius: 0.2;
+    -fx-effect: dropshadow(three-pass-box, grey, 10, 0, 0, 0);
+}
+
+.accept-button {
+    -fx-background-color: #2ecc71;
+}
+
+.decline-button {
+    -fx-background-color: #e74c3c;
+}
+
+.menu-button:hover {
+    -fx-effect: innershadow(gaussian, grey, 2, 0, 0, 0);
+}
+
+.title {
+    -fx-font-size: 2em;
+    -fx-font-weight: bold;
+}

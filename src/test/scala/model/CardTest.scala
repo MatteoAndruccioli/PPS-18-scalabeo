@@ -3,7 +3,7 @@ package model
 import org.scalatest._
 
 
-class CardImplTest extends FlatSpec {
+class CardTest extends FlatSpec {
   "Letter in a Card " should " be equal to the parameter of the costructor" in {
     val letter = "A";
     val cardA = CardImpl(letter)

@@ -87,4 +87,14 @@ object ClusterScheduler{
   //factory con apply per il mio ClusterScheduler
   def apply(cluster: Cluster): CustomScheduler =
     new ClusterScheduler(INITIAL_DELAY, TimeUnit.SECONDS, INTERVAL, TimeUnit.SECONDS, None,cluster)
+
+  //factory con apply per il ClusterScheduler in cui posso specificare tutti i parametri
+  def apply(initialDelay: Long,
+            timeUnitInitialDelay: TimeUnit,
+            interval: Long,
+            timeUnitInterval: TimeUnit,
+            runnable: Option[Runnable],
+            cluster: Cluster): CustomScheduler =
+    new ClusterScheduler(initialDelay, timeUnitInitialDelay, interval, timeUnitInterval, runnable, cluster)
+
 }
