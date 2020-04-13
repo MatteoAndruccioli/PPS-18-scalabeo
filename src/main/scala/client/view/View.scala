@@ -144,6 +144,7 @@ object View extends JFXApp {
 
   def terminate(): Unit  = {
     View.sendToClient(UserExited())
+    Platform.exit()
   }
 
 }
