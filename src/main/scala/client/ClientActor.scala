@@ -16,7 +16,6 @@ import shared.GameServerToClientMessages.{ClientMoveAck, DisconnectionToGameServ
 import shared.{ClusterScheduler, CustomScheduler, Move}
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
 import shared.GreetingToClientMessages._
-import shared.Move.FakeMove
 
 import scala.collection.mutable.ArrayBuffer
 
