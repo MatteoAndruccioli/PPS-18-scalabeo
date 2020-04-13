@@ -33,11 +33,9 @@ class GreetingServer extends Actor {
   override def receive: Receive = {
     case message: ConnectionToGreetingQuery =>
       listPlayers += sender()
-      println("MI HA CONTATTATO IL PLAYER " + message.username)
       mapPlayersName += (sender() -> message.username)
       sender ! ConnectionAnswer(isServerOn)
       if(listPlayers.size>=nPlayer){
-        println("CI SONO ALMENO "+nPlayer+" giocatori")
         mediator ! Publish(GREETING_SERVER_RECEIVES_TOPIC, ReadyToJoinQuery())
       }
     case PlayerReadyAnswer(answer) =>
@@ -47,11 +45,9 @@ class GreetingServer extends Actor {
         if (readyPlayers.size >= nPlayer) {
           val playersForGame = List[ActorRef](readyPlayers.dequeue(), readyPlayers.dequeue() /*,readyPlayers.dequeue(),readyPlayers.dequeue()*/)
           for (player <- playersForGame) listPlayers -= player
-          println("ListPlayers after the game start: " + listPlayers)
           val gameServer = context.actorOf(Props(new GameServer(playersForGame, mapPlayersName.filter(user => playersForGame.contains(user._1)).toMap)), "gameServer" + gameNumber)
           games += (gameServer -> playersForGame)
           gameNumber = gameNumber + 1
-          println("GAME LIST :" + games.toString())
           gameServer ! InitGame()
         }
       } else {

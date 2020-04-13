@@ -98,10 +98,8 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       case message: Move.WordMove =>
         if (sender().equals(gamePlayers(turn))) {
           message.word.foreach(boardTile => playedWord.insert(0, boardTile))
-          println("RICEVUTA MOSSA: " + playedWord.toString + " da " + sender())
           board.addPlayedWord(List.concat(playedWord))
           println(board.boardTiles.toString)
-          //inserire check validità parole in futuro
           if(isFirstWord && board.checkGameFirstWord() && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints()))){
             updatePointsAndCheckIfGameEnded(sender())
             isFirstWord = false
@@ -188,7 +186,6 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
     for( player <- gamePlayers){
       rankingTuples.insert(0,(gamePlayersUsername(player), ranking.ranking(player)))
     }
-    println("L'aggiornamento contiene: " +board.playedWord)
     mediator ! Publish(serverTopic, EndTurnUpdate(rankingTuples.toList, board.playedWord))
   }
 
@@ -214,9 +211,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
     ranking.updatePoints(sender, board.calculateTurnPoints(board.takeCardToCalculatePoints()))
     replaceHand()
     sender ! ClientMoveAck(WordAccepted(playersHand(sender)._hand))
-    //controllo se è finito il game
     if (playersHand(sender).hand.isEmpty && pouch.bag.isEmpty) {
-      //toglieere i punti a tutti per le tessere nella propria mano e aggiungerli al vincitore
       winnerRef = sender
       for (player <- gamePlayers) {
         ranking.removePoints(player, playersHand(player).calculateHandPoint)
