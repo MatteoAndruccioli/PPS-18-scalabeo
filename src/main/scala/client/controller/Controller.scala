@@ -7,6 +7,7 @@ import client.controller.MoveOutcome.ServerDown.{GameServerDown, GreetingServerD
 import client.controller.MoveOutcome.{AcceptedWord, HandSwitchAccepted, HandSwitchRefused, PassReceived, RefusedWord, ServerDown, TimeoutReceived}
 import client.view.{BoardInteraction, LetterStatus, LetterTile, View}
 import model.{BoardTile, Card}
+import scalafx.application.Platform
 import shared.Move.WordMove
 
 import scala.collection.mutable.ArrayBuffer
