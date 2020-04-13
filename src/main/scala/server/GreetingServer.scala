@@ -18,7 +18,7 @@ class GreetingServer extends Actor {
   private val cluster = Cluster.get(context.system)
   private val isServerOn = true
 
-  private val nPlayer = 2
+  private val nPlayer = 4
 
   private var listPlayers = new mutable.ListBuffer[ActorRef]()
   private var mapPlayersName = mutable.Map[ActorRef, String]()
@@ -43,7 +43,7 @@ class GreetingServer extends Actor {
       if(answer) {
         readyPlayers.enqueue(sender())
         if (readyPlayers.size >= nPlayer) {
-          val playersForGame = List[ActorRef](readyPlayers.dequeue(), readyPlayers.dequeue() /*,readyPlayers.dequeue(),readyPlayers.dequeue()*/)
+          val playersForGame = List[ActorRef](readyPlayers.dequeue(), readyPlayers.dequeue(),readyPlayers.dequeue(),readyPlayers.dequeue())
           for (player <- playersForGame) listPlayers -= player
           val gameServer = context.actorOf(Props(new GameServer(playersForGame, mapPlayersName.filter(user => playersForGame.contains(user._1)).toMap)), "gameServer" + gameNumber)
           games += (gameServer -> playersForGame)

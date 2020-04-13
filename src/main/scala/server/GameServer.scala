@@ -32,7 +32,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private var winnerRef: ActorRef = _
 
   private val board = BoardImpl()
-  private val pouch = LettersBagImpl(true)
+  private val pouch = LettersBagImpl()
   private var playersHand = mutable.Map[ActorRef, LettersHandImpl]()
   //creo le mani
   gamePlayers.foreach(p => playersHand+=(p -> LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(8).get : _*))))
