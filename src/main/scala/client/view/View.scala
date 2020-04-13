@@ -2,7 +2,7 @@ package client.view
 
 import client.controller.Controller
 import client.controller.Messages.ViewToClientMessages
-import client.controller.Messages.ViewToClientMessages.UserExited
+import client.controller.Messages.ViewToClientMessages.{PlayAgain, UserExited}
 import scalafx.application.{JFXApp, Platform}
 
 import scala.collection.mutable.ArrayBuffer
@@ -122,7 +122,24 @@ object View extends JFXApp {
   }
 
   def matchEnded(player: String, playerWon: Boolean): Unit = {
-    gameBoard.matchEnded(player, playerWon)
+    var winnerString = ""
+    if(playerWon) {
+      winnerString = "Hai vinto!!! Vuoi giocare di nuovo?"
+    } else {
+      winnerString = player + " ha vinto. Vuoi giocare di nuovo?"
+    }
+    Platform.runLater(() => {
+        new Dialog(winnerString)
+          .addYesNoButtons(
+            () => {
+              View.sendToClient(PlayAgain(true))
+              View.backToMainMenu()
+            },
+            () => {
+              View.sendToClient(PlayAgain(false))
+              View.terminate()
+            }).show()
+      })
   }
 
   def terminate(): Unit  = {
