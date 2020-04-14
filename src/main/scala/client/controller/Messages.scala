@@ -17,5 +17,7 @@ object Messages {
     case class UserExited() extends  ViewToClientMessages
     //giocatore indica la propria mossa
     case class UserMadeHisMove(move: Move) extends ViewToClientMessages
+    //messaggio che il giocatore vuole inviare in chat
+    case class ChatMessage(message: String) extends ViewToClientMessages
   }
 }
