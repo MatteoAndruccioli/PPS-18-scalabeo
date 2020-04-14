@@ -2,7 +2,6 @@ package shared
 
 import akka.actor.ActorRef
 import model.{BoardTile, Card}
-
 import scala.collection.mutable.ArrayBuffer
 
 //tipo dei messaggi inviati da Client a GameServer
@@ -27,10 +26,11 @@ object Move {
   case class TimeOut() extends Move
 }
 
-//tipo dei messaggi inviati da GameServe a Client
+//tipo dei messaggi inviati da GameServer a Client
 sealed trait GameServerToClientMessages
 object GameServerToClientMessages {
-  case class MatchTopicListenQuery(gameServerTopic:String, playerHand: ArrayBuffer[Card], playersList: List[String]) extends GameServerToClientMessages
+  //messaggio per set-up comunicazione Client-GameServer
+  case class MatchTopicListenQuery(gameServerTopic:String, gameChatTopic:String, playerHand: ArrayBuffer[Card], playersList: List[String]) extends GameServerToClientMessages
   case class PlayerTurnBegins(playerInTurn:ActorRef) extends GameServerToClientMessages
   case class ClientMoveAck(moveAckType:ClientMoveAckType) extends GameServerToClientMessages
   case class EndTurnUpdate(playersRanking:List[(String,Int)], board:List[BoardTile]) extends GameServerToClientMessages
@@ -47,4 +47,14 @@ object ClientMoveAckType{
   case class HandSwitchRequestRefused() extends ClientMoveAckType//la mossa dell'utente era una richiesta di cambio mano che viene rifiutata
   case class PassAck() extends ClientMoveAckType //la mossa dell'utente era un passo => accettato sempre
   case class TimeoutAck() extends ClientMoveAckType //l'utente non ha prodotto nessuna mossa e il timer è scaduto => accettato sempre
+}
+
+
+//tipo che caratterizza messaggi inviati sulla chat
+sealed trait ChatMessages
+object ChatMessages{
+  //messaggio che l'utente invia in chat
+  case class SendChatMessageToGameServer(senderUsername: String, message: String) extends ChatMessages
+  //messaggio ricevuto in chat dall'utente
+  case class SendOnChat(senderUsername: String, senderActor:ActorRef, message: String) extends ChatMessages
 }

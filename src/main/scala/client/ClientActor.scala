@@ -5,10 +5,11 @@ import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
 import client.controller.Controller
-import client.controller.Messages.ViewToClientMessages.{JoinQueue, PlayAgain, UserExited, UserMadeHisMove, UserReadyToJoin, UsernameChosen}
+import client.controller.Messages.ViewToClientMessages.{ChatMessage, JoinQueue, PlayAgain, UserExited, UserMadeHisMove, UserReadyToJoin, UsernameChosen}
 import client.controller.MoveOutcome.ServerDown.{GameServerDown, GreetingServerDown}
 import client.controller.MoveOutcome._
 import model.Card
+import shared.ChatMessages.{SendChatMessageToGameServer, SendOnChat}
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
 import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameServerNotification, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck, SomeoneDisconnectedAck}
 import shared.ClientToGreetingMessages._
@@ -31,6 +32,8 @@ class ClientActor extends Actor{
   var gameServerActorRef: Option[ActorRef] = None
   //contiene il topic relativi al GameServer
   var gameServerTopic: Option[String] = None
+  //contiene il topic della chat
+  var chatTopic: Option[String] = None
   //contiene lo username scelto dall'utente
   private var username: Option[String] = None
   //l'utente è disposto a giocare
@@ -139,19 +142,19 @@ class ClientActor extends Actor{
   def waitingGameServerTopic: Receive = UnexpectedShutdown orElse
     opponentLefted orElse {
     case topicMessage: MatchTopicListenQuery =>
-
       updateGameServerReference(sender())
       updateGameServerTopic(topicMessage.gameServerTopic)
-      //todo forse in questo momento vorresti ricevere e gestire chat
+      updateChatTopic(topicMessage.gameChatTopic)
       Controller.onMatchStart(topicMessage.playerHand, topicMessage.playersList)
       sendGameServerTopicReceived()
       context.become(waitingInTurnPlayerNomination)
   }
 
-  //attendo che il GameServer decida di chi è il turno //todo manca gestione arrivo messaggi in chat
+  //attendo che il GameServer decida di chi è il turno
   def waitingInTurnPlayerNomination: Receive =
     UnexpectedShutdown orElse
-    opponentLefted orElse {
+    opponentLefted orElse
+      waitingChatMessages orElse {
     case message: PlayerTurnBegins => {
       if (message.playerInTurn == self){
         //caso in cui spetta a me giocare
@@ -177,9 +180,10 @@ class ClientActor extends Actor{
 
 
 
-  //attendo che l'utente faccia la sua mossa per poi comunicarla al GameServer //todo manca gestione arrivo messaggi in chat
+  //attendo che l'utente faccia la sua mossa per poi comunicarla al GameServer
   def waitingUserMakingMove: Receive = UnexpectedShutdown orElse
-    opponentLefted orElse {
+    opponentLefted orElse
+    waitingChatMessages orElse {
     case message :UserMadeHisMove =>{
       println("--------------------------------------------------------------------")
       println("utente ha indicato la sua mossa: " + message.move)
@@ -189,9 +193,9 @@ class ClientActor extends Actor{
   }
 
   //attendo che il server mi confermi la ricezione della mossa
-  //todo manca gestione arrivo messaggi in chat
   def waitingMoveAckFromGameServer: Receive =  UnexpectedShutdown orElse
-    opponentLefted orElse {
+    opponentLefted orElse
+    waitingChatMessages orElse {
     case serverAnswer: ClientMoveAck => {
       scheduler.stopTask()
       serverAnswer.moveAckType match {
@@ -206,9 +210,10 @@ class ClientActor extends Actor{
   }
 
 
-  //attendo che il GameServer comunichi gli aggiornamenti da compiere //todo manca gestione arrivo messaggi in chat
+  //attendo che il GameServer comunichi gli aggiornamenti da compiere
   def waitingTurnEndUpdates: Receive = UnexpectedShutdown orElse
-    opponentLefted orElse {
+    opponentLefted orElse
+    waitingChatMessages orElse {
     case message :EndTurnUpdate =>{
       println("ricevuti aggironamenti di fine turno dal GameServer [EndTurnUpdate]")
       Controller.turnEndUpdates(message.playersRanking, message.board)
@@ -219,8 +224,9 @@ class ClientActor extends Actor{
   }
 
 
-  //stato in cui attendo che il controller mi comunichi se l'utente vuole giocare una nuova partita o uscire //todo manca gestione arrivo messaggi in chat
-  def waitingUserChoosingWheterPlayAgainOrClosing: Receive = UnexpectedShutdown orElse {
+  //stato in cui attendo che il controller mi comunichi se l'utente vuole giocare una nuova partita o uscire
+  def waitingUserChoosingWheterPlayAgainOrClosing: Receive = UnexpectedShutdown orElse
+    waitingChatMessages orElse {
     case message: PlayAgain => {
       println("--------------------------------------------------------------------")
       println("utente dice che vuole continuare a giocare ("+message.userWantsToPlay+")")
@@ -239,8 +245,8 @@ class ClientActor extends Actor{
     }
   }
 
-  //attendo che GreetingServer confermi ricezione messaggio di disconnessione //todo manca gestione arrivo messaggi in chat
-  def waitingDisconnectionAck: Receive = {
+  //attendo che GreetingServer confermi ricezione messaggio di disconnessione
+  def waitingDisconnectionAck: Receive = waitingChatMessages orElse {
     case _: DisconnectionToGameServerNotificationAck => {
       println("--------------------------------------------------------------------")
       println(self + " - Ricevuto ack di richiesta disconnessione dal Game Server = " +sender())
@@ -268,6 +274,16 @@ class ClientActor extends Actor{
 
 
 
+  //usato dai client in qualsiasi momento per attendere messaggi da altri client e da View
+  def waitingChatMessages: Receive = {
+    case chatMessage: ChatMessage => gameServerActorRef.get ! SendChatMessageToGameServer(username.getOrElse("Username Sconosciuto"), chatMessage.message)
+    case sendOnChatMessage: SendOnChat => {
+      if (sendOnChatMessage.senderActor != self){
+        //todo invia messaggio al Controller
+      }
+    }
+  }
+
 
 
 
@@ -285,6 +301,12 @@ class ClientActor extends Actor{
   private def updateGameServerTopic(topic: String): Unit ={
     gameServerTopic = Some(topic)
     mediator ! Subscribe(gameServerTopic.get, self)
+  }
+
+  //memorizza il topic relativo alla chat e si registra per poter ricevere messaggi degli altri giocatori
+  private def updateChatTopic(topic: String): Unit = {
+    chatTopic = Some(topic)
+    mediator ! Subscribe(chatTopic.get, self)
   }
 
   //confermo a GameServer ricezione messaggio MatchTopicListenQuery
@@ -538,6 +560,10 @@ class ClientActor extends Actor{
     if (gameServerTopic.isDefined){
       mediator ! Unsubscribe(gameServerTopic.get, self)
     }
+    if (chatTopic.isDefined){
+      mediator ! Unsubscribe(chatTopic.get, self)
+    }
+    chatTopic = None
     gameServerTopic = None
     gameServerActorRef = None
     playerIsReady = false
