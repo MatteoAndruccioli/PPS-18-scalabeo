@@ -31,6 +31,8 @@ class ClientActor extends Actor{
   var gameServerActorRef: Option[ActorRef] = None
   //contiene il topic relativi al GameServer
   var gameServerTopic: Option[String] = None
+  //contiene il topic della chat
+  var chatTopic: Option[String] = None
   //contiene lo username scelto dall'utente
   private var username: Option[String] = None
   //l'utente è disposto a giocare
@@ -139,10 +141,9 @@ class ClientActor extends Actor{
   def waitingGameServerTopic: Receive = UnexpectedShutdown orElse
     opponentLefted orElse {
     case topicMessage: MatchTopicListenQuery =>
-
       updateGameServerReference(sender())
       updateGameServerTopic(topicMessage.gameServerTopic)
-      //todo forse in questo momento vorresti ricevere e gestire chat
+      updateChatTopic(topicMessage.gameChatTopic)
       Controller.onMatchStart(topicMessage.playerHand, topicMessage.playersList)
       sendGameServerTopicReceived()
       context.become(waitingInTurnPlayerNomination)
@@ -285,6 +286,12 @@ class ClientActor extends Actor{
   private def updateGameServerTopic(topic: String): Unit ={
     gameServerTopic = Some(topic)
     mediator ! Subscribe(gameServerTopic.get, self)
+  }
+
+  //memorizza il topic relativo alla chat e si registra per poter ricevere messaggi degli altri giocatori
+  private def updateChatTopic(topic: String): Unit = {
+    chatTopic = Some(topic)
+    mediator ! Subscribe(chatTopic.get, self)
   }
 
   //confermo a GameServer ricezione messaggio MatchTopicListenQuery
@@ -538,6 +545,10 @@ class ClientActor extends Actor{
     if (gameServerTopic.isDefined){
       mediator ! Unsubscribe(gameServerTopic.get, self)
     }
+    if (chatTopic.isDefined){
+      mediator ! Unsubscribe(chatTopic.get, self)
+    }
+    chatTopic = None
     gameServerTopic = None
     gameServerActorRef = None
     playerIsReady = false
