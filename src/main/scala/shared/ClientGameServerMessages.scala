@@ -2,7 +2,6 @@ package shared
 
 import akka.actor.ActorRef
 import model.{BoardTile, Card}
-
 import scala.collection.mutable.ArrayBuffer
 
 //tipo dei messaggi inviati da Client a GameServer
@@ -47,4 +46,14 @@ object ClientMoveAckType{
   case class HandSwitchRequestRefused() extends ClientMoveAckType//la mossa dell'utente era una richiesta di cambio mano che viene rifiutata
   case class PassAck() extends ClientMoveAckType //la mossa dell'utente era un passo => accettato sempre
   case class TimeoutAck() extends ClientMoveAckType //l'utente non ha prodotto nessuna mossa e il timer è scaduto => accettato sempre
+}
+
+
+//tipo che caratterizza messaggi inviati sulla chat
+sealed trait ChatMessages
+object ChatMessages{
+  //messaggio che l'utente invia in chat
+  case class SendChatMessageToGameServer(senderUsername: String, message: String) extends ChatMessages
+  //messaggio ricevuto in chat dall'utente
+  case class SendOnChat(senderUsername: String, senderActor:ActorRef, message: String) extends ChatMessages
 }
