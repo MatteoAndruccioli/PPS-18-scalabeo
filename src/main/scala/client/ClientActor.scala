@@ -5,10 +5,11 @@ import akka.cluster.Cluster
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe, Unsubscribe}
 import client.controller.Controller
-import client.controller.Messages.ViewToClientMessages.{JoinQueue, PlayAgain, UserExited, UserMadeHisMove, UserReadyToJoin, UsernameChosen}
+import client.controller.Messages.ViewToClientMessages.{ChatMessage, JoinQueue, PlayAgain, UserExited, UserMadeHisMove, UserReadyToJoin, UsernameChosen}
 import client.controller.MoveOutcome.ServerDown.{GameServerDown, GreetingServerDown}
 import client.controller.MoveOutcome._
 import model.Card
+import shared.ChatMessages.{SendChatMessageToGameServer, SendOnChat}
 import shared.ClientMoveAckType.{HandSwitchRequestAccepted, HandSwitchRequestRefused, PassAck, TimeoutAck, WordAccepted, WordRefused}
 import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameServerNotification, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck, SomeoneDisconnectedAck}
 import shared.ClientToGreetingMessages._
@@ -266,6 +267,18 @@ class ClientActor extends Actor{
   }
 
 
+
+
+
+  //usato dai client in qualsiasi momento per attendere messaggi da altri client e da View
+  def waitingChatMessages: Receive = {
+    case chatMessage: ChatMessage => gameServerActorRef.get ! SendChatMessageToGameServer(username.getOrElse("Username Sconosciuto"), chatMessage.message)
+    case sendOnChatMessage: SendOnChat => {
+      if (sendOnChatMessage.senderActor != self){
+        //todo invia messaggio al Controller
+      }
+    }
+  }
 
 
 
