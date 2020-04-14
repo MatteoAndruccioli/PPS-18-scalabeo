@@ -26,10 +26,11 @@ object Move {
   case class TimeOut() extends Move
 }
 
-//tipo dei messaggi inviati da GameServe a Client
+//tipo dei messaggi inviati da GameServer a Client
 sealed trait GameServerToClientMessages
 object GameServerToClientMessages {
-  case class MatchTopicListenQuery(gameServerTopic:String, playerHand: ArrayBuffer[Card], playersList: List[String]) extends GameServerToClientMessages
+  //messaggio per set-up comunicazione Client-GameServer
+  case class MatchTopicListenQuery(gameServerTopic:String, gameChatTopic:String, playerHand: ArrayBuffer[Card], playersList: List[String]) extends GameServerToClientMessages
   case class PlayerTurnBegins(playerInTurn:ActorRef) extends GameServerToClientMessages
   case class ClientMoveAck(moveAckType:ClientMoveAckType) extends GameServerToClientMessages
   case class EndTurnUpdate(playersRanking:List[(String,Int)], board:List[BoardTile]) extends GameServerToClientMessages
