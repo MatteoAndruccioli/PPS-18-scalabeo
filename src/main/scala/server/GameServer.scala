@@ -1,6 +1,6 @@
 package server
 
-import shared.Topic.GAME_SERVER_SEND_TOPIC
+import shared.Topic.{CHAT_TOPIC, GAME_SERVER_SEND_TOPIC}
 import server.GreetingToGameServer.{EndGameToGreetingAck, InitGame}
 import akka.actor.{Actor, ActorRef}
 import akka.cluster.Cluster
@@ -9,6 +9,7 @@ import akka.cluster.pubsub.DistributedPubSubMediator.{Publish, Subscribe}
 import model._
 import server.GameServerToGameServer.EndGameInit
 import server.GameServerToGreeting.EndGameToGreeting
+import shared.ChatMessages.{SendChatMessageToGameServer, SendOnChat}
 import shared.ClientMoveAckType._
 import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameServerNotification, EndTurnUpdateAck, GameEndedAck, MatchTopicListenAck, PlayerTurnBeginAck, SomeoneDisconnectedAck}
 import shared.GameServerToClientMessages.{ClientMoveAck, DisconnectionToGameServerNotificationAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins, SomeoneDisconnected}
@@ -21,7 +22,9 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   val mediator = DistributedPubSub(context.system).mediator
   val serverTopic = GAME_SERVER_SEND_TOPIC+self.toString().substring(50)
+  val chatTopic : String = CHAT_TOPIC+self.toString().substring(50)
   mediator ! Subscribe(serverTopic, self)
+  mediator ! Subscribe(chatTopic, self)
   private val cluster = Cluster.get(context.system)
   private val scheduler: CustomScheduler = ClusterScheduler(cluster)
   private val nPlayer = players.size
@@ -147,6 +150,12 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
     case _ : EndGameToGreetingAck =>
       scheduler.stopTask()
       context.stop(self)
+
+    //chat
+    case message: SendChatMessageToGameServer =>
+      gamePlayers.foreach(p => if (!p.equals(sender())) {
+        p ! SendOnChat(message.senderUsername, sender(), message.message)
+      })
   }
 
   def EndGame : Receive = {
@@ -174,7 +183,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   //comportamento dello scheduler
   private def sendTopic(): Unit = {
-    gamePlayers.foreach(player => player ! MatchTopicListenQuery(serverTopic, playersHand(player)._hand, gamePlayersUsername.values.toList))
+    gamePlayers.foreach(player => player ! MatchTopicListenQuery(serverTopic, chatTopic, playersHand(player)._hand, gamePlayersUsername.values.toList))
   }
 
   private def sendTurn(): Unit = {
