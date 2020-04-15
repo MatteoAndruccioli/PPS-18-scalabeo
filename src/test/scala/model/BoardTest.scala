@@ -224,6 +224,16 @@ class BoardTest extends FlatSpec {
     assert(!board.checkGameFirstWord())
   }
 
+  "The letters played not " should "adjacent to the letters in the Board" in {
+    val board = BoardImpl()
+    val boardTile = BoardTileImpl(new Position(9,9), CardImpl("F"))
+    val boardTile1 = BoardTileImpl(new Position(9,10), CardImpl("I"))
+    board.addPlayedWord(List(boardTile,boardTile1))
+    assert(!board.takeCardToCalculatePoints().equals(List()))
+    board.addPlayedWord(List(BoardTileImpl(new Position(1,2), CardImpl("I"))))
+    assert(board.takeCardToCalculatePoints().equals(List()))
+  }
+
   "The word points" should "be doubled for the first word" in {
     val board = BoardImpl()
     val aspectedPoints = 14

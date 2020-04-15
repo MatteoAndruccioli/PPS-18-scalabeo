@@ -1,6 +1,7 @@
 package model
 
 import scala.collection.mutable.ArrayBuffer
+import model.Directions.{N,S,W,E}
 
 package object boardConstants{
   val boardBonus: Map[(Int, Int), String] = Map((1, 5) -> constants.letterForTwo, (1, 13) -> constants.letterForTwo, (3, 8) -> constants.letterForTwo,
@@ -60,7 +61,6 @@ sealed trait Board{
   def getWordsFromLetters(word: List[ArrayBuffer[(Card, String)]]): List[String]
   def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]]): Int
   def checkGameFirstWord(): Boolean
-  def playedLettersAreInFoundWords(foundWords: List[ArrayBuffer[(Card, String)]]): Boolean
 }
 
 case class BoardImpl() extends Board {
@@ -124,6 +124,7 @@ case class BoardImpl() extends Board {
 
   // metodo per ottenere parole formate con le card inserite dall'utente in un turno
   override def takeCardToCalculatePoints(): List[ArrayBuffer[(Card, String)]] = {
+    if (!(checkBoardLettersNearness() || _firstWord)) return List()
     var listOfWords: List[ArrayBuffer[(Card, String)]] = List()
 
     // per la testa della lista controllo in tutti e due i versi
@@ -145,15 +146,24 @@ case class BoardImpl() extends Board {
         }
       }
     }
-    if (playedLettersAreInFoundWords(listOfWords)) listOfWords.filter(array => array.length > 1) else List()
+    if (playedLettersAreInFoundWords(listOfWords) ) listOfWords.filter(array => array.length > 1) else List()
   }
 
-  // meteod per controllare il caso in cui le letere giocate non siano adiacenti e gli spazi non siano occupati dalla board
+  // metodo per controllare il caso in cui le letere giocate non siano adiacenti e gli spazi non siano occupati dalla board
   // controlla che in una parola, fra quelle trovate, ci siano tutte le lettere giocate
-  override def playedLettersAreInFoundWords(foundWords: List[ArrayBuffer[(Card, String)]]): Boolean =
+  private def playedLettersAreInFoundWords(foundWords: List[ArrayBuffer[(Card, String)]]): Boolean =
     foundWords.exists(word => {
       _playedWord.forall(tileBoard => word.contains((tileBoard.card,tileBoard.position.bonus)))
     })
+
+  // medoto per controllare almeno una parola giocata è adiacente a quelle già presenti nella Board
+  private def checkBoardLettersNearness(): Boolean =
+    _playedWord.exists(boardTile =>
+      !getTileInAPosition(boardTile.position.shift(N).get.coord._1, boardTile.position.shift(N).get.coord._2).equals(boardConstants.boardTileDefault) ||
+        !getTileInAPosition(boardTile.position.shift(W).get.coord._1, boardTile.position.shift(W).get.coord._2).equals(boardConstants.boardTileDefault) ||
+        !getTileInAPosition(boardTile.position.shift(E).get.coord._1, boardTile.position.shift(E).get.coord._2).equals(boardConstants.boardTileDefault) ||
+        !getTileInAPosition(boardTile.position.shift(S).get.coord._1, boardTile.position.shift(S).get.coord._2).equals(boardConstants.boardTileDefault)
+    )
 
   // metodo per ottenere da una data posizione le carte inserite in una direzione
   private def tileBoardsInADirection(direction: Direction, boardTile: BoardTile): ArrayBuffer[(Card, String)] = {
