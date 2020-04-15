@@ -40,7 +40,6 @@ class UtilityPanel extends GridPane {
         if(Controller.isMyTurn) {
           println("Giocato")
           timerPanel.pauseTimer()
-          Controller.endMyTurn()
           Controller.playWord()
         } else {
           println("Non è il mio turno!!!!!!!!!!!!!")

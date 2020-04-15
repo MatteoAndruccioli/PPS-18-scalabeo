@@ -77,14 +77,17 @@ object Controller {
   }
 
   def playWord(): Unit = {
+    Controller.endMyTurn()
     val playedWord = GameManager.getPlayedWord
-    if(!playedWord.isEmpty)
-      {
+    if(playedWord.nonEmpty) {
         playedWord.foreach(b => {
           print(b.card.letter)
         })
         sendToClient(UserMadeHisMove(WordMove(playedWord)))
-      }
+    } else {
+      View.showEventMessage("Devi inserire almeno una lettera per inviare la tua mossa")
+      Controller.userTurnContinues()
+    }
   }
 
   //metodo attraverso cui il Client comunica al controller l'esito della mossa inviata al GameServer
