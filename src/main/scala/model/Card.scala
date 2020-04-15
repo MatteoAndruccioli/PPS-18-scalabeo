@@ -14,21 +14,8 @@ package object constants {
     ("S",1,7),  ("T",1,7), ("U",4,4), ("V",4,4),
     ("Z",8,2),  ("[a-zA-Z]",1,2))
 
+  val defaultCard = CardImpl("NULL")
   val lettersScoresCardinalitiesTest = List(("I",1,8), ("S",1,8))
-
-  // bonus che può avere una card
-  val letterForTwo: String = "2L"
-  val letterForThree: String = "3L"
-  val wordForTwo: String = "2P"
-  val wordForThree: String = "3P"
-  val bonusLenght8 = 50
-  val bonusLenght7 = 30
-  val bonusLenght6 = 10
-  val scarabeo = "[a-zA-Z]"
-  val firstWordBonus = 2
-  val bonusScarabeoWord = 100
-  val bonusWithoutScarabeo = 10
-  val scarabeoWord = "scarabeo"
 }
 
 // interfaccia della Carta: lettera e relativo valore

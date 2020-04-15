@@ -4,31 +4,31 @@ import scala.collection.mutable.ArrayBuffer
 import model.Directions.{N,S,W,E}
 
 package object boardConstants{
-  val boardBonus: Map[(Int, Int), String] = Map((1, 5) -> constants.letterForTwo, (1, 13) -> constants.letterForTwo, (3, 8) -> constants.letterForTwo,
-    (3, 10) -> constants.letterForTwo, (4, 9) -> constants.letterForTwo, (5, 1) ->constants.letterForTwo,
-    (5, 17) ->constants.letterForTwo, (8, 3) -> constants.letterForTwo,(8, 8) ->constants.letterForTwo,
-    (8, 10) ->constants.letterForTwo, (8, 15) ->constants.letterForTwo, (9, 4) ->constants.letterForTwo,
-    (9, 14) ->constants.letterForTwo, (10, 3) ->constants.letterForTwo, (10, 8) ->constants.letterForTwo,
-    (10, 10) ->constants.letterForTwo, (10, 15) ->constants.letterForTwo, (13, 1) ->constants.letterForTwo,
-    (13, 17) ->constants.letterForTwo, (14, 9) ->constants.letterForTwo, (15, 8) ->constants.letterForTwo,
-    (15, 10) ->constants.letterForTwo, (17, 5) ->constants.letterForTwo,(17,13) ->constants.letterForTwo,
-    (2, 7) ->constants.letterForThree, (2, 11) ->constants.letterForThree, (7, 2) ->constants.letterForThree,
-    (7, 7) ->constants.letterForThree, (7, 11) ->constants.letterForThree, (7, 16) ->constants.letterForThree,
-    (11, 2) ->constants.letterForThree, (11, 7) ->constants.letterForThree, (11, 11) ->constants.letterForThree,
-    (11, 16) ->constants.letterForThree, (16, 7) ->constants.letterForThree, (16, 11) ->constants.letterForThree,
-    (1, 1) ->constants.wordForThree, (9, 1) ->constants.wordForThree, (17, 1) ->constants.wordForThree,
-    (1, 9) ->constants.wordForThree, (17, 9) ->constants.wordForThree, (1, 17) ->constants.wordForThree,
-    (9, 17) ->constants.wordForThree, (17, 17) ->constants.wordForThree,
-    (2, 2) ->constants.wordForTwo, (3, 3) ->constants.wordForTwo, (4, 4) ->constants.wordForTwo,
-    (5, 5) ->constants.wordForTwo, (6, 6) ->constants.wordForTwo, (12, 12) ->constants.wordForTwo,
-    (13, 13) ->constants.wordForTwo, (14, 14) ->constants.wordForTwo, (15, 15) ->constants.wordForTwo,
-    (16, 16) ->constants.wordForTwo, (2, 16) ->constants.wordForTwo, (3, 15) ->constants.wordForTwo,
-    (4, 14) ->constants.wordForTwo, (5, 13) ->constants.wordForTwo, (6, 12) ->constants.wordForTwo,
-    (12, 6) ->constants.wordForTwo, (13, 5) ->constants.wordForTwo, (14, 4) ->constants.wordForTwo,
-    (15, 3) ->constants.wordForTwo, (16, 2) ->constants.wordForTwo)
+  val boardBonus: Map[(Int, Int), String] = Map((1, 5) -> scoreConstants.letterForTwo, (1, 13) -> scoreConstants.letterForTwo, (3, 8) -> scoreConstants.letterForTwo,
+    (3, 10) -> scoreConstants.letterForTwo, (4, 9) -> scoreConstants.letterForTwo, (5, 1) ->scoreConstants.letterForTwo,
+    (5, 17) ->scoreConstants.letterForTwo, (8, 3) -> scoreConstants.letterForTwo,(8, 8) ->scoreConstants.letterForTwo,
+    (8, 10) ->scoreConstants.letterForTwo, (8, 15) ->scoreConstants.letterForTwo, (9, 4) ->scoreConstants.letterForTwo,
+    (9, 14) ->scoreConstants.letterForTwo, (10, 3) ->scoreConstants.letterForTwo, (10, 8) ->scoreConstants.letterForTwo,
+    (10, 10) ->scoreConstants.letterForTwo, (10, 15) ->scoreConstants.letterForTwo, (13, 1) ->scoreConstants.letterForTwo,
+    (13, 17) ->scoreConstants.letterForTwo, (14, 9) ->scoreConstants.letterForTwo, (15, 8) ->scoreConstants.letterForTwo,
+    (15, 10) ->scoreConstants.letterForTwo, (17, 5) ->scoreConstants.letterForTwo,(17,13) ->scoreConstants.letterForTwo,
+    (2, 7) ->scoreConstants.letterForThree, (2, 11) ->scoreConstants.letterForThree, (7, 2) ->scoreConstants.letterForThree,
+    (7, 7) ->scoreConstants.letterForThree, (7, 11) ->scoreConstants.letterForThree, (7, 16) ->scoreConstants.letterForThree,
+    (11, 2) ->scoreConstants.letterForThree, (11, 7) ->scoreConstants.letterForThree, (11, 11) ->scoreConstants.letterForThree,
+    (11, 16) ->scoreConstants.letterForThree, (16, 7) ->scoreConstants.letterForThree, (16, 11) ->scoreConstants.letterForThree,
+    (1, 1) ->scoreConstants.wordForThree, (9, 1) ->scoreConstants.wordForThree, (17, 1) ->scoreConstants.wordForThree,
+    (1, 9) ->scoreConstants.wordForThree, (17, 9) ->scoreConstants.wordForThree, (1, 17) ->scoreConstants.wordForThree,
+    (9, 17) ->scoreConstants.wordForThree, (17, 17) ->scoreConstants.wordForThree,
+    (2, 2) ->scoreConstants.wordForTwo, (3, 3) ->scoreConstants.wordForTwo, (4, 4) ->scoreConstants.wordForTwo,
+    (5, 5) ->scoreConstants.wordForTwo, (6, 6) ->scoreConstants.wordForTwo, (12, 12) ->scoreConstants.wordForTwo,
+    (13, 13) ->scoreConstants.wordForTwo, (14, 14) ->scoreConstants.wordForTwo, (15, 15) ->scoreConstants.wordForTwo,
+    (16, 16) ->scoreConstants.wordForTwo, (2, 16) ->scoreConstants.wordForTwo, (3, 15) ->scoreConstants.wordForTwo,
+    (4, 14) ->scoreConstants.wordForTwo, (5, 13) ->scoreConstants.wordForTwo, (6, 12) ->scoreConstants.wordForTwo,
+    (12, 6) ->scoreConstants.wordForTwo, (13, 5) ->scoreConstants.wordForTwo, (14, 4) ->scoreConstants.wordForTwo,
+    (15, 3) ->scoreConstants.wordForTwo, (16, 2) ->scoreConstants.wordForTwo)
 
-  val defaultCard = CardImpl("NULL")
-  val boardTileDefault = BoardTileImpl(Position(-1, -1), defaultCard)
+
+  val boardTileDefault = BoardTileImpl(Position(-1, -1), constants.defaultCard)
 
   val horizontal  = "H"
   val vertical = "V"
@@ -72,7 +72,7 @@ case class BoardImpl() extends Board {
   override def playedWord: List[BoardTile] = _playedWord
 
   private def populateBoard() = (for( x <- 1 to 17; y <- 1 to 17) yield tuple2BoardTile(x, y)).toList
-  private def tuple2BoardTile(tuple: (Int, Int)): BoardTile = BoardTileImpl(Position.apply(tuple._1, tuple._2), boardConstants.defaultCard)
+  private def tuple2BoardTile(tuple: (Int, Int)): BoardTile = BoardTileImpl(Position.apply(tuple._1, tuple._2), constants.defaultCard)
 
   private def samePosition(position: Position, x: Int, y: Int): Boolean = position.coord._1+1 == x && position.coord._2+1 == y
   private def getTileInAPosition(x:Int, y:Int): BoardTile = _boardTiles.find( boardTile => samePosition(boardTile.position,x, y)).getOrElse(boardConstants.boardTileDefault)
@@ -89,12 +89,12 @@ case class BoardImpl() extends Board {
 
   // metodo per rimuovere una card in una posizione del tabellone
   override def removeCardFromTile(x: Int, y: Int, removeFromPlayedWord:Boolean = true): Card = {
-    var card: Card = boardConstants.defaultCard
+    var card: Card = constants.defaultCard
     _boardTiles = _boardTiles.map {
       element => if (element.equals(getTileInAPosition(x, y))) {
         card = element.card
         if(removeFromPlayedWord) _playedWord = _playedWord.filter(boardTile => !boardTile.equals(element))
-        BoardTileImpl(new Position(x, y), boardConstants.defaultCard)
+        BoardTileImpl(new Position(x, y), constants.defaultCard)
       }else element
     }
     card
@@ -109,7 +109,7 @@ case class BoardImpl() extends Board {
   override def clearPlayedWords(): Unit = _playedWord = List()
   override def clearBoardFromPlayedWords(): Unit = for(playedWord <- _playedWord) removeCardFromTile(playedWord.position.coord._1+1, playedWord.position.coord._2+1, removeFromPlayedWord = false)
 
-  // metodo per controllare che lettere siano in prizzontale o in verticale
+  // metodo per controllare che lettere siano in orizzontale o in verticale
   def checkGoodWordDirection(): Boolean = !(wordDirection(_playedWord) == boardConstants.diagonal)
 
   // metodo per controllare che le lettere inserite siano tutte nella stessa direzione
@@ -120,6 +120,23 @@ case class BoardImpl() extends Board {
       boardConstants.horizontal
     else
       boardConstants.diagonal
+  }
+
+  // metodo per i controlli aggiuntivi della prima parola
+  private def firstWord(): Int = if(_firstWord){_firstWord= false; scoreRules.bonusFirstWord()} else 1
+
+  // metodo per implementare i controlli sulla prima parola inserita nella partita
+  override def checkGameFirstWord(): Boolean = playedWordIsOnScarabeo() && lettersAreAdjacent()
+
+  // 1 => la prima parola deve essere sopra la figura dello scarabeo al centro del tabellone
+  private def playedWordIsOnScarabeo(): Boolean = _playedWord exists(boardTile => boardTile.position.coord.equals(8,8))
+
+  // 2 -> le lettere giocate devono essere tutte adiacenti
+  private def lettersAreAdjacent(): Boolean = {
+    val playedWordOrderedByX = _playedWord.sortWith(_.position.coord._1<_.position.coord._1)
+    val playedWordOrderedByY = _playedWord.sortWith(_.position.coord._2<_.position.coord._2)
+    (playedWordOrderedByX.forall(boardTiles => boardTiles.position.coord._1 == playedWordOrderedByX.head.position.coord._1 + playedWordOrderedByX.indexWhere(element => element.equals(boardTiles)))
+      != playedWordOrderedByY.forall(boardTiles => boardTiles.position.coord._2 == playedWordOrderedByY.head.position.coord._2 + playedWordOrderedByY.indexWhere(element => element.equals(boardTiles))))
   }
 
   // metodo per ottenere parole formate con le card inserite dall'utente in un turno
@@ -169,7 +186,7 @@ case class BoardImpl() extends Board {
   private def tileBoardsInADirection(direction: Direction, boardTile: BoardTile): ArrayBuffer[(Card, String)] = {
     var wordReturn: ArrayBuffer[(Card,String)] = ArrayBuffer()
     var actualBoardTile = getTileInAPosition(boardTile.position.coord._1+1+direction.shift._1, boardTile.position.coord._2+1+direction.shift._2)
-    while(!actualBoardTile.card.equals(boardConstants.defaultCard) && actualBoardTile.position.isValidPosition()){
+    while(!actualBoardTile.card.equals(constants.defaultCard) && actualBoardTile.position.isValidPosition()){
       if(direction.equals(Directions.N) || direction.equals(Directions.W)) {
         wordReturn = (actualBoardTile.card, actualBoardTile.position.bonus) +: wordReturn
       } else if (direction.equals(Directions.S) || direction.equals(Directions.E)) {
@@ -195,59 +212,20 @@ case class BoardImpl() extends Board {
     result
   }
 
+  // metodo per il calcolo del punteggio di una parola
   private def calculateWordScore(word: ArrayBuffer[(Card, String)]): Int =  {
     var letterValue: Int = 0
     var multiplier: Int = 0
     val letterPoints = for (tuple <- word;
-                            multiplierBonus = getWordMultiplier(tuple._2);
-                            letterValue = getLetterMultiplier(tuple._2) * tuple._1.score) yield (letterValue, multiplierBonus)
+                            multiplierBonus = scoreRules.wordMultiplier(tuple._2);
+                            letterValue = scoreRules.letterMultiplier(tuple._2) * tuple._1.score) yield (letterValue, multiplierBonus)
     letterPoints.foreach({letterValue += _._1})
     letterPoints.foreach({multiplier += _._2})
     if(multiplier == 0) multiplier=1
-    letterValue * multiplier * firstWord+ lenghtBonus(word) + wordIsScarabeoBonus(word)
+    letterValue * multiplier * firstWord+ scoreRules.lenghtBonus(word) + scoreRules.wordScarabeoBonus(word)
   }
 
-  // metodo per il bonus che ritorna il moltiplicatore del punteggio della parola
-  private def getWordMultiplier(positionBonus: String): Int = positionBonus match{
-    case constants.wordForTwo => 2
-    case constants.wordForThree => 3
-    case _ => 0
-  }
 
-  // metodo per il moltiplicatore del punteggio della lettera
-  private def getLetterMultiplier(positionBonus: String): Int = positionBonus match{
-    case constants.letterForTwo => 2
-    case constants.letterForThree => 3
-    case _ => 1
-  }
-
-  // medoto per il bonus dato dato dalla lunghezza della parola
-  private def lenghtBonus(word: ArrayBuffer[(Card, String)]) : Int = word.length match{
-    case 8 => constants.bonusLenght8 + isThereScarabeoCard(word)
-    case 7 => constants.bonusLenght7 + isThereScarabeoCard(word)
-    case 6 => constants.bonusLenght6 + isThereScarabeoCard(word)
-    case _ => 0
-  }
-
-  // metodo per il bonus se nella parola non è stato usato lo scarabeo
-  private def isThereScarabeoCard(word: ArrayBuffer[(Card, String)]): Int =
-    if (word exists (tuple => tuple._1.letter == constants.scarabeo)) 0 else constants.bonusWithoutScarabeo
-  // metodo per il bonus parol
-  //a == SCARABEO
-  private def wordIsScarabeoBonus(word: ArrayBuffer[(Card, String)]): Int =  if (getWordFromLetters(word).equals(constants.scarabeoWord)) constants.bonusScarabeoWord else 0
-  // bonus prima parola inserita
-  private def firstWord(): Int = if(_firstWord){_firstWord = false; constants.firstWordBonus} else 1
-
-  override def checkGameFirstWord(): Boolean = playedWordIsOnScarabeo() && lettersAreAdjacent()
-
-  private def playedWordIsOnScarabeo(): Boolean = _playedWord exists(boardTile => boardTile.position.coord.equals(8,8))
-
-  private def lettersAreAdjacent(): Boolean = {
-    val playedWordOrderedByX = _playedWord.sortWith(_.position.coord._1<_.position.coord._1)
-    val playedWordOrderedByY = _playedWord.sortWith(_.position.coord._2<_.position.coord._2)
-    (playedWordOrderedByX.forall(boardTiles => boardTiles.position.coord._1 == playedWordOrderedByX.head.position.coord._1 + playedWordOrderedByX.indexWhere(element => element.equals(boardTiles)))
-      != playedWordOrderedByY.forall(boardTiles => boardTiles.position.coord._2 == playedWordOrderedByY.head.position.coord._2 + playedWordOrderedByY.indexWhere(element => element.equals(boardTiles))))
-  }
 
 
 }
