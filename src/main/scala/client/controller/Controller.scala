@@ -112,6 +112,10 @@ object Controller {
     View.userTurnContinues()
   }
 
+  def showInChat(sender: String, message: String): Unit = {
+    View.showInChat(sender, message)
+  }
+
   def isMulliganAvailable: Boolean = {
     GameManager.isMulliganAvailable()
   }

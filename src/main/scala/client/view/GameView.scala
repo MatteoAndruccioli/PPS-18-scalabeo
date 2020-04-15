@@ -26,6 +26,14 @@ class GameView(cards: ArrayBuffer[(String, Int)], users: List[String]) extends P
   sizeToScene()
   show()
 
+  def showInChat(sender: String, message: String): Unit = {
+    utilityPanel.showInChat(sender, message)
+  }
+
+  def showEventMessage(message: String): Unit = {
+    utilityPanel.showEventMessage(message)
+  }
+
   def updateBoard(word: List[(LetterTile, Int, Int)]): Unit = {
     boardAndPlayerPanel.updateBoard(word)
   }

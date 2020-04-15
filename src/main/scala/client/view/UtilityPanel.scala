@@ -13,7 +13,7 @@ class UtilityPanel extends GridPane {
   prefWidth = 310
   prefHeight = 720
   val timerPanel: TimerPanel = new TimerPanel
-
+  val chatPanel: ChatPanel = new ChatPanel
   val mulliganButton: Button = new Button("Mulligan") {
     onAction = handle {
       if(Controller.isMyTurn) {
@@ -68,6 +68,51 @@ class UtilityPanel extends GridPane {
       }
     )
   }, 0, 1)
+
+  add(new VBox() {
+    children = List(
+      new VBox() {
+        styleClass += "big-container"
+        children = List(
+          new HBox(5) {
+            styleClass += "line-container"
+            children = List(
+              LetterTile(36, "s", "", 0, LetterStatus.placeHolder),
+              LetterTile(36, "c", "", 0, LetterStatus.placeHolder),
+              LetterTile(36, "a", "", 0, LetterStatus.placeHolder),
+              LetterTile(36, "l", "", 0, LetterStatus.placeHolder),
+              LetterTile(36, "a", "", 0, LetterStatus.placeHolder),
+              LetterTile(36, "b", "", 0, LetterStatus.placeHolder),
+              LetterTile(36, "e", "", 0, LetterStatus.placeHolder),
+              LetterTile(36, "o", "", 0, LetterStatus.placeHolder)
+            )
+          },
+          new HBox(5) {
+            styleClass += "line-container"
+            children = List(
+              LetterTile(36, "c", "", 0, LetterStatus.placeHolder),
+              LetterTile(36, "h", "", 0, LetterStatus.placeHolder),
+              LetterTile(36, "a", "", 0, LetterStatus.placeHolder),
+              LetterTile(36, "t", "", 0, LetterStatus.placeHolder),
+            )
+          }
+        )
+      },
+      new VBox() {
+        styleClass += "chat-container"
+        children = chatPanel
+      }
+
+    )
+  }, 0, 2)
+
+  def showInChat(sender: String, message: String): Unit = {
+    chatPanel.showInChat(sender, message)
+  }
+
+  def showEventMessage(message: String): Unit = {
+    chatPanel.showEventMessage(message)
+  }
 
   def disableMulliganButton(condition: Boolean): Unit = {
     mulliganButton.disable = condition

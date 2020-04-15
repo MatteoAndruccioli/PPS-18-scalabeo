@@ -97,6 +97,18 @@ object View extends JFXApp {
     gameBoard.updateBoard(word)
   }
 
+  def showInChat(sender: String, message: String): Unit = {
+    Platform.runLater(() => {
+      gameBoard.showInChat(sender, message)
+    })
+  }
+
+  def showEventMessage(message: String): Unit = {
+    Platform.runLater(() => {
+      gameBoard.showEventMessage(message)
+    })
+  }
+
   def endMyTurn(): Unit = {
     Controller.endMyTurn()
   }
