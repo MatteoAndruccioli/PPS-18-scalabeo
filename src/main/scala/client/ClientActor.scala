@@ -279,7 +279,7 @@ class ClientActor extends Actor{
     case chatMessage: ChatMessage => gameServerActorRef.get ! SendChatMessageToGameServer(username.getOrElse("Username Sconosciuto"), chatMessage.message)
     case sendOnChatMessage: SendOnChat => {
       if (sendOnChatMessage.senderActor != self){
-        //todo invia messaggio al Controller
+        Controller.showInChat(sendOnChatMessage.senderUsername, sendOnChatMessage.message)
       }
     }
   }
