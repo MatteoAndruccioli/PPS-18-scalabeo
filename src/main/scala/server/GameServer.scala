@@ -106,7 +106,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
           if(isFirstWord && board.checkGameFirstWord() && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints()))){
             updatePointsAndCheckIfGameEnded(sender())
             isFirstWord = false
-          } else if (!isFirstWord && board.checkGoodWordDirection() && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints()))) {
+          } else if (!isFirstWord && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints()))) {
             updatePointsAndCheckIfGameEnded(sender())
           } else {
             board.clearBoardFromPlayedWords()
