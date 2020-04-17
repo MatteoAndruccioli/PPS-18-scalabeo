@@ -8,7 +8,7 @@ class PositionTest extends FlatSpec {
     val x = 1
     val y = 1
     val position = Position(x,y)
-    assert(position.bonus.equals(boardConstants.boardBonus.get(x,y).getOrElse("DEFAULT")))
+    assert(position.bonus == boardConstants.boardBonus.get(x,y).getOrElse("DEFAULT"))
   }
   "Coordinates of position " should " be checked" in {
     val positionGood = Position(1,1)
@@ -19,7 +19,7 @@ class PositionTest extends FlatSpec {
     val position = Position(1,1)
     val shiftedCoordinatePosition = position.shift(1,0)
     val shiftedDirectionPosition = position.shift(E)
-    assert(shiftedCoordinatePosition.equals(shiftedDirectionPosition))
+    assert(shiftedCoordinatePosition == shiftedDirectionPosition)
   }
 }
 
