@@ -20,7 +20,7 @@ class ChatPanel extends BorderPane {
     minWidth = 60
     onAction = handle {
       if(textField.text.value.trim != "") {
-        View.sendToClient(ChatMessage(Controller.username))
+        View.sendToClient(ChatMessage(textField.text.value))
         showInChat("Tu", textField.text.value)
         textField.clear()
       }
