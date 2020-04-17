@@ -4,20 +4,23 @@ import org.scalatest._
 import scala.collection.mutable.ArrayBuffer
 
 class BoardTest extends FlatSpec {
+  
+  def createBoardTileListFromPositionsAndStrings(wantedBoardTiles: List[(Int, Int, String)]): List[BoardTile] =
+    for(tuple <- wantedBoardTiles) yield BoardTileImpl(new Position(tuple._1,tuple._2), CardImpl(tuple._3))
 
   // TEST SUI METODI UTILIZZATI PER INSERIRE E RIMUOVERE ELEMENTI DA BOARD
   "A card " should " be added to the board in a specific position" in {
     val card = CardImpl("A")
     val board = BoardImpl()
     board.addCard2Tile(card, 1,1 )
-    assert(board.boardTiles.head.card.equals(card))
+    assert(board.boardTiles.head.card == card)
   }
   "A card " should " be removed to the board in a specific position" in {
     val card = CardImpl("A")
     val board = BoardImpl()
     board.addCard2Tile(card, 1,1)
     board.removeCardFromTile(1,1)
-    assert(board.boardTiles.head.card.equals(constants.defaultCard))
+    assert(board.boardTiles.head.card == constants.defaultCard)
   }
   "A card " should " be added to the board in a specific position and in played word" in {
     val card = CardImpl("A")
@@ -52,121 +55,94 @@ class BoardTest extends FlatSpec {
   }
   "A list of card played " should " be remove from board" in {
     val boardTile = BoardTileImpl(new Position(1,3), CardImpl("D"))
-    val boardTile1 = BoardTileImpl(new Position(2,3), CardImpl("B"))
-    val boardTile2 = BoardTileImpl(new Position(3,3), CardImpl("E"))
-    val listBoardTile = List(boardTile,boardTile1,boardTile2)
+    val listBoardTile = List(boardTile)
     val board = BoardImpl()
     board.addPlayedWord(listBoardTile)
     board.clearBoardFromPlayedWords()
-    assert(!board.boardTiles.contains(listBoardTile))
+    assert(!board.boardTiles.contains(boardTile))
   }
-
 
   // TEST SUI CONTROLLI DELLA PRIMA PAROLA INSERITA
   "The first word" should "be on SCARABEO image" in {
     val board = BoardImpl()
-    val boardTile = BoardTileImpl(new Position(9,9), CardImpl("F"))
-    val boardTile1 = BoardTileImpl(new Position(10,9), CardImpl("I"))
-    board.addPlayedWord(List(boardTile,boardTile1))
+    val boardTilesPlayed = List((9,9,"F"), (10,9,"I"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     assert(board.checkGameFirstWord())
   }
   "The first letters played" should "be adjacent " in {
     val board = BoardImpl()
-    val boardTile = BoardTileImpl(new Position(9,9), CardImpl("F"))
-    val boardTile1 = BoardTileImpl(new Position(10,9), CardImpl("I"))
-    val boardTile2 = BoardTileImpl(new Position(11,9), CardImpl("C"))
-    board.addPlayedWord(List(boardTile,boardTile1, boardTile2))
+    val boardTilesPlayed = List((9,9,"F"), (10,9,"I"), (11, 9 , "C"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     assert(board.checkGameFirstWord())
     board.clearPlayedWords()
-    val boardTile3 = BoardTileImpl(new Position(9,9), CardImpl("F"))
-    val boardTile4 = BoardTileImpl(new Position(9,10), CardImpl("I"))
-    val boardTile5 = BoardTileImpl(new Position(9,11), CardImpl("C"))
-    board.addPlayedWord(List(boardTile3,boardTile4, boardTile5))
+    val boardTilesPlayed1 = List((9,9,"F"), (9,10,"I"), (9, 11 , "C"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed1))
     assert(board.checkGameFirstWord())
   }
   "The first letters played" should "be adjacent (played not in order)" in {
     val board = BoardImpl()
-    val boardTile = BoardTileImpl(new Position(11,9), CardImpl("F"))
-    val boardTile1 = BoardTileImpl(new Position(9,9), CardImpl("I"))
-    val boardTile2 = BoardTileImpl(new Position(10,9), CardImpl("C"))
-    board.addPlayedWord(List(boardTile,boardTile1, boardTile2))
+    val boardTilesPlayed = List((11,9,"F"), (9,9,"I"), (10, 9 , "C"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     assert(board.checkGameFirstWord())
     board.clearPlayedWords()
-    val boardTile3 = BoardTileImpl(new Position(9,11), CardImpl("F"))
-    val boardTile4 = BoardTileImpl(new Position(9,9), CardImpl("I"))
-    val boardTile5 = BoardTileImpl(new Position(9,10), CardImpl("C"))
-    board.addPlayedWord(List(boardTile3,boardTile4, boardTile5))
+    val boardTilesPlayed1 = List((9,11,"F"), (9,9,"I"), (9, 10 , "C"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed1))
     assert(board.checkGameFirstWord())
   }
   "The first letters played not adjacent" should "be found " in {
     val board = BoardImpl()
-    val boardTile = BoardTileImpl(new Position(9,9), CardImpl("F"))
-    val boardTile1 = BoardTileImpl(new Position(10,9), CardImpl("I"))
-    val boardTile2 = BoardTileImpl(new Position(15,9), CardImpl("C"))
-    board.addPlayedWord(List(boardTile,boardTile1, boardTile2))
+    val boardTilesPlayed = List((9,9,"F"), (10,9,"I"), (15, 9 , "C"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     assert(!board.checkGameFirstWord())
     board.clearPlayedWords()
-    val boardTile3 = BoardTileImpl(new Position(9,9), CardImpl("F"))
-    val boardTile4 = BoardTileImpl(new Position(9,10), CardImpl("I"))
-    val boardTile5 = BoardTileImpl(new Position(9,13), CardImpl("C"))
-    board.addPlayedWord(List(boardTile3,boardTile4, boardTile5))
+    val boardTilesPlayed1 = List((9,9,"F"), (9,10,"I"), (9, 13 , "C"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed1))
     assert(!board.checkGameFirstWord())
   }
   "The first letters played not adjacent" should "be found: case 2" in {
     val board = BoardImpl()
-    val boardTile = BoardTileImpl(new Position(9,9), CardImpl("F"))
-    val boardTile1 = BoardTileImpl(new Position(10,10), CardImpl("I"))
-    val boardTile2 = BoardTileImpl(new Position(11,11), CardImpl("C"))
-    board.addPlayedWord(List(boardTile,boardTile1, boardTile2))
+    val boardTilesPlayed = List((9,9,"F"), (10,10,"I"), (11, 11 , "C"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     assert(!board.checkGameFirstWord())
   }
 
   // TEST PER IL CONTROLLO DELLE PAROLE ESTRATTE DALLA BOARD
   "A list of card played " should " be insert in the same row or in the same column" in {
     val card = CardImpl("A")
-    val boardTile = BoardTileImpl(new Position(1,3), card)
-    val boardTile1 = BoardTileImpl(new Position(1,2), card)
-    val listBoardTile = List(boardTile,boardTile1)
     val board = BoardImpl()
-    board.addPlayedWord(listBoardTile)
+    val boardTilesPlayed = List((1,3,"A"), (1,2,"A"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     assert(board.takeCardToCalculatePoints().nonEmpty)
     board.clearBoardFromPlayedWords()
-    val boardTile2 = BoardTileImpl(new Position(1,1), card)
-    val boardTile3 = BoardTileImpl(new Position(2,1), card)
-    val listBoardTile2 = List(boardTile2,boardTile3)
-    board.addPlayedWord(listBoardTile2)
+    val boardTilesPlayed2 = List((1,1,"A"), (2,1,"A"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed2))
     assert(board.takeCardToCalculatePoints().nonEmpty)
-    val boardTile4 = BoardTileImpl(new Position(1,1), card)
-    val boardTile5 = BoardTileImpl(new Position(2,2), card)
-    val listBoardTile3 = List(boardTile4,boardTile5)
-    board.addPlayedWord(listBoardTile3)
+    val boardTilesPlayed3 = List((1,1,"A"), (2,2,"A"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed3))
     assert(board.takeCardToCalculatePoints().isEmpty)
   }
   "The letters played not " should "adjacent to the letters in the Board" in {
     val board = BoardImpl()
-    val boardTile = BoardTileImpl(new Position(9,9), CardImpl("F"))
-    val boardTile1 = BoardTileImpl(new Position(9,10), CardImpl("I"))
-    board.addPlayedWord(List(boardTile,boardTile1))
+    val boardTilesPlayed = List((9,9,"F"), (9,10,"I"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     assert(board.takeCardToCalculatePoints().nonEmpty)
     board.addPlayedWord(List(BoardTileImpl(new Position(1,2), CardImpl("I"))))
     assert(board.takeCardToCalculatePoints().isEmpty)
   }
   "Not adjacent letters" should "not make a word" in {
     val board = BoardImpl()
-    val boardTileC = BoardTileImpl(new Position(3,1), CardImpl("C"))
-    val boardTileD = BoardTileImpl(new Position(3,4), CardImpl("D"))
+    val boardTilesPlayed = List((3,1,"C"), (3,4,"D"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     board.addCard2Tile(CardImpl("A"), 2, 3)
     board.addCard2Tile(CardImpl("B"), 3, 3)
-    board.addPlayedWord(List(boardTileC,boardTileD))
     assert(board.takeCardToCalculatePoints().isEmpty)
   }
   "Not adjacent letters" should "not make a word (vertical)" in {
     val board = BoardImpl()
-    val boardTileC = BoardTileImpl(new Position(2,3), CardImpl("S"))
-    val boardTileD = BoardTileImpl(new Position(5,3), CardImpl("I"))
+    val boardTilesPlayed = List((2,3,"S"), (5,3,"I"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     board.addCard2Tile(CardImpl("S"), 3, 2)
     board.addCard2Tile(CardImpl("i"), 3, 3)
-    board.addPlayedWord(List(boardTileC,boardTileD))
     assert(board.takeCardToCalculatePoints().isEmpty)
   }
   "The list of check words" should "be the cross of the card that is played" in {
@@ -178,7 +154,7 @@ class BoardTest extends FlatSpec {
     board.addCard2Tile(CardImpl("F"), 2, 4)
     board.addCard2Tile(CardImpl("G"), 3,3)
     board.addPlayedWord(List(boardTileE))
-    assert(board.takeCardToCalculatePoints().equals(listOfWords))
+    assert(board.takeCardToCalculatePoints() == listOfWords)
   }
   "The list of check words from vertical cards" should "contain also the horizontal crossings" in {
     val board = BoardImpl()
@@ -190,19 +166,20 @@ class BoardTest extends FlatSpec {
     board.addCard2Tile(CardImpl("C"), 1,4)
     board.addCard2Tile(CardImpl("F"), 2,4)
     board.addPlayedWord(List(boardTileB,boardTileE))
-    assert(board.takeCardToCalculatePoints().equals(listOfWords))
+    assert(board.takeCardToCalculatePoints() == listOfWords)
   }
   "The list of check words from horizontal cards" should "contain also the vertical crossings" in {
     val board = BoardImpl()
     val boardTileE = BoardTileImpl(new Position(2,2), CardImpl("C"))
     val boardTileB = BoardTileImpl(new Position(2,3), CardImpl("D"))
+    val boardTilesPlayed = List((2,2,"C"), (2,3,"D"))
     val listOfWords = List(ArrayBuffer((CardImpl("A"),"DEFAULT"), (CardImpl("C"),"2P"), (CardImpl("E"),"DEFAULT")), ArrayBuffer((CardImpl("B"),"DEFAULT"), (CardImpl("D"),"DEFAULT"), (CardImpl("F"),"2P")), ArrayBuffer((CardImpl("C"),"2P"), (CardImpl("D"),"DEFAULT")))
     board.addCard2Tile(CardImpl("A"), 1, 2)
     board.addCard2Tile(CardImpl("B"), 1, 3)
     board.addCard2Tile(CardImpl("E"), 3,2)
     board.addCard2Tile(CardImpl("F"), 3,3)
     board.addPlayedWord(List(boardTileB,boardTileE))
-    assert(board.takeCardToCalculatePoints().equals(listOfWords))
+    assert(board.takeCardToCalculatePoints() == listOfWords)
   }
 
   // TEST PER RICAVARE LA PAROLA NEL FORMATO DEL DIZIONARIO DALLE LETTERE GIOCATE
@@ -216,21 +193,15 @@ class BoardTest extends FlatSpec {
   "The word points" should "respect the rules of Scarabeo" in {
     val board = BoardImpl()
     val aspectedPoints = 28
-    val boardTile = BoardTileImpl(new Position(1,2), CardImpl("F"))
-    val boardTile1 = BoardTileImpl(new Position(2,2), CardImpl("I"))
-    val boardTile2 = BoardTileImpl(new Position(3,2), CardImpl("C"))
-    val boardTile3 = BoardTileImpl(new Position(4,2), CardImpl("O"))
-    board.addPlayedWord(List(boardTile,boardTile1,boardTile2, boardTile3))
+    val boardTilesPlayed = List((1,2,"F"), (2,2,"I"), (3,2,"C"), (4,2,"O"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     assert(board.calculateTurnPoints(board.takeCardToCalculatePoints()) == aspectedPoints)
   }
   "The word points" should "be doubled for the first word" in {
     val board = BoardImpl()
     val aspectedPoints = 14
-    val boardTile = BoardTileImpl(new Position(1,2), CardImpl("F"))
-    val boardTile1 = BoardTileImpl(new Position(2,2), CardImpl("I"))
-    val boardTile2 = BoardTileImpl(new Position(3,2), CardImpl("C"))
-    val boardTile3 = BoardTileImpl(new Position(4,2), CardImpl("O"))
-    board.addPlayedWord(List(boardTile,boardTile1,boardTile2, boardTile3))
+    val boardTilesPlayed = List((1,2,"F"), (2,2,"I"), (3,2,"C"), (4,2,"O"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     // calcolo punteggio prima parola
     assert(board.calculateTurnPoints(board.takeCardToCalculatePoints()) == aspectedPoints*scoreConstants.firstWordBonus)
     // calcolo punteggio seconda parola
@@ -239,15 +210,8 @@ class BoardTest extends FlatSpec {
   "The word 'SCARABEO'" should "have a bonus" in {
     val board = BoardImpl()
     val aspectedPoints = 112
-    val boardTile = BoardTileImpl(new Position(1,2), CardImpl("S"))
-    val boardTile1 = BoardTileImpl(new Position(2,2), CardImpl("C"))
-    val boardTile2 = BoardTileImpl(new Position(3,2), CardImpl("A"))
-    val boardTile3 = BoardTileImpl(new Position(4,2), CardImpl("R"))
-    val boardTile4 = BoardTileImpl(new Position(5,2), CardImpl("A"))
-    val boardTile5 = BoardTileImpl(new Position(6,2), CardImpl("B"))
-    val boardTile6 = BoardTileImpl(new Position(7,2), CardImpl("E"))
-    val boardTile7 = BoardTileImpl(new Position(8,2), CardImpl("O"))
-    board.addPlayedWord(List(boardTile,boardTile1,boardTile2, boardTile3, boardTile4,boardTile5,boardTile6, boardTile7))
+    val boardTilesPlayed = List((1,2,"S"), (2,2,"C"), (3,2,"A"), (4,2,"R"), (5,2,"A"), (6,2,"B"), (7,2,"E"), (8,2,"O"))
+    board.addPlayedWord(createBoardTileListFromPositionsAndStrings(boardTilesPlayed))
     assert(board.calculateTurnPoints(board.takeCardToCalculatePoints()) == aspectedPoints+scoreConstants.bonusScarabeoWord)
   }
 }
