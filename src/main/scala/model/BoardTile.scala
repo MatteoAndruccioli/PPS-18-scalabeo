@@ -52,8 +52,8 @@ sealed trait Board{
   def boardTiles: List[BoardTile]
   def playedWord: List[BoardTile]
   // metodi per inserire elementi nella Board o nelle parole giocate
-  def addCard2Tile (card: Card, x:Int, y:Int, player:Boolean)
-  def removeCardFromTile(x:Int, y:Int, player:Boolean): Card
+  def addCard2Tile (card: Card, x:Int, y:Int, add2PlayedWord:Boolean = false)
+  def removeCardFromTile(x:Int, y:Int, removeFromPlayedWord:Boolean = false): Card
   def addPlayedWord(playedWordsList: List[BoardTile])
   def clearPlayedWords()
   def clearBoardFromPlayedWords()
@@ -81,7 +81,7 @@ case class BoardImpl() extends Board {
 
   // METODI PER INSERIRE ELEMENTI NELLA BOARD O NELLE PAROLE GIOCATE
   // metodo per aggiungere una card in una posizione del tabellone
-  override def addCard2Tile(card: Card, x:Int, y:Int, add2PlayedWord:Boolean = true): Unit =  {
+  override def addCard2Tile(card: Card, x:Int, y:Int, add2PlayedWord:Boolean = false): Unit =  {
     _boardTiles = _boardTiles.map {
       element => if (element.equals(getTileInAPosition(x, y))){
         if(add2PlayedWord) _playedWord = BoardTileImpl(new Position(x, y), card) :: _playedWord
@@ -90,7 +90,7 @@ case class BoardImpl() extends Board {
     }
   }
   // metodo per rimuovere una card in una posizione del tabellone
-  override def removeCardFromTile(x: Int, y: Int, removeFromPlayedWord:Boolean = true): Card = {
+  override def removeCardFromTile(x: Int, y: Int, removeFromPlayedWord:Boolean = false): Card = {
     var card: Card = constants.defaultCard
     _boardTiles = _boardTiles.map {
       element => if (element.equals(getTileInAPosition(x, y))) {
@@ -105,10 +105,10 @@ case class BoardImpl() extends Board {
   override def addPlayedWord(playedWordsList: List[BoardTile]): Unit = {
     _playedWord = List()
     _playedWord = _playedWord ++ playedWordsList
-    for(playedWord <- playedWordsList)  addCard2Tile(playedWord.card, playedWord.position.coord._1+1, playedWord.position.coord._2+1, add2PlayedWord = false)
+    for(playedWord <- playedWordsList)  addCard2Tile(playedWord.card, playedWord.position.coord._1+1, playedWord.position.coord._2+1)
   }
   override def clearPlayedWords(): Unit = _playedWord = List()
-  override def clearBoardFromPlayedWords(): Unit = for(playedWord <- _playedWord) removeCardFromTile(playedWord.position.coord._1+1, playedWord.position.coord._2+1, removeFromPlayedWord = false)
+  override def clearBoardFromPlayedWords(): Unit = for(playedWord <- _playedWord) removeCardFromTile(playedWord.position.coord._1+1, playedWord.position.coord._2+1)
   private def samePosition(position: Position, x: Int, y: Int): Boolean = position.coord._1+1 == x && position.coord._2+1 == y
   private def getTileInAPosition(x:Int, y:Int): BoardTile = _boardTiles.find( boardTile => samePosition(boardTile.position,x, y)).getOrElse(boardConstants.boardTileDefault)
 
@@ -183,8 +183,9 @@ case class BoardImpl() extends Board {
       boardConstants.vertical
     else if (wordList.forall(boardTiles => boardTiles.position.coord._2 == wordList.head.position.coord._2))
       boardConstants.horizontal
-    else
+    else {
       boardConstants.diagonal
+    }
   }
   // 3 => uan parola, fra quelle trovate, deve contenere tutte le lettere giocate
   private def playedLettersAreInFoundWords(foundWords: List[ArrayBuffer[(Card, String)]]): Boolean =
