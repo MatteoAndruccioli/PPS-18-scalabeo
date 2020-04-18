@@ -2,6 +2,7 @@ package client
 
 import akka.actor.{ActorSystem, Props}
 import client.controller.Controller
+import client.controller.ControllerLogic.CleverMind
 import com.typesafe.config.ConfigFactory
 
 //launcher del client
@@ -14,5 +15,5 @@ object ClientLauncher extends App{
 
   val client = system.actorOf(Props.create(classOf[ClientActor]), "client")
 
-  Controller.init(client)
+  Controller.init(client, CleverMind())
 }
