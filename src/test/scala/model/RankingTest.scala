@@ -15,19 +15,19 @@ class RankingWithDefaultActors {
 }
 
 class RankingTest extends FlatSpec {
-  "The list of the players " should "be added to the ranking at the start of the game" in {
+  "The players' names " should "be added to the ranking list at the start of the game" in {
     val rankingWithDefaultActor = new RankingWithDefaultActors()
     assert(rankingWithDefaultActor.ranking.ranking.nonEmpty)
     rankingWithDefaultActor.system.terminate()
   }
-  "The points of one player " should "be updated at the end of his turn" in{
+  "The player's points" should "be updated at the end of his turn" in{
     val points = 100
     val rankingWithDefaultActor = new RankingWithDefaultActors()
     rankingWithDefaultActor.ranking.updatePoints(rankingWithDefaultActor.actorRef2, setPoint = points)
     assert(rankingWithDefaultActor.ranking.ranking(rankingWithDefaultActor.actorRef2)==points)
     rankingWithDefaultActor.system.terminate()
   }
-  "The points of an hand " should "be subtracted from the player points" in {
+  "The player's points" should "be subtracted at the end of his turn" in {
     val hand = LettersHandImpl(new ArrayBuffer[Card]())
     val handValue = 5
     val actorPoints = 100
@@ -38,7 +38,7 @@ class RankingTest extends FlatSpec {
     assert(rankingWithDefaultActor.ranking.ranking(rankingWithDefaultActor.actorRef2) == actorPoints-handValue)
     rankingWithDefaultActor.system.terminate()
   }
-  "The players " should "be list by points" in {
+  "The players " should "be ordered by points" in {
     val rankingWithDefaultActor = new RankingWithDefaultActors()
     rankingWithDefaultActor.ranking.updatePoints(rankingWithDefaultActor.actorRef2, setPoint = 100)
     assert (rankingWithDefaultActor.ranking.getRankingByScore.head._1.equals(rankingWithDefaultActor.actorRef2))

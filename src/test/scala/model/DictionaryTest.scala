@@ -3,17 +3,17 @@ package model
 import org.scalatest._
 
 class DictionaryTest extends FlatSpec {
-  "A list of words " should " be checked" in {
+  "A check " should " be performed on words validity: correct words" in {
     val wordsToCheck = List("ago","abaco")
     val dictionary: DictionaryImpl = new DictionaryImpl("/dictionary/dictionary.txt")
     assert(dictionary.checkWords(wordsToCheck))
   }
-  "A wrong words " should " be found" in {
+  "A check " should " be performed on word validity: misspelled word" in {
     val wordsToCheck = List("arstgo")
     val dictionary: DictionaryImpl = new DictionaryImpl("/dictionary/dictionary.txt")
     assert(!dictionary.checkWords(wordsToCheck))
   }
-  "A word with a scarabeo" should " be checked" in {
+  "A check " should " be performed on word validity: scarabeo tile in the word" in {
     val wordsToCheck = List("a[a-zA-Z]o")
     val dictionary: DictionaryImpl = new DictionaryImpl("/dictionary/dictionary.txt")
     assert(dictionary.checkWords(wordsToCheck))

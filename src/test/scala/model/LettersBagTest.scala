@@ -11,11 +11,11 @@ class LettersBagTest extends FlatSpec {
     assert(cardList.head.letter == constants.lettersScoresCardinalities.head._1)
     assert(cardList.head.score == constants.lettersScoresCardinalities.head._2)
   }
-  "The bag of card " should " not be empty" in {
+  "The cards bag " should " not be empty" in {
     val lettersBagImpl = LettersBagImpl()
     assert(lettersBagImpl.bag.nonEmpty)
   }
-  "The bag of cards " should "be equivalent to the constant specified" in {
+  "The cards bag " should "be created according to game rules" in {
     val lettersScoresExample = List(("A",1,2), ("B",4,1), ("C",1,1), ("D",1,1), ("C",1,1))
     val bag = List(CardImpl("A"), CardImpl("A"),CardImpl("B"), CardImpl("C"), CardImpl("D"), CardImpl("C"))
     val lettersBagImpl = LettersBagImpl()
@@ -35,7 +35,7 @@ class LettersBagTest extends FlatSpec {
     lettersBagImpl.takeRandomElementFromBagOfLetters(numberCardToBeRemoved)
     assert(lettersBagImpl.bag.length == defaultBagLenght-numberCardToBeRemoved)
   }
-  "A card " should "be insert in the bag" in {
+  "A card " should "be inserted in the bag" in {
     val cardA: Card= CardImpl("$")
     val lettersBagImpl = LettersBagImpl()
     lettersBagImpl.reinsertCardInBag(ArrayBuffer(cardA))

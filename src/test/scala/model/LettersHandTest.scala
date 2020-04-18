@@ -5,12 +5,7 @@ import org.scalatest._
 import scala.collection.mutable.ArrayBuffer
 
 class LettersHandTest extends FlatSpec {
-  "The hand " should " be equal to Array passed to costructor" in {
-    val hand:ArrayBuffer[Card] = ArrayBuffer(CardImpl("A"))
-    val lettersHand = LettersHandImpl(hand)
-    assert(lettersHand.hand == hand)
-  }
-  "A letter " should " be in the position specified in the hand" in {
+  "A new letter " should " be added in a specific position of the hand" in {
     val hand:ArrayBuffer[Card] = ArrayBuffer(CardImpl("A"))
     val lettersHand = LettersHandImpl(hand)
     lettersHand.putLetter(cardPosition = 0,CardImpl("B"))
@@ -35,7 +30,7 @@ class LettersHandTest extends FlatSpec {
     val points = 5
     assert(lettersHand.calculateHandPoint == points)
   }
-  "It " should "be checked if the hand contains only vowls or constants" in {
+  "Hand " should "be checked if it contains only vowls or only consonants" in {
     val vocalHand:ArrayBuffer[Card] = ArrayBuffer(CardImpl("A"), CardImpl("E"))
     val constantHand:ArrayBuffer[Card] = ArrayBuffer(CardImpl("C"), CardImpl("D"))
     val lettersHand = LettersHandImpl(vocalHand)
