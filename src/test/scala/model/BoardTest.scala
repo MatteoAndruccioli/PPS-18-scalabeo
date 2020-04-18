@@ -69,6 +69,7 @@ class BoardTest extends FlatSpec {
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((9,9,"F"), (10,9,"I"))))
     assert(board.checkGameFirstWord())
   }
+  // le prime lettere giocate devono essere adiacenti se no non possono formare una parola
   "The first letters played" should "be adjacent " in {
     val board = BoardImpl()
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((9,9,"F"), (10,9,"I"), (11, 9 , "C"))))
@@ -77,6 +78,7 @@ class BoardTest extends FlatSpec {
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((9,9,"F"), (9,10,"I"), (9, 11 , "C"))))
     assert(board.checkGameFirstWord())
   }
+  // il controllo precedente deve funzionare anche se le lettere non sono state giocate in ordine lessicografico
   "The first letters played" should "be adjacent (played not in order)" in {
     val board = BoardImpl()
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((11,9,"F"), (9,9,"I"), (10, 9 , "C"))))
@@ -93,6 +95,8 @@ class BoardTest extends FlatSpec {
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((9,9,"F"), (9,10,"I"), (9, 13 , "C"))))
     assert(!board.checkGameFirstWord())
   }
+  // le lettere giocate devono essere sulla stessa colonna o sulla stessa riga, altrimenti sono in diagonale
+  // e non devono passare il controllo
   "The first letters played not adjacent" should "be found: case 2" in {
     val board = BoardImpl()
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((9,9,"F"), (10,10,"I"), (11, 11 , "C"))))
@@ -100,24 +104,30 @@ class BoardTest extends FlatSpec {
   }
 
   // TEST PER IL CONTROLLO DELLE PAROLE ESTRATTE DALLA BOARD
+  // le lettere giocate devono essere o nella stessa colonna o nella stessa riga
   "A list of card played " should " be insert in the same row or in the same column" in {
     val card = CardImpl("A")
     val board = BoardImpl()
+    // stessa riga
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((1,3,"A"), (1,2,"A"))))
     assert(board.takeCardToCalculatePoints().nonEmpty)
     board.clearBoardFromPlayedWords()
+    // stessa colonna
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((1,1,"A"), (2,1,"A"))))
     assert(board.takeCardToCalculatePoints().nonEmpty)
+    // in diagonale -> non formano una parola
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((1,1,"A"), (2,2,"A"))))
     assert(board.takeCardToCalculatePoints().isEmpty)
   }
-  "The letters played not " should "adjacent to the letters in the Board" in {
+  // gli spazi fra le lettere inserite devono essere occupate da quelle nella board
+  // per formare delle parole
+  // lettere adicenti
+  "The letters played " should "adjacent to the letters in the Board" in {
     val board = BoardImpl()
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((9,9,"F"), (9,10,"I"))))
     assert(board.takeCardToCalculatePoints().nonEmpty)
-    board.addPlayedWord(List(BoardTileImpl(new Position(1,2), CardImpl("I"))))
-    assert(board.takeCardToCalculatePoints().isEmpty)
   }
+  // lettere non adiacenti con caselle nella board già piene
   "Not adjacent letters" should "not make a word" in {
     val board = BoardImpl()
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((3,1,"C"), (3,4,"D"))))
@@ -132,6 +142,13 @@ class BoardTest extends FlatSpec {
     board.addCard2Tile(CardImpl("i"), 3, 3)
     assert(board.takeCardToCalculatePoints().isEmpty)
   }
+  // controllo delle parole ottenute dalla board
+  // lettere maiuscole -> già presenti nella board
+  // lettere minuscole -> giocate nel turno
+  // 1 => controllo incroci se aggiunta una singola lettera
+  // - B -
+  // D e F
+  // - G -
   "The list of check words" should "be the cross of the card that is played" in {
     val board = BoardImpl()
     val listOfWords = List(ArrayBuffer((CardImpl("B"),"DEFAULT"), (CardImpl("E"),"DEFAULT"), (CardImpl("G"),"2P")), ArrayBuffer((CardImpl("D"),"2P"), (CardImpl("E"),"DEFAULT"), (CardImpl("F"),"DEFAULT")))
@@ -139,6 +156,9 @@ class BoardTest extends FlatSpec {
     board.addPlayedWord(List(BoardTileImpl(new Position(2,3), CardImpl("E"))))
     assert(board.takeCardToCalculatePoints() == listOfWords)
   }
+  // 2 => controllo incroci orizzontali
+  // - A b C
+  // - D e F
   "The list of check words from vertical cards" should "contain also the horizontal crossings" in {
     val board = BoardImpl()
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((1,3,"B"),(2,3,"E"))))
@@ -146,6 +166,10 @@ class BoardTest extends FlatSpec {
     addListOfCardsToTheBoard(board, List((CardImpl("A"), 1, 2),(CardImpl("D"), 2, 2), (CardImpl("C"), 1,4), (CardImpl("F"), 2,4)))
     assert(board.takeCardToCalculatePoints() == listOfWords)
   }
+  // 3 => controllo incroci verticali
+  // - A B
+  // - c d
+  // - E F
   "The list of check words from horizontal cards" should "contain also the vertical crossings" in {
     val board = BoardImpl()
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((2,2,"C"), (2,3,"D"))))
