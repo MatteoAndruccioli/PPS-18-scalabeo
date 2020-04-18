@@ -107,6 +107,7 @@ object ControllerLogic {
     }
 
     def userTurnContinues(): Unit = {
+      Controller.setMyTurn()
       View.userTurnContinues()
     }
 

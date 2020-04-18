@@ -69,6 +69,11 @@ object Controller {
     mind.userTurnContinues()
   }
 
+  //aggiunto per userTurnContinue in controllerLogic
+  def setMyTurn():Unit = {
+    _myTurn = true
+  }
+
   def showInChat(sender: String, message: String): Unit = {
     mind.showInChat(sender, message)
   }
