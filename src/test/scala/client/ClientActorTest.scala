@@ -75,6 +75,39 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   }
 
 
+  /*
+  testo la capacità del Client gestire connessione al server:
+    - client in grado di ricevere nome da utente
+    - client in grado di ricevere stabilire connessione con GreetingServer
+    - client notifica a utente che una partita è pronta quando richiesto dal GreetingServer
+
+  */
+  "Client"  should "be able to notify user when match is ready" in {
+    //attore a cui il Controller invierà messaggi
+    val controllerListener = TestProbe()
+    //il mio client
+    val client = system.actorOf(Props(new ClientToTest()), clientActorName)
+    //greetingServer
+    val greetingServer = TestProbe()
+    //avvia attore che ascolta il topic del greetingServer (GreetingServerTopicListener)
+    system.actorOf(Props(new GreetingServerTopicListener(greetingServer.ref)), greetingSTopicListenerName+"2" )
+
+    //l'utente effettua l'accesso e richiede di esser messo in coda per nuova partita
+    testConnectionToGreetingServer(controllerListener, client, greetingServer)
+
+    //Valuto la gestione di un messaggio che indica che il GreetingServer accetta la connessione
+    greetingServer.send(client, ConnectionAnswer(true))
+    //non dovrebbero esserci scambi di messaggi fino a quando Greeting non riuscirà a creare una partita
+    bothReceivesNoMessageCheck(controllerListener, greetingServer)
+
+    //GreetingServer riesce a creare una partita
+    greetingServer.send(client, ReadyToJoinQuery())
+    checkReceivedStringMessage(controllerListener, ASK_USER_TO_JOIN_GAME)
+  }
+
+
+
+
   //--------------------METODI TEST CHIAMATI PIU VOLTE-------------------
 
 
@@ -101,6 +134,15 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
 
   //---------------------------------------METODI DI UTILITY------------------------------
 
+
+  //spesso mi troverò a controllare che nessun altro attore oltre a Client riceva messaggi
+  private def bothReceivesNoMessageCheck(actor1: TestProbe, actor2: TestProbe): Unit = {
+    actorReceivesNoMessageCheck(actor1)
+    actorReceivesNoMessageCheck(actor2)
+  }
+
+  //si assicura che l'attore indicato non riceva messaggi (per un certo dt)
+  private def actorReceivesNoMessageCheck(actor: TestProbe):Unit = actor.expectNoMessage(new FiniteDuration(secondsWithoutMessages,TimeUnit.SECONDS))
 
   //inizializza il controller ed effettua check su di esso
   private def controllerInitCheck(controllerListener: TestProbe,
