@@ -218,7 +218,7 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   }
 
   /*
-  testo la capacità del Client gestire terminazione del gioco
+  testo la capacità del Client gestire terminazione della partita
     - il test parte da quando attendo primo messaggio GameServer -> lo gestisco
     - il GameServer comunica fine della partita -> viene gestita
     - l'utente vuole rigiocare -> verrà ricontattato GreetingServer
@@ -276,8 +276,45 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   }
 
 
+  //testo la capacità del Client gestire chiusura del gioco
+  "Client"  should "be able to handle game end, player doesn't want to play again" in {
+    val testId: String = "6"
+    //attore a cui il Controller invierà messaggi
+    val controllerListener = TestProbe()
+    //il mio client
+    val client = system.actorOf(Props(new ClientToTest()), clientActorName+testId)
+    //greetingServer
+    val greetingServer = TestProbe()
+    //avvia attore che ascolta il topic del greetingServer (GreetingServerTopicListener)
+    system.actorOf(Props(new GreetingServerTopicListener(greetingServer.ref)), greetingSTopicListenerName+testId )
+    //GameServer
+    val gameServer = TestProbe()
+    //topic del GameServer
+    val gsTopic :String= gameServerTopic+testId
+    //attore che invia i messaggi sul topic del gameserver
+    val gameServerTopicSender = system.actorOf(Props(new OnGameTopicSenderActor(gsTopic, gameServer.ref)), gameSTopicSender+testId)
 
+    //inizializzo il controller
+    controllerInitCheck(controllerListener, client)
 
+    //trick per skippare parti già testate ed andare dritto a WaitingUserChoosingWheterPlayAgainOrClosing
+    client ! JumpToWaitingUserChoosingWheterPlayAgainOrClosing(greetingServer.ref, username, gameServer.ref, gsTopic)
+    //controlla che sia avvenuto il setup
+    expectMsgType[SetUpDoneWUCWPAOC](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+
+    //comunico al client che utente vuole giocare di nuovo
+    client ! PlayAgain(false)
+
+    //client dovrebbe inviare Ack di ricezione messaggio GameEnded a GameServer
+    val state = greetingServer.expectMsgType[DisconnectionToGreetingNotification](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state must equal(DisconnectionToGreetingNotification())
+
+    //greetingServer dovrebbe rispondere con un Ack al messaggio di disconnessione
+    greetingServer.send(client, DisconnectionAck())
+
+    //greetingServer non dovrebbe ricerver ulteriori messaggi in quanto il client dovrebbe essersi stoppato
+    actorReceivesNoMessageCheck(greetingServer)
+  }
 
 
 
