@@ -8,9 +8,13 @@ sealed trait ExtraMessagesForClientTestingType
 object ExtraMessagesForClientTesting{
   //mi permette di saltare dritto allo stato WaitingReadyToJoinRequestFromGreetingServer, settando gli opportuni parametri che avrei dovuto normalmente ottenere
   case class JumpToWaitingReadyToJoinRequestFromGreetingServer(greetingServer:ActorRef, username:String) extends ExtraMessagesForClientTestingType
-
   //messaggio inviato in risposta ai messaggi parametri ricevuti in jumpToWRTJRFGS, log contiene descrizione stampabile di cosa stia avvenendo
   case class SetUpDoneWRTJRFGS(log: String = "") extends ExtraMessagesForClientTestingType
+
+  //mi permette di saltare dritto allo stato WaitingGameServerTopic, settando gli opportuni parametri che avrei dovuto normalmente ottenere
+  case class JumpToWaitingGameServerTopic(greetingServer:ActorRef, username:String) extends ExtraMessagesForClientTestingType
+  //messaggio inviato in risposta ai messaggi parametri ricevuti in jumpToWGST, log contiene descrizione stampabile di cosa stia avvenendo
+  case class SetUpDoneWGST(log: String = "") extends ExtraMessagesForClientTestingType
 }
 
 /*
@@ -26,6 +30,12 @@ class ClientToTest extends ClientActor {
     greetingServerActorRef = Some(greetingServer)
   }
 
+  //oltre alle variabili di inizializzazione indica che l'utente è pronto a giocare
+  private def setReadyPlayerVariables(greetingServer:ActorRef, username:String):Unit = {
+    setGreetingConnectionVariables(greetingServer, username)
+    playerIsReady = true
+  }
+
   //permette di saltare nello stato WaitingReadyToJoinRequestFromGreetingServer
   def jumpToWAOUQR: Receive = {
     case msg: JumpToWaitingReadyToJoinRequestFromGreetingServer => {
@@ -35,8 +45,18 @@ class ClientToTest extends ClientActor {
     }
   }
 
+  //permette di saltare nello stato WaitingGameServerTopic
+  def jumpToWGST: Receive = {
+    case msg: JumpToWaitingGameServerTopic => {
+      setReadyPlayerVariables(msg.greetingServer, msg.username)
+      sender ! SetUpDoneWGST()
+      context.become(waitingGameServerTopic)
+    }
+  }
+
   //faccio si che dal primo stato io possa saltare in altri stati fondamentali, rendendo piu agile il test dell'attore
   override def waitingUsernameFromUser: Receive =
     jumpToWAOUQR orElse
+    jumpToWGST orElse
       super.waitingUsernameFromUser
 }

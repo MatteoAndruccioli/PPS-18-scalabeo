@@ -16,10 +16,10 @@ import scala.concurrent.duration.FiniteDuration
 import TestOnClientCostants._
 import ClientTestConstants._
 import ExtraMessagesForClientTesting._
-import client.ClientTestMessage.OnMatchStart
+import client.ClientTestMessage.{MatchEnded, OnMatchStart}
 import model.{Card, CardImpl}
 import shared.ClientToGameServerMessages._
-import shared.GameServerToClientMessages.MatchTopicListenQuery
+import shared.GameServerToClientMessages._
 
 import scala.collection.mutable.ArrayBuffer
 
@@ -160,11 +160,8 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     val state2 = controllerListener.expectMsgType[String](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
     state2 must equal(ON_LOGIN_RESPONSE)
 
-    //testo che utente possa effettuare richiesta per nuova partita
-    client ! JoinQueue()
-    greetingServer.expectMsgType[ConnectionToGreetingQuery](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
-    //questo evita che il client continui a inviare richieste, dando problemi ai test successivi
-    greetingServer.send(client, ConnectionAnswer(true))
+    //dovrebbe essere possibile contattare il GreetingServer
+    testNewGameRequest(controllerListener, client, greetingServer)
   }
 
 
@@ -216,6 +213,99 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     //in questo stato greetingServer non dovrebbe ricevere messaggi
     actorReceivesNoMessageCheck(greetingServer)
 
+    //testo interazione di inizio partita
+    testConnectionToGameServer(controllerListener, client, gameServer, gsTopic)
+  }
+
+  /*
+  testo la capacità del Client gestire terminazione del gioco
+    - il test parte da quando attendo primo messaggio GameServer -> lo gestisco
+    - il GameServer comunica fine della partita -> viene gestita
+    - l'utente vuole rigiocare -> verrà ricontattato GreetingServer
+  */
+  "Client"  should "be able to handle game end, player wants to play again" in {
+    val testId: String = "5"
+    //attore a cui il Controller invierà messaggi
+    val controllerListener = TestProbe()
+    //il mio client
+    val client = system.actorOf(Props(new ClientToTest()), clientActorName+testId)
+    //greetingServer
+    val greetingServer = TestProbe()
+    //avvia attore che ascolta il topic del greetingServer (GreetingServerTopicListener)
+    system.actorOf(Props(new GreetingServerTopicListener(greetingServer.ref)), greetingSTopicListenerName+testId )
+    //GameServer
+    val gameServer = TestProbe()
+    //topic del GameServer
+    val gsTopic :String= gameServerTopic+testId
+    //attore che invia i messaggi sul topic del gameserver
+    val gameServerTopicSender = system.actorOf(Props(new OnGameTopicSenderActor(gsTopic, gameServer.ref)), gameSTopicSender+testId)
+
+    //inizializzo il controller
+    controllerInitCheck(controllerListener, client)
+
+    //trick per skippare parti già testate ed andare dritto a WaitingGameServerTopic
+    client ! JumpToWaitingGameServerTopic(greetingServer.ref, username)
+    //controlla che sia avvenuto il setup
+    expectMsgType[SetUpDoneWGST](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+
+    //testo interazione di inizio partita -> ClientActor attende (anche) GameEnded
+    testConnectionToGameServer(controllerListener, client, gameServer, gsTopic)
+
+    //nome del vincitore
+    val winnerName: String= "vincitore";
+
+    //GameServer comunica fine partita
+    gameServer.send(gameServerTopicSender, GameEnded(winnerName,client))
+
+    //client dovrebbe inviare Ack di ricezione messaggio GameEnded a GameServer
+    val state = gameServer.expectMsgType[GameEndedAck](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state must equal(GameEndedAck())
+
+    //UI dovrebbe ricevere notifica di fine partita
+    val state1 = controllerListener.expectMsgType[MatchEnded](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state1 must equal(MatchEnded(winnerName, true))
+
+    //non dovrebbero ricevere ulteriori messaggi
+    bothReceivesNoMessageCheck(controllerListener,gameServer)
+
+    //comunico al client che utente vuole giocare di nuovo
+    client ! PlayAgain(true)
+
+    //dovrebbe essere possibile contattare il GreetingServer
+    testNewGameRequest(controllerListener, client, greetingServer)
+  }
+
+
+
+
+
+
+
+
+
+
+  //--------------------METODI TEST CHIAMATI PIU VOLTE-------------------
+
+  //Simula interazione UI-Client-GreetingServer dopo la chiamata OnLoginResponse
+  private def testNewGameRequest(controllerListener: TestProbe,
+                                 client: ActorRef,
+                                 greetingServer: TestProbe):Unit = {
+    //testo che utente possa effettuare richiesta per nuova partita
+    client ! JoinQueue()
+    greetingServer.expectMsgType[ConnectionToGreetingQuery](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    //questo evita che il client continui a inviare richieste, dando problemi ai test successivi
+    greetingServer.send(client, ConnectionAnswer(true))
+  }
+
+  /*
+   Simula prima interazione UI-Client-GameServer
+    - Client deve essere in waitingGameServerTopic, attente primo messaggio da GameServer
+    - Client risponde sia a Controller che a GameServer
+  */
+  private def testConnectionToGameServer(controllerListener: TestProbe,
+                                         client: ActorRef,
+                                         gameServer: TestProbe,
+                                         gsTopic:String):Unit = {
     //questa sarà la mano del giocatore
     val hand: ArrayBuffer[Card] = ArrayBuffer(CardImpl("B"), CardImpl("C"), CardImpl("D"))
     val players: List[String] = List("player1","player2","player3")
@@ -230,20 +320,6 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     val state3 = gameServer.expectMsgType[MatchTopicListenAck](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
     state3 must equal(MatchTopicListenAck())
   }
-
-
-
-
-
-
-
-
-
-
-
-
-  //--------------------METODI TEST CHIAMATI PIU VOLTE-------------------
-
 
   /*
      Simula interazione UI-Client-GreetingServer da avvio a richiesta di connessione
