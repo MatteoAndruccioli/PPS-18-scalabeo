@@ -14,6 +14,7 @@ import scala.concurrent.duration.FiniteDuration
 
 import TestOnClientCostants._
 import ClientTestConstants._
+import ExtraMessagesForClientTesting._
 
 
 
@@ -31,8 +32,8 @@ object TestOnClientCostants{
            + IN QUESTA CLASSE:
                 val waitTimeForMessages: Int = 10
                 val secondsWithoutMessages: Int = 10
-           + IN Client6:
-                private def istantiateEmptyScheduler(): ClusterScheduler = new ClusterScheduler(6, TimeUnit.SECONDS, 6, TimeUnit.SECONDS, None,cluster)
+           + Per ClientActor:
+                private def  ClusterScheduler = new ClusterScheduler(6, TimeUnit.SECONDS, 6, TimeUnit.SECONDS, None,cluster)
 
    */
   val waitTimeForMessages: Int = 10
@@ -86,7 +87,7 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     //attore a cui il Controller invierà messaggi
     val controllerListener = TestProbe()
     //il mio client
-    val client = system.actorOf(Props(new ClientToTest()), clientActorName)
+    val client = system.actorOf(Props(new ClientToTest()), clientActorName+"2")
     //greetingServer
     val greetingServer = TestProbe()
     //avvia attore che ascolta il topic del greetingServer (GreetingServerTopicListener)
@@ -104,6 +105,57 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     greetingServer.send(client, ReadyToJoinQuery())
     checkReceivedStringMessage(controllerListener, ASK_USER_TO_JOIN_GAME)
   }
+
+
+  /*
+  testo la capacità del Client gestire risposta negativa dell'utente alla richiesta di entrare in partita
+    - il test parte da quando attendo richiesta utente pronto (waitingReadyToJoinRequestFromGreetingServer)
+    - testo successivo scambio di messaggi con UI, GreetingServer e risposta a UI
+ */
+  "Client"  should "be able to handle user not ready for match" in {
+    //attore a cui il Controller invierà messaggi
+    val controllerListener = TestProbe()
+    //il mio client
+    val client = system.actorOf(Props(new ClientToTest()), clientActorName+"3")
+    //greetingServer
+    val greetingServer = TestProbe()
+    //avvia attore che ascolta il topic del greetingServer (GreetingServerTopicListener)
+    system.actorOf(Props(new GreetingServerTopicListener(greetingServer.ref)), greetingSTopicListenerName+"3" )
+
+    //inizializzo il controller
+    controllerInitCheck(controllerListener, client)
+
+    //trick per skippare parti già testate ed andare dritto a WaitingReadyToJoinRequestFromGreetingServer
+    client ! JumpToWaitingReadyToJoinRequestFromGreetingServer(greetingServer.ref, username)
+    //controlla che sia avvenuto il setup
+    expectMsgType[SetUpDoneWRTJRFGS](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+
+    //greeting server è riuscito a creare una partita vorrebbe che l'utente joinasse
+    greetingServer.send(client, ReadyToJoinQuery())
+    //richiesta all'utente se è disponibile per la partita
+    checkReceivedStringMessage(controllerListener, ASK_USER_TO_JOIN_GAME)
+
+    //l'utente non è disponibile a entrare in partita
+    client ! UserReadyToJoin(false)
+    //client dovrebbe comunicare a GreetingServer tale decisione del player
+    val state1 = greetingServer.expectMsgType[PlayerReadyAnswer](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state1 must equal(PlayerReadyAnswer(false))
+
+    //GreetingServer invia Ack al client
+    greetingServer.send(client, ReadyToJoinAck())
+
+    //in questo stato greetingServer non dovrebbe ricevere messaggi
+    actorReceivesNoMessageCheck(greetingServer)
+
+    //client dovrebbe far aggiornare la UI
+    val state2 = controllerListener.expectMsgType[String](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state2 must equal(ON_LOGIN_RESPONSE)
+
+    //testo che utente possa effettuare richiesta per nuova partita
+    client ! JoinQueue()
+    greetingServer.expectMsgType[ConnectionToGreetingQuery](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+  }
+
 
 
 
