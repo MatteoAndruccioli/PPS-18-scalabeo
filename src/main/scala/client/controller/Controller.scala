@@ -17,37 +17,27 @@ object Controller {
   private var _myTurn: Boolean = false
   private var clientRef: ActorRef = _
   private var _username: String = _
+  private var mind: ControllerLogic = _
 
   def username_= (username: String): Unit = _username = username
   def username: String = _username
 
-  def init(clientRef: ActorRef): Unit  = {
+  def init(clientRef: ActorRef, mind: ControllerLogic): Unit  = {
     this.clientRef = clientRef
-    startGui()
-  }
-
-  private def startGui(): Unit = {
-    new Thread(() => {
-      View.main(Array[String]())
-    }).start()
+    this.mind = mind
+    mind.startGui()
   }
 
   def sendToClient(message: ViewToClientMessages): Unit ={
     clientRef ! message
   }
 
-  def onLoginResponse(): Unit = {
-    View.onLoginResponse()
-  }
+  def onLoginResponse(): Unit = mind.onLoginResponse()
 
-  def askUserToJoinGame(): Unit = {
-    View.askUserToJoinGame()
-  }
+  def askUserToJoinGame(): Unit = mind.askUserToJoinGame()
 
-  def onMatchStart(hand:ArrayBuffer[Card], players: List[String]): Unit = {
-    View.onMatchStart(hand.map(c => (c.letter, c.score)), players)
-    GameManager.newGame(hand)
-  }
+  def onMatchStart(hand:ArrayBuffer[Card], players: List[String]): Unit = mind.onMatchStart(hand, players)
+
 
   def isMyTurn: Boolean = {
     this._myTurn
@@ -55,98 +45,50 @@ object Controller {
 
   def userTurnBegins(): Unit = {
     this._myTurn = true
-    View.userTurnBegins()
+    mind.userTurnBegins()
   }
 
   def endMyTurn(): Unit = {
     this._myTurn = false
   }
 
-  def turnEndUpdates(ranking: List[(String,Int)], board:List[BoardTile]): Unit = {
-    View.updateLeaderboard(ranking)
-    GameManager.addPlayedWordAndConfirm(board)
-    View.turnEndUpdates(board.map(b => (LetterTile(60, b.card.letter, b.card.score.toString, 0, LetterStatus.insertedConfirmed), b.position.row, b.position.col)))
-  }
+  def turnEndUpdates(ranking: List[(String,Int)], board:List[BoardTile]): Unit = mind.turnEndUpdates(ranking,board)
 
-  def addCardToTile(position: Int, x: Int, y: Int): Unit = {
-    GameManager.addCardToTile(position, x, y)
-  }
+  def addCardToTile(position: Int, x: Int, y: Int): Unit = mind.addCardToTile(position, x, y)
 
-  def collectLetters(): Unit = {
-    GameManager.collectLetters()
-  }
+  def collectLetters(): Unit = mind.collectLetters()
 
-  def playWord(): Unit = {
-    Controller.endMyTurn()
-    val playedWord = GameManager.getPlayedWord
-    if(playedWord.nonEmpty) {
-        playedWord.foreach(b => {
-          print(b.card.letter)
-        })
-        sendToClient(UserMadeHisMove(WordMove(playedWord)))
-    } else {
-      View.showEventMessage("Devi inserire almeno una lettera per inviare la tua mossa")
-      Controller.userTurnContinues()
-    }
-  }
+  def playWord(): Unit = mind.playWord()
+
 
   //metodo attraverso cui il Client comunica al controller l'esito della mossa inviata al GameServer
-  def moveOutcome[A >: MoveOutcome](outcome: A):Unit = outcome match {
-    case _: RefusedWord => {takeLettersBackInHand(); userTurnContinues()}
-    case _: HandSwitchRefused => {userTurnContinues()}
-    case _: AcceptedWord => {updateHand(outcome.asInstanceOf[AcceptedWord].hand); View.confirmPlay(); GameManager.confirmPlay()}
-    case _: HandSwitchAccepted => {updateHand(outcome.asInstanceOf[HandSwitchAccepted].hand); endMyTurn()}
-    case _: PassReceived => {endMyTurn()}
-    case _: TimeoutReceived => {endMyTurn()}
-  }
-
-  private def updateHand(hand:ArrayBuffer[Card]): Unit = {
-    View.updateHand(hand.map(c => (c.letter, c.score)))
-    GameManager.changeHand(hand)
-  }
-
-  private def takeLettersBackInHand(): Unit = {
-    View.getLettersBackFromBoard();
-    GameManager.collectLetters()
-  }
+  def moveOutcome[A >: MoveOutcome](outcome: A):Unit = mind.moveOutcome(outcome)
 
   def userTurnContinues(): Unit = {
     _myTurn = true
-    View.userTurnContinues()
+    mind.userTurnContinues()
+  }
+
+  //aggiunto per userTurnContinue in controllerLogic
+  def setMyTurn():Unit = {
+    _myTurn = true
   }
 
   def showInChat(sender: String, message: String): Unit = {
-    View.showInChat(sender, message)
+    mind.showInChat(sender, message)
   }
 
-  def isMulliganAvailable: Boolean = {
-    GameManager.isMulliganAvailable()
-  }
+  def isMulliganAvailable: Boolean = mind.isMulliganAvailable
 
-  def onConnectionFailed(): Unit = {
-    View.terminate()
-  }
+  def onConnectionFailed(): Unit = mind.onConnectionFailed()
 
-  def serversDown(server: ServerDown):Unit = {
-    server match {
-      case _: GreetingServerDown => View.greetingDisconnected()
-      case _: GameServerDown => View.gameServerDisconnected()
-    }
-  }
+  def serversDown(server: ServerDown):Unit = mind.serversDown(server)
 
-  def matchEnded(player: String, playerWon:Boolean): Unit =  {
-    endMyTurn()
-    BoardInteraction.reset()
-    View.matchEnded(player, playerWon)
-  }
+  def matchEnded(player: String, playerWon:Boolean): Unit =  mind.matchEnded(player, playerWon)
 
-  def playerLeft(): Unit = {
-    View.playerLeft()
-  }
+  def playerLeft(): Unit = mind.playerLeft()
 
-  def terminate(): Unit = {
-    View.terminate()
-  }
+  def terminate(): Unit = mind.terminate()
 
   def exit(): Unit = {
     System.exit(0)
