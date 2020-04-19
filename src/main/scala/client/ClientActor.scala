@@ -79,8 +79,8 @@ class ClientActor extends Actor{
         case false => {
           //comunicare al player che la connessione non può essere stabilita e chiudere (valutare prossime due istruzioni)
           Controller.onConnectionFailed()
+          println("Client " + self + " ricevuto ConnectionAnswer negativa ["+ connection.connected +"] dal GreetingServer "+ sender())
           context.stop(self)
-          println("Client " + self + " ricevuto ConnectionAnswer negativa ["+ connection.connected +"] dal GreetingServer "+ greetingServerActorRef.get)
         }
       }
     }
