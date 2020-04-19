@@ -1,6 +1,7 @@
 package client
 
 import java.util.concurrent.TimeUnit
+
 import client.controller.Messages.ViewToClientMessages._
 import shared.ClientToGreetingMessages._
 import shared.GreetingToClientMessages._
@@ -10,11 +11,17 @@ import client.controller.Controller
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.must.Matchers
-import scala.concurrent.duration.FiniteDuration
 
+import scala.concurrent.duration.FiniteDuration
 import TestOnClientCostants._
 import ClientTestConstants._
 import ExtraMessagesForClientTesting._
+import client.ClientTestMessage.OnMatchStart
+import model.{Card, CardImpl}
+import shared.ClientToGameServerMessages._
+import shared.GameServerToClientMessages.MatchTopicListenQuery
+
+import scala.collection.mutable.ArrayBuffer
 
 
 
@@ -23,6 +30,8 @@ object TestOnClientCostants{
   val username :String= "UsernameTest"
   val clientActorName: String = "Client"
   val greetingSTopicListenerName: String = "greetingTopicListener" //greeting server topic listener
+  val gameSTopicSender: String = "gameTopicSender" //game server topic sender
+  val gameServerTopic: String = "GameServerTopic" //game server topic sender
 
   val chatTopic: String = "chatTopic" //game server topic sender
   /*
@@ -154,7 +163,80 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     //testo che utente possa effettuare richiesta per nuova partita
     client ! JoinQueue()
     greetingServer.expectMsgType[ConnectionToGreetingQuery](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    //questo evita che il client continui a inviare richieste, dando problemi ai test successivi
+    greetingServer.send(client, ConnectionAnswer(true))
   }
+
+
+
+  /*
+  testo la capacità del Client gestire risposta positiva dell'utente alla richiesta di entrare in partita
+    - il test parte da quando attendo richiesta utente pronto (waitingReadyToJoinRequestFromGreetingServer)
+    - testo successivo scambio di messaggi con UI, GreetingServer e risposta a UI
+    - l'ultimo passo consiste nella gestione del primo messaggio proveniente dal GameServer
+  */
+  "Client"  should "be able to handle game start" in {
+    //attore a cui il Controller invierà messaggi
+    val controllerListener = TestProbe()
+    //il mio client
+    val client = system.actorOf(Props(new ClientToTest()), clientActorName+"4")
+    //greetingServer
+    val greetingServer = TestProbe()
+    //avvia attore che ascolta il topic del greetingServer (GreetingServerTopicListener)
+    system.actorOf(Props(new GreetingServerTopicListener(greetingServer.ref)), greetingSTopicListenerName+"4" )
+    //GameServer
+    val gameServer = TestProbe()
+    //topic del GameServer
+    val gsTopic :String= gameServerTopic+"4"
+    //attore che invia i messaggi sul topic del gameserver
+    val gameServerTopicSender = system.actorOf(Props(new OnGameTopicSenderActor(gsTopic, gameServer.ref)), gameSTopicSender+"4")
+
+    //inizializzo il controller
+    controllerInitCheck(controllerListener, client)
+
+    //trick per skippare parti già testate ed andare dritto a WaitingReadyToJoinRequestFromGreetingServer
+    client ! JumpToWaitingReadyToJoinRequestFromGreetingServer(greetingServer.ref, username)
+    //controlla che sia avvenuto il setup
+    expectMsgType[SetUpDoneWRTJRFGS](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+
+    //greeting server è riuscito a creare una partita vorrebbe che l'utente joinasse
+    greetingServer.send(client, ReadyToJoinQuery())
+    //richiesta all'utente se è disponibile per la partita
+    checkReceivedStringMessage(controllerListener, ASK_USER_TO_JOIN_GAME)
+
+    //l'utente non è disponibile a entrare in partita
+    client ! UserReadyToJoin(true)
+    //client dovrebbe comunicare a GreetingServer tale decisione del player
+    val state1 = greetingServer.expectMsgType[PlayerReadyAnswer](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state1 must equal(PlayerReadyAnswer(true))
+
+    //GreetingServer invia Ack al client
+    greetingServer.send(client, ReadyToJoinAck())
+
+    //in questo stato greetingServer non dovrebbe ricevere messaggi
+    actorReceivesNoMessageCheck(greetingServer)
+
+    //questa sarà la mano del giocatore
+    val hand: ArrayBuffer[Card] = ArrayBuffer(CardImpl("B"), CardImpl("C"), CardImpl("D"))
+    val players: List[String] = List("player1","player2","player3")
+    //il gameServer contatta il giocatore
+    gameServer.send(client, MatchTopicListenQuery(gsTopic, chatTopic, hand, players))
+
+    //il controller dovrebbe ricevere un messaggio con la mano di carte e la lista dei giocatori
+    val state2 = controllerListener.expectMsgType[OnMatchStart](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state2 must equal(OnMatchStart(hand, players))
+
+    //gameserver dovrebbe ricevere messaggio di ack in risposta
+    val state3 = gameServer.expectMsgType[MatchTopicListenAck](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state3 must equal(MatchTopicListenAck())
+  }
+
+
+
+
+
+
+
 
 
 
