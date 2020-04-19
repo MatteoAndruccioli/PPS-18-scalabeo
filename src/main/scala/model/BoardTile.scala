@@ -28,7 +28,7 @@ package object boardConstants{
     (15, 3) ->scoreConstants.wordForTwo, (16, 2) ->scoreConstants.wordForTwo)
 
 
-  val boardTileDefault = BoardTileImpl(Position(-1, -1), constants.defaultCard)
+  val boardTileDefault = BoardTileImpl(Position(-1, -1), cardConstants.defaultCard)
 
   val horizontal  = "H"
   val vertical = "V"
@@ -77,7 +77,7 @@ case class BoardImpl() extends Board {
 
   // metodo per il popolamento della board
   private def populateBoard() = (for( x <- 1 to 17; y <- 1 to 17) yield tuple2BoardTile(x, y)).toList
-  private def tuple2BoardTile(tuple: (Int, Int)): BoardTile = BoardTileImpl(Position.apply(tuple._1, tuple._2), constants.defaultCard)
+  private def tuple2BoardTile(tuple: (Int, Int)): BoardTile = BoardTileImpl(Position.apply(tuple._1, tuple._2), cardConstants.defaultCard)
 
   // METODI PER INSERIRE ELEMENTI NELLA BOARD O NELLE PAROLE GIOCATE
   // metodo per aggiungere una card in una posizione del tabellone
@@ -91,12 +91,12 @@ case class BoardImpl() extends Board {
   }
   // metodo per rimuovere una card in una posizione del tabellone
   override def removeCardFromTile(x: Int, y: Int, removeFromPlayedWord:Boolean = false): Card = {
-    var card: Card = constants.defaultCard
+    var card: Card = cardConstants.defaultCard
     _boardTiles = _boardTiles.map {
       element => if (element.equals(getTileInAPosition(x, y))) {
         card = element.card
         if(removeFromPlayedWord) _playedWord = _playedWord.filter(boardTile => !boardTile.equals(element))
-        BoardTileImpl(new Position(x, y), constants.defaultCard)
+        BoardTileImpl(new Position(x, y), cardConstants.defaultCard)
       }else element
     }
     card
@@ -155,7 +155,7 @@ case class BoardImpl() extends Board {
   private def tileBoardsInADirection(direction: Direction, boardTile: BoardTile): ArrayBuffer[(Card, String)] = {
     var wordReturn: ArrayBuffer[(Card,String)] = ArrayBuffer()
     var actualBoardTile = getTileInAPosition(boardTile.position.coord._1+1+direction.shift._1, boardTile.position.coord._2+1+direction.shift._2)
-    while(!actualBoardTile.card.equals(constants.defaultCard) && actualBoardTile.position.isValidPosition()){
+    while(!actualBoardTile.card.equals(cardConstants.defaultCard) && actualBoardTile.position.isValidPosition()){
       if(direction.equals(Directions.N) || direction.equals(Directions.W)) {
         wordReturn = (actualBoardTile.card, actualBoardTile.position.bonus) +: wordReturn
       } else if (direction.equals(Directions.S) || direction.equals(Directions.E)) {

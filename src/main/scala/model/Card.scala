@@ -3,8 +3,7 @@ package model
 import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
-
-package object constants {
+package object cardConstants {
   // lista del punteggio e della cardinalità che le lettere devono avere in una partita
   // (lettare. valore, cardinalità)
   val lettersScoresCardinalities = List(("A",1,12), ("B",4,4), ("C",1,7), ("D",4,4),
@@ -13,23 +12,24 @@ package object constants {
     ("O",1,12), ("P",3,4), ("Q",10,2), ("R",1,7),
     ("S",1,7),  ("T",1,7), ("U",4,4), ("V",4,4),
     ("Z",8,2),  ("[a-zA-Z]",1,2))
-
-  val defaultCard = CardImpl("NULL")
+  // lista utilizzata per i test di fine partita
   val lettersScoresCardinalitiesTest = List(("I",1,8), ("S",1,8))
+
+  // valore della card di default
+  val defaultCard = CardImpl("NULL")
 }
 
-// interfaccia della Carta: lettera e relativo valore
+// Carta: lettera e relativo valore
 sealed trait Card{
   def letter: String
   def score: Int
 }
 
-
 // implementazione della Carta
 case class CardImpl (var _letter : String) extends Card {
   override def letter: String = _letter
   // lo score è assegnato automaticamente usando la lista definita in lettersScoresCardinalities
-  override def score: Int = constants.lettersScoresCardinalities.find(s => s._1 == _letter).head._2
+  override def score: Int = cardConstants.lettersScoresCardinalities.find(s => s._1 == _letter).head._2
 }
 
 
@@ -37,61 +37,65 @@ case class CardImpl (var _letter : String) extends Card {
 sealed trait LettersBag {
   def test: Boolean
   def bag: List[Card]
-  def populateBag(list: List[(String, Int, Int)]): List[Card]
-  def tuple2Cards(tuple: (String, Int, Int)): List[Card]
-  def reinsertCardInBag(cardsToInsert: ArrayBuffer[Card]): Unit
+  // metodo per estarre un numero di lettere dalla bag
   def takeRandomElementFromBagOfLetters(lettersToTake: Int): Option[List[Card]]
+  // metodo per inserire una lettera nella bag
+  def reinsertCardInBag(cardsToInsert: ArrayBuffer[Card]): Unit
 }
-
 
 // implementazione LettersBag
 case class LettersBagImpl(test: Boolean= false) extends LettersBag {
   private var _bag: List[Card] = List()
-  if (test) _bag = populateBag(constants.lettersScoresCardinalitiesTest) else _bag = populateBag(constants.lettersScoresCardinalities)
-  override def populateBag(list: List[(String, Int, Int)]): List[Card] = list.flatMap(tuple2Cards)
-  override def tuple2Cards(tuple: (String, Int, Int)): List[Card] = List.fill(tuple._3)(CardImpl(tuple._1))
+  if (test) _bag = populateBag(cardConstants.lettersScoresCardinalitiesTest) else _bag = populateBag(cardConstants.lettersScoresCardinalities)
+  private def populateBag(list: List[(String, Int, Int)]): List[Card] = list.flatMap(tuple2Cards)
+  private def tuple2Cards(tuple: (String, Int, Int)): List[Card] = List.fill(tuple._3)(CardImpl(tuple._1))
   override def bag: List[Card] = _bag
-  override def reinsertCardInBag(cardsToInsert: ArrayBuffer[Card]): Unit = _bag = _bag ++ cardsToInsert
+  // metodo per estarre un numero di lettere dalla bag
   def takeRandomElementFromBagOfLetters(lettersToTake: Int): Option[List[Card]] = _bag match {
     case Nil => Option.empty
+    case _ if lettersToTake > _bag.length =>
+      val shuffledList = Random.shuffle(_bag)
+      _bag = Nil
+      Some(shuffledList)
     case _ =>
       val shuffledList = Random.shuffle(_bag)
-      if (lettersToTake > _bag.length) {
-        _bag = Nil
-        Some(shuffledList)
-      } else {
-        _bag = shuffledList.drop(lettersToTake)
-        Some(shuffledList.slice(0, lettersToTake))
-      }
+      _bag = shuffledList.drop(lettersToTake)
+      Some(shuffledList.slice(0, lettersToTake))
   }
+  // metodo per inserire una lettera nella bag
+  override def reinsertCardInBag(cardsToInsert: ArrayBuffer[Card]): Unit = _bag = _bag ++ cardsToInsert
 }
+
 
 // mano delle card di ogni giocatore
 sealed trait LettersHand {
   def hand: ArrayBuffer[Card]
+  // metodo per giocare una lettera dalla mano
   def playLetter (cardPosition: Int): Card
+  // metodo per inserire una lettera nella mano
   def putLetter (cardPosition: Int, card: Card)
+  // metodo per il cambio di una mano
   def changeHand(newHand: ArrayBuffer[Card])
+  // metodo per il calcolo dei punti della mano
   def calculateHandPoint: Int
+  // metodo per controllare se la mano contiene solo vocali o constanti
   def containsOnlyVowelsOrOnlyConsonants(): Boolean
 }
 
 // implementazione LettersHand
 case class LettersHandImpl(_hand: ArrayBuffer[Card]) extends LettersHand{
   override def hand: ArrayBuffer[Card] = _hand
+  // metodo per giocare una lettera dalla mano
   override def playLetter(cardPosition: Int): Card = hand.remove(cardPosition)
+  // metodo per inserire una lettera nella mano
   override def putLetter(cardPosition:Int, card: Card): Unit = hand.insert(cardPosition, card)
-  override def changeHand(newHand: ArrayBuffer[Card]): Unit = {
-    hand.clear()
-    hand.insertAll(0, newHand)
-  }
+  // metodo per il cambio di una mano
+  override def changeHand(newHand: ArrayBuffer[Card]): Unit = {hand.clear(); hand.insertAll(0, newHand)}
+  // metodo per il calcolo dei punti della mano
   override def containsOnlyVowelsOrOnlyConsonants(): Boolean = {
     val vowels = Set("A", "E", "I", "O", "U")
     hand.forall(card => vowels.contains(card.letter)) || hand.forall(card => !vowels.contains(card.letter))
   }
-  override def calculateHandPoint: Int = {
-    var handValue = 0
-    _hand.foreach(card => handValue += card.score)
-    handValue
-  }
+  // metodo per controllare se la mano contiene solo vocali o constanti
+  override def calculateHandPoint: Int = _hand.foldLeft(0)(_+_.score)
 }

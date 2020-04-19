@@ -21,7 +21,7 @@ class BoardTest extends FlatSpec {
     val board = BoardImpl()
     board.addCard2Tile(card, 1,1)
     board.removeCardFromTile(1,1)
-    assert(board.boardTiles.head.card == constants.defaultCard)
+    assert(board.boardTiles.head.card == cardConstants.defaultCard)
   }
   "A card " should " be added to the board in a specific position and in the played word" in {
     val card = CardImpl("A")
@@ -34,14 +34,14 @@ class BoardTest extends FlatSpec {
     val board = BoardImpl()
     board.addCard2Tile(card, 1,1)
     board.removeCardFromTile(1,1, removeFromPlayedWord = true)
-    assert(board.boardTiles.head.card.equals(constants.defaultCard) && !board.playedWord.contains(BoardTileImpl(Position(1,1),card)))
+    assert(board.boardTiles.head.card.equals(cardConstants.defaultCard) && !board.playedWord.contains(BoardTileImpl(Position(1,1),card)))
   }
   "A hand " should " be removed from the board" in {
     val card = CardImpl("A")
     val board = BoardImpl()
     board.addCard2Tile(card, 1,1)
     board.removeCardFromTile(1,1, removeFromPlayedWord = true)
-    assert(board.boardTiles.head.card.equals(constants.defaultCard) && !board.playedWord.contains(BoardTileImpl(Position(1,1),card)))
+    assert(board.boardTiles.head.card.equals(cardConstants.defaultCard) && !board.playedWord.contains(BoardTileImpl(Position(1,1),card)))
   }
   "A list of cards " should " be added to the board and removed" in {
     val boardTile = BoardTileImpl(new Position(1,3), CardImpl("D"))
