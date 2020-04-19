@@ -16,8 +16,8 @@ import scala.concurrent.duration.FiniteDuration
 import TestOnClientCostants._
 import ClientTestConstants._
 import ExtraMessagesForClientTesting._
-import client.ClientTestMessage.{MatchEnded, OnMatchStart}
-import model.{Card, CardImpl}
+import client.ClientTestMessage.{MatchEnded, OnMatchStart, TurnEndUpdates}
+import model.{BoardTile, BoardTileImpl, Card, CardImpl, Position, boardConstants, constants}
 import shared.ClientToGameServerMessages._
 import shared.GameServerToClientMessages._
 
@@ -161,7 +161,7 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     state2 must equal(ON_LOGIN_RESPONSE)
 
     //dovrebbe essere possibile contattare il GreetingServer
-    testNewGameRequest(controllerListener, client, greetingServer)
+    testNewGameRequest(client, greetingServer)
   }
 
 
@@ -251,19 +251,8 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     //testo interazione di inizio partita -> ClientActor attende (anche) GameEnded
     testConnectionToGameServer(controllerListener, client, gameServer, gsTopic)
 
-    //nome del vincitore
-    val winnerName: String= "vincitore";
-
-    //GameServer comunica fine partita
-    gameServer.send(gameServerTopicSender, GameEnded(winnerName,client))
-
-    //client dovrebbe inviare Ack di ricezione messaggio GameEnded a GameServer
-    val state = gameServer.expectMsgType[GameEndedAck](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
-    state must equal(GameEndedAck())
-
-    //UI dovrebbe ricevere notifica di fine partita
-    val state1 = controllerListener.expectMsgType[MatchEnded](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
-    state1 must equal(MatchEnded(winnerName, true))
+    //gameServer manda messaggio GameEnded e vengono controllati relativi ack
+    testGameEndedInteraction(controllerListener, client, gameServer, gameServerTopicSender)
 
     //non dovrebbero ricevere ulteriori messaggi
     bothReceivesNoMessageCheck(controllerListener,gameServer)
@@ -272,11 +261,92 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     client ! PlayAgain(true)
 
     //dovrebbe essere possibile contattare il GreetingServer
-    testNewGameRequest(controllerListener, client, greetingServer)
+    testNewGameRequest(client, greetingServer)
   }
 
 
-  //testo la capacità del Client gestire chiusura del gioco
+  /*
+    test della fase di gioco, nel caso in cui non sia il turno del player;
+    dopodichè fingo la partita finisce (in pratica è l'ultimo turno)
+   */
+  "Client"  should "be able to handle other player's turn, the game ends" in {
+    //id del test
+    val testId: String = "7"
+    //attore a cui il Controller invierà messaggi
+    val controllerListener = TestProbe()
+    //il mio client
+    val client = system.actorOf(Props(new ClientToTest()), clientActorName + testId)
+    //greetingServer
+    val greetingServer = TestProbe()
+    //avvia attore che ascolta il topic del greetingServer (GreetingServerTopicListener)
+    system.actorOf(Props(new GreetingServerTopicListener(greetingServer.ref)), greetingSTopicListenerName + testId)
+    //GameServer
+    val gameServer = TestProbe()
+    //topic del GameServer
+    val gsTopic: String = gameServerTopic + testId
+    //attore che invia i messaggi sul topic del gameserver
+    val gameServerTopicSender = system.actorOf(Props(new OnGameTopicSenderActor(gsTopic, gameServer.ref)), gameSTopicSender + testId)
+
+    //inizializzo il controller
+    controllerInitCheck(controllerListener, client)
+
+    //trick per skippare parti già testate ed andare dritto a WaitingInTurnPlayerNomination
+    client ! JumpToWaitingInTurnPlayerNomination(greetingServer.ref, username, gameServer.ref, gsTopic)
+    //controlla che sia avvenuto il setup
+    expectMsgType[SetUpDoneWITPN](new FiniteDuration(waitTimeForMessages, TimeUnit.SECONDS))
+
+    //testprobe che genera ActorRef del giocatore in turno
+    val playerInTurn = TestProbe()
+
+    //gameServer dichiara inizio del turno di un altro giocatore
+    gameServer.send(gameServerTopicSender, PlayerTurnBegins(playerInTurn.ref))
+
+    //ClientActor dovrebbe inviare un Ack al gameServer
+    val state = gameServer.expectMsgType[PlayerTurnBeginAck](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state must equal(PlayerTurnBeginAck())
+
+    //in questo stato controller non dovrebbe ricevere messaggi
+    actorReceivesNoMessageCheck(controllerListener)
+
+    //ClientActor in waitingTurnEndUpdates
+    val playerRanking:List[(String,Int)] = List(("player1",1),("player2",2),("player3",3))
+    val board: List[BoardTile] =  (for(x <- 1 to 17; y <- 1 to 17) yield BoardTileImpl(Position.apply(x,y), constants.defaultCard)).toList
+
+    //gameServer dichiara fine del turno di un altro giocatore
+    gameServer.send(gameServerTopicSender, EndTurnUpdate(playerRanking, board))
+
+    val state1 = controllerListener.expectMsgType[TurnEndUpdates](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state1 must equal(TurnEndUpdates(playerRanking,board))
+    val state2 = gameServer.expectMsgType[EndTurnUpdateAck](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state2 must equal(EndTurnUpdateAck())
+
+    //ClientActor in waitingInTurnPlayerNomination => terminiamo la partita
+
+    //in questo stato gameServer e controllerListener non dovrebbero ricevere messaggi
+    bothReceivesNoMessageCheck(gameServer, controllerListener)
+
+    //gameServer manda messaggio GameEnded e vengono controllati relativi ack
+    testGameEndedInteraction(controllerListener, client, gameServer, gameServerTopicSender)
+  }
+
+
+
+
+
+
+
+
+  
+
+
+  /*
+    todo il test6 va per ultimo: termina l'ActorSystem quindi poi non puoi piu creare attori,
+     deve essere l'ultimo test, valutare se eliminarlo
+   */
+  /*
+    testo la capacità del Client gestire chiusura del gioco dopo la fine di una partita
+    parto dall'attesa della risposta (negativa) dell'utente riguardo a fare nuova partita
+   */
   "Client"  should "be able to handle game end, player doesn't want to play again" in {
     val testId: String = "6"
     //attore a cui il Controller invierà messaggi
@@ -317,15 +387,31 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   }
 
 
-
-
-
-
   //--------------------METODI TEST CHIAMATI PIU VOLTE-------------------
 
+
+  //GameServer invia al client messaggio di terminazione della partita, poi vengono controllati i conseguenti ack
+  private def testGameEndedInteraction(controllerListener: TestProbe,
+                                       client: ActorRef,
+                                       gameServer: TestProbe,
+                                       gameServerTopicSender:ActorRef): Unit = {
+    //nome del vincitore
+    val winnerName: String= "vincitore";
+
+    //GameServer comunica fine partita
+    gameServer.send(gameServerTopicSender, GameEnded(winnerName,client))
+
+    //client dovrebbe inviare Ack di ricezione messaggio GameEnded a GameServer
+    val state = gameServer.expectMsgType[GameEndedAck](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state must equal(GameEndedAck())
+
+    //UI dovrebbe ricevere notifica di fine partita
+    val state1 = controllerListener.expectMsgType[MatchEnded](new FiniteDuration(waitTimeForMessages,TimeUnit.SECONDS))
+    state1 must equal(MatchEnded(winnerName, true))
+  }
+
   //Simula interazione UI-Client-GreetingServer dopo la chiamata OnLoginResponse
-  private def testNewGameRequest(controllerListener: TestProbe,
-                                 client: ActorRef,
+  private def testNewGameRequest(client: ActorRef,
                                  greetingServer: TestProbe):Unit = {
     //testo che utente possa effettuare richiesta per nuova partita
     client ! JoinQueue()

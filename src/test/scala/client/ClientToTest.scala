@@ -20,6 +20,11 @@ object ExtraMessagesForClientTesting{
   case class JumpToWaitingUserChoosingWheterPlayAgainOrClosing(greetingServer:ActorRef, username:String, gameServer:ActorRef, gameServerTopic:String) extends ExtraMessagesForClientTestingType
   //messaggio inviato in risposta ai messaggi parametri ricevuti in jumpToWGST, log contiene descrizione stampabile di cosa stia avvenendo
   case class SetUpDoneWUCWPAOC(log: String = "") extends ExtraMessagesForClientTestingType
+
+  //mi permette di saltare dritto allo stato WaitingInTurnPlayerNomination, settando gli opportuni parametri che avrei dovuto normalmente ottenere
+  case class JumpToWaitingInTurnPlayerNomination(greetingServer:ActorRef, username:String, gameServer:ActorRef, gameServerTopic:String) extends ExtraMessagesForClientTestingType
+  //messaggio inviato in risposta ai messaggi parametri ricevuti in jumpToWITPN, log contiene descrizione stampabile di cosa stia avvenendo
+  case class SetUpDoneWITPN(log: String = "") extends ExtraMessagesForClientTestingType
 }
 
 /*
@@ -69,7 +74,7 @@ class ClientToTest extends ClientActor {
 
 
 
-  //nota: non c'è sottoscrizione a gameServerTopic e chatTopic
+  //nota: non c'è sottoscrizione a chatTopic
   def jumpToWUCWPAOC: Receive = {
     case msg: JumpToWaitingUserChoosingWheterPlayAgainOrClosing => {
       setUpGameVariables(msg.greetingServer, msg.username, msg.gameServer, msg.gameServerTopic)
@@ -79,11 +84,21 @@ class ClientToTest extends ClientActor {
     }
   }
 
+  //nota: non c'è sottoscrizione a chatTopic
+  def jumpToWITPN: Receive = {
+    case msg: JumpToWaitingInTurnPlayerNomination => {
+      setUpGameVariables(msg.greetingServer, msg.username, msg.gameServer, msg.gameServerTopic)
+      sender ! SetUpDoneWITPN()
+      context.become(waitingInTurnPlayerNomination)
+    }
+  }
+
 
   //faccio si che dal primo stato io possa saltare in altri stati fondamentali, rendendo piu agile il test dell'attore
   override def waitingUsernameFromUser: Receive =
     jumpToWAOUQR orElse
     jumpToWGST orElse
     jumpToWUCWPAOC orElse
+    jumpToWITPN orElse
       super.waitingUsernameFromUser
 }
