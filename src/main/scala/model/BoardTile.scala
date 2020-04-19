@@ -51,9 +51,8 @@ case class BoardTileImpl(_position: PositionImpl, _card: Card) extends BoardTile
 sealed trait Board{
   def boardTiles: List[BoardTile]
   def playedWord: List[BoardTile]
-  // metodi per inserire elementi nella Board o nelle parole giocate
+  // metodi per inserire e rimuovere elementi dalla board
   def addCard2Tile (card: Card, x:Int, y:Int, add2PlayedWord:Boolean = false)
-  def removeCardFromTile(x:Int, y:Int, removeFromPlayedWord:Boolean = false): Card
   def addPlayedWord(playedWordsList: List[BoardTile])
   def clearPlayedWords()
   def clearBoardFromPlayedWords()
@@ -84,22 +83,10 @@ case class BoardImpl() extends Board {
   override def addCard2Tile(card: Card, x:Int, y:Int, add2PlayedWord:Boolean = false): Unit =  {
     _boardTiles = _boardTiles.map {
       element => if (element.equals(getTileInAPosition(x, y))){
-        if(add2PlayedWord) _playedWord = BoardTileImpl(new PositionImpl(x, y), card) :: _playedWord
-        BoardTileImpl(new PositionImpl(x, y), card)}
+        if(add2PlayedWord) _playedWord = BoardTileImpl(PositionImpl(x, y), card) :: _playedWord
+        BoardTileImpl(PositionImpl(x, y), card)}
       else element
     }
-  }
-  // metodo per rimuovere una card in una posizione del tabellone
-  override def removeCardFromTile(x: Int, y: Int, removeFromPlayedWord:Boolean = false): Card = {
-    var card: Card = cardConstants.defaultCard
-    _boardTiles = _boardTiles.map {
-      element => if (element.equals(getTileInAPosition(x, y))) {
-        card = element.card
-        if(removeFromPlayedWord) _playedWord = _playedWord.filter(boardTile => !boardTile.equals(element))
-        BoardTileImpl(new PositionImpl(x, y), cardConstants.defaultCard)
-      }else element
-    }
-    card
   }
   // metodi per aggiungere e rimuovere una lista di carte
   override def addPlayedWord(playedWordsList: List[BoardTile]): Unit = {
@@ -109,6 +96,18 @@ case class BoardImpl() extends Board {
   }
   override def clearPlayedWords(): Unit = _playedWord = List()
   override def clearBoardFromPlayedWords(): Unit = for(playedWord <- _playedWord) removeCardFromTile(playedWord.position._coord._1+1, playedWord.position._coord._2+1)
+  // metodo per rimuovere una card in una posizione del tabellone
+  private def removeCardFromTile(x: Int, y: Int, removeFromPlayedWord:Boolean = false): Card = {
+    var card: Card = cardConstants.defaultCard
+    _boardTiles = _boardTiles.map {
+      element => if (element.equals(getTileInAPosition(x, y))) {
+        card = element.card
+        if(removeFromPlayedWord) _playedWord = _playedWord.filter(boardTile => !boardTile.equals(element))
+        BoardTileImpl(PositionImpl(x, y), cardConstants.defaultCard)
+      }else element
+    }
+    card
+  }
   private def samePosition(position: PositionImpl, x: Int, y: Int): Boolean = position._coord._1+1 == x && position._coord._2+1 == y
   private def getTileInAPosition(x:Int, y:Int): BoardTile = _boardTiles.find( boardTile => samePosition(boardTile.position,x, y)).getOrElse(boardConstants.boardTileDefault)
 
@@ -155,7 +154,7 @@ case class BoardImpl() extends Board {
   private def tileBoardsInADirection(direction: Direction, boardTile: BoardTile): ArrayBuffer[(Card, String)] = {
     var wordReturn: ArrayBuffer[(Card,String)] = ArrayBuffer()
     var actualBoardTile = getTileInAPosition(boardTile.position._coord._1+1+direction.shift._1, boardTile.position._coord._2+1+direction.shift._2)
-    while(!actualBoardTile.card.equals(cardConstants.defaultCard) /*&& actualBoardTile.position.isValidPosition()*/){
+    while(!actualBoardTile.card.equals(cardConstants.defaultCard) && actualBoardTile.position.isValidPosition){
       if(direction.equals(Directions.N) || direction.equals(Directions.W)) {
         wordReturn = (actualBoardTile.card, actualBoardTile.position._bonus) +: wordReturn
       } else if (direction.equals(Directions.S) || direction.equals(Directions.E)) {
@@ -178,20 +177,15 @@ case class BoardImpl() extends Board {
   // 2 => le lettere inserite devo essere su una colonna o su una riga
   private def wordDirectionIsDiagonal(): Boolean = wordDirection(_playedWord) == boardConstants.diagonal
   // metodo per controllare che le lettere inserite siano tutte nella stessa direzione
-  private def wordDirection(wordList: List[BoardTile]): String = {
+  private def wordDirection(wordList: List[BoardTile]): String =
     if (wordList.forall(boardTiles => boardTiles.position._coord._1 == wordList.head.position._coord._1))
       boardConstants.vertical
     else if (wordList.forall(boardTiles => boardTiles.position._coord._2 == wordList.head.position._coord._2))
       boardConstants.horizontal
-    else {
-      boardConstants.diagonal
-    }
-  }
-  // 3 => uan parola, fra quelle trovate, deve contenere tutte le lettere giocate
+    else boardConstants.diagonal
+  // 3 => una parola, fra quelle trovate, deve contenere tutte le lettere giocate
   private def playedLettersAreInFoundWords(foundWords: List[ArrayBuffer[(Card, String)]]): Boolean =
-    foundWords.exists(word => {
-      _playedWord.forall(tileBoard => word.contains((tileBoard.card,tileBoard.position._bonus)))
-    })
+    foundWords.exists(word => {_playedWord.forall(tileBoard => word.contains((tileBoard.card,tileBoard.position._bonus)))})
 
   // metodo di utilità per ottenere da una BoardTile una tupla (Card, String)
   private def boardTails2Tuple(boardTile: BoardTile): (Card, String) = (boardTile.card, boardTile.position._bonus)

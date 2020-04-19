@@ -9,39 +9,18 @@ class BoardTest extends FlatSpec {
     for(tuple <- wantedBoardTiles) yield BoardTileImpl(new PositionImpl(tuple._1,tuple._2), CardImpl(tuple._3))
   def addListOfCardsToTheBoard(board:Board, cards: List[(Card, Int, Int)]): Unit = for (card <- cards) board.addCard2Tile(card._1, card._2, card._3)
 
-  // TEST SUI METODI UTILIZZATI PER INSERIRE E RIMUOVERE ELEMENTI DA BOARD
+  // TEST SUI METODI UTILIZZATI PER INSERIRE E RIMUOVERE ELEMENTI DALLA BOARD
   "A card " should " be added to the board in a specific position" in {
     val card = CardImpl("A")
     val board = BoardImpl()
     board.addCard2Tile(card, 1,1 )
     assert(board.boardTiles.head.card == card)
   }
-  "A card " should " be removed from a specific position of the board" in {
-    val card = CardImpl("A")
-    val board = BoardImpl()
-    board.addCard2Tile(card, 1,1)
-    board.removeCardFromTile(1,1)
-    assert(board.boardTiles.head.card == cardConstants.defaultCard)
-  }
   "A card " should " be added to the board in a specific position and in the played word" in {
     val card = CardImpl("A")
     val board = BoardImpl()
     board.addCard2Tile(card, 1,1, add2PlayedWord = true)
     assert(board.boardTiles.head.card.equals(card) && board.playedWord.contains(BoardTileImpl(PositionImpl(1,1),card)))
-  }
-  "A card " should " be removed from a specific position of the board and from the played word" in {
-    val card = CardImpl("A")
-    val board = BoardImpl()
-    board.addCard2Tile(card, 1,1)
-    board.removeCardFromTile(1,1, removeFromPlayedWord = true)
-    assert(board.boardTiles.head.card.equals(cardConstants.defaultCard) && !board.playedWord.contains(BoardTileImpl(PositionImpl(1,1),card)))
-  }
-  "A hand " should " be removed from the board" in {
-    val card = CardImpl("A")
-    val board = BoardImpl()
-    board.addCard2Tile(card, 1,1)
-    board.removeCardFromTile(1,1, removeFromPlayedWord = true)
-    assert(board.boardTiles.head.card.equals(cardConstants.defaultCard) && !board.playedWord.contains(BoardTileImpl(PositionImpl(1,1),card)))
   }
   "A list of cards " should " be added to the board and removed" in {
     val boardTile = BoardTileImpl(PositionImpl(1,3), CardImpl("D"))
