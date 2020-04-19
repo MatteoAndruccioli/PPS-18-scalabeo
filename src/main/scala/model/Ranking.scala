@@ -6,8 +6,11 @@ import scala.collection.immutable.ListMap
 // classifica dei giocatori
 sealed trait Ranking {
   def ranking: Map[ActorRef, Int]
+  // metodo per aggiornamento dei punti di un giocatore
   def updatePoints (actorRef: ActorRef, setPoint: Int)
+  // metodo per rimuovere i punti per un giocatore
   def removePoints(actorRef: ActorRef, handPoint: Int)
+  // metodo per ottenere l'elenco dei giocatori ordinati per punteggio
   def getRankingByScore: ListMap[ActorRef, Int]
 }
 
