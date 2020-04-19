@@ -1,13 +1,11 @@
 package model
 
-
 import akka.actor.ActorRef
 import scala.collection.immutable.ListMap
 
 // classifica dei giocatori
 sealed trait Ranking {
   def ranking: Map[ActorRef, Int]
-  def addInitialPlayers(matchPlayer: List[ActorRef]): Map[ActorRef, Int]
   def updatePoints (actorRef: ActorRef, setPoint: Int)
   def removePoints(actorRef: ActorRef, handPoint: Int)
   def getRankingByScore: ListMap[ActorRef, Int]
@@ -18,7 +16,7 @@ class RankingImpl(players: List[ActorRef]) extends Ranking {
   private var _ranking: Map[ActorRef, Int] = addInitialPlayers(players)
   override def ranking: Map[ActorRef, Int] = _ranking
   // metodo per aggiungere i giocatori iniziali
-  override def addInitialPlayers(matchPlayers: List[ActorRef]): Map[ActorRef, Int]= {
+  private def addInitialPlayers(matchPlayers: List[ActorRef]): Map[ActorRef, Int]= {
     var map: Map[ActorRef, Int] = Map()
     matchPlayers.foreach(player => map = map.+((player, 0)))
     map
