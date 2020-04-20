@@ -5,17 +5,22 @@ import scalafx.scene.layout.{ColumnConstraints, GridPane, RowConstraints}
 
 class BoardPanel extends GridPane {
 
-  var board: Array[Array[BoardTile]] = Array.ofDim[BoardTile](17, 17)
-  maxHeight = 17 * 32
-  maxWidth = 17 * 32
+  val BOARD_SIZE = 17
+  val TILE_SIZE = 32
+  var board: Array[Array[BoardTile]] = Array.ofDim[BoardTile](BOARD_SIZE, BOARD_SIZE)
+
   styleClass += "board-panel"
-  val colInfo = new ColumnConstraints(minWidth = 32, prefWidth = 32, maxWidth = 32)
-  val rowInfo = new RowConstraints(minHeight = 32, prefHeight = 32, maxHeight = 32)
-  for(row <- 1 to 17) {
+
+  maxHeight = BOARD_SIZE * TILE_SIZE
+  maxWidth = BOARD_SIZE * TILE_SIZE
+  val colInfo = new ColumnConstraints(minWidth = TILE_SIZE, prefWidth = TILE_SIZE, maxWidth = TILE_SIZE)
+  val rowInfo = new RowConstraints(minHeight = TILE_SIZE, prefHeight = TILE_SIZE, maxHeight = TILE_SIZE)
+
+  for(row <- 1 to BOARD_SIZE) {
     columnConstraints.add(colInfo)
     rowConstraints.add(rowInfo)
-    for(column <- 1 to 17) {
-      val boardTile = new BoardTile(32, row, column)
+    for(column <- 1 to BOARD_SIZE) {
+      val boardTile = new BoardTile(TILE_SIZE, row, column)
       add(boardTile, row - 1, column - 1)
       board(row - 1)(column - 1) = boardTile
     }

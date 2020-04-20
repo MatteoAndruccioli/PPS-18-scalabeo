@@ -8,13 +8,13 @@ import scalafx.application.{JFXApp, Platform}
 import scala.collection.mutable.ArrayBuffer
 
 object View extends JFXApp {
-
+  private val PLAYER_EXITED_DIALOG_TEXT = "A player left the game, in 5 seconds you will be redirected to the main menu."
+  private val SERVER_CRASHED_DIALOG_TEXT = "The main server has crashed, the game will exit in 5 seconds."
+  private val GAME_SERVER_CRASHED_TEXT = "The game server has crashed, in 5 seconds you will be redirected to the main menu."
   var mainMenu: MainMenu = new MainMenu
   var gameBoard: GameView = _
   stage = mainMenu
 
-
-  //da chiamare quando il greeting ha confermato il login
   def onLoginResponse(): Unit = {
     mainMenu.onLoginResponse()
   }
@@ -23,22 +23,18 @@ object View extends JFXApp {
     Controller.sendToClient(message)
   }
 
-  //da chiamare quando si può iniziare la partita
   def onMatchStart(cards: ArrayBuffer[(String, Int)], players:List[String]): Unit = {
     Platform.runLater(() => {
       if(stage != null)
         stage.close()
       gameBoard = new GameView(cards, players)
-      //updateHand(cards)
     })
   }
 
-  //chiede all'utente di joinare la partita
   def askUserToJoinGame(): Unit = {
     mainMenu.askUserToJoinGame()
   }
 
-  //Chiamato quando dalla gameboard si vuole tornare nel mainmenu
   def backToMainMenu(): Unit = {
     Platform.runLater(() =>{
       gameBoard.close()
@@ -51,7 +47,7 @@ object View extends JFXApp {
 
   def playerLeft(): Unit = {
     Platform.runLater(() =>{
-      new Dialog("A player left the game, in 5 seconds you will be redirected to the main menu.")
+      new Dialog(PLAYER_EXITED_DIALOG_TEXT)
         .autoClose(Option(gameBoard), () => {
           mainMenu = new MainMenu
           mainMenu.onLoginResponse()
@@ -64,7 +60,7 @@ object View extends JFXApp {
 
   def greetingDisconnected(): Unit = {
     Platform.runLater(() =>{
-      new Dialog("The main server has crashed, the game will exit in 5 seconds.")
+      new Dialog(SERVER_CRASHED_DIALOG_TEXT)
         .autoClose(Option(gameBoard), () => {
           Controller.exit()
         })
@@ -74,7 +70,7 @@ object View extends JFXApp {
 
   def gameServerDisconnected(): Unit = {
     Platform.runLater(() =>{
-      new Dialog("The game server has crashed, in 5 seconds you will be redirected to the main menu.")
+      new Dialog(GAME_SERVER_CRASHED_TEXT)
         .autoClose(Option(gameBoard), () => {
           mainMenu = new MainMenu
           mainMenu.onLoginResponse()
@@ -85,14 +81,12 @@ object View extends JFXApp {
     })
   }
 
-  //chiamato quando inizia il turno dell'utente
   def userTurnBegins(): Unit = {
     gameBoard.disableMulliganButton(!Controller.isMulliganAvailable)
     gameBoard.startTurn()
     gameBoard.restartTimer()
   }
 
-  //chiamato a fine turno quando il Gameserver broadcasta gli aggiornamenti, è la fine del turno del player per il GameServer
   def turnEndUpdates(word: List[(LetterTile, Int, Int)]): Unit = {
     gameBoard.updateBoard(word)
   }

@@ -7,6 +7,7 @@ import client.controller.MoveOutcome.ServerDown.{GameServerDown, GreetingServerD
 import client.view.{BoardInteraction, LetterStatus, LetterTile, View}
 import model.{BoardTile, Card}
 import shared.Move.WordMove
+
 import scala.collection.mutable.ArrayBuffer
 
 trait ControllerLogic {
@@ -143,5 +144,88 @@ object ControllerLogic {
     def terminate(): Unit = {
       View.terminate()
     }
+  }
+
+  class StupidMind(verbose: Boolean = true) extends ControllerLogic{
+
+    override def startGui(): Unit = myPrintln("invocato startGui()")
+
+    override def onLoginResponse(): Unit = myPrintln("invocato onLoginResponse()")
+
+    override def askUserToJoinGame(): Unit = myPrintln("invocato askUserToJoinGame()")
+
+    override def onMatchStart(hand: ArrayBuffer[Card], players: List[String]): Unit = {
+      myPrintln("invocato askUserToJoinGame(hand: ArrayBuffer[Card], players: List[String])")
+      myPrintln("Hand: ")
+      hand.foreach(c=>myPrintln(c.toString()))
+      myPrintln("Players: ")
+      myPrintln(players)
+    }
+
+    override def userTurnBegins(): Unit = myPrintln("invocato userTurnBegins()")
+
+    override def turnEndUpdates(ranking: List[(String, Int)], board: List[BoardTile]): Unit = {
+      myPrintln("invocato turnEndUpdates(ranking: List[(String, Int)], board: List[BoardTile])")
+      myPrintln("ranking: ")
+      ranking.foreach(c=>myPrintln("\n (" + c._1 + "," + c._2 +")"))
+      myPrintln("board: ")
+      board.foreach(c=>myPrintln("\n" + c.toString()))
+    }
+
+    override def addCardToTile(position: Int, x: Int, y: Int): Unit = {
+      myPrintln("invocato addCardToTile(position: Int, x: Int, y: Int)")
+      myPrintln("position: " + position)
+      myPrintln("x: "+ x)
+      myPrintln("y: "+ y)
+    }
+
+    override def collectLetters(): Unit = myPrintln("invocato collectLetters()")
+
+    override def playWord(): Unit = myPrintln("invocato playWord()")
+
+    override def moveOutcome[A >: MoveOutcome](outcome: A): Unit = {
+      myPrintln("invocato moveOutcome[A >: MoveOutcome](outcome: A)")
+      myPrintln("outcome: " + outcome)
+    }
+
+    override def updateHand(hand: ArrayBuffer[Card]): Unit = {
+      myPrintln("invocato updateHand(hand: ArrayBuffer[Card])")
+      myPrintln("Hand: ")
+      hand.foreach(c=>myPrintln(c.toString()))
+    }
+
+    override def takeLettersBackInHand(): Unit = myPrintln("invocato takeLettersBackInHand()")
+
+    override def userTurnContinues(): Unit = myPrintln("invocato userTurnContinues()")
+
+    override def isMulliganAvailable: Boolean = {
+      myPrintln("invocato isMulliganAvailable()")
+      return true
+    }
+
+    override def onConnectionFailed(): Unit = myPrintln("invocato onConnectionFailed()")
+
+    override def serversDown(server: ServerDown): Unit = {
+      myPrintln("invocato serversDown(server: ServerDown)")
+      myPrintln("server: " + server.toString())
+    }
+
+    override def matchEnded(player: String, playerWon: Boolean): Unit = {
+      myPrintln("invocato matchEnded(player: String, playerWon: Boolean)")
+      myPrintln("player: " + player)
+      myPrintln("playerWon: " + playerWon)
+    }
+
+    override def playerLeft(): Unit = myPrintln("invocato playerLeft()")
+
+    override def terminate(): Unit = myPrintln("invocato terminate()")
+
+    override def showInChat(sender: String, message: String): Unit = {
+      myPrintln("invocato showInChat(sender: String, message: String)")
+      myPrintln("sender: " + sender)
+      myPrintln("message: " + message)
+    }
+
+    def myPrintln:Any => Unit = condPrintln(verbose)_
   }
 }

@@ -10,6 +10,7 @@ import scala.collection.mutable.ArrayBuffer
 
 object BoardInteraction {
 
+  private val LETTER_SIZE = 60
   private var _selection: LetterTile = _
   private var _handHBox: Pane = _
   private val _thisTurnInsertions: mutable.Map[LetterTile, (Int, Int)] = mutable.Map()
@@ -68,7 +69,7 @@ object BoardInteraction {
   def updateHand(cards: ArrayBuffer[(String, Int)]): Unit = {
     Platform.runLater(() => {
       _handHBox.getChildren.clear()
-      cards.zipWithIndex.foreach(c => _handHBox.getChildren.add(LetterTile(60, c._1._1, c._1._2.toString, c._2, LetterStatus.inHand)))
+      cards.zipWithIndex.foreach(c => _handHBox.getChildren.add(LetterTile(LETTER_SIZE, c._1._1, c._1._2.toString, c._2, LetterStatus.inHand)))
     })
   }
 

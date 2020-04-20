@@ -10,6 +10,7 @@ import scalafx.scene.paint.Color
 import scalafx.stage.{Stage, StageStyle}
 
 class Dialog(title: String) extends Stage(StageStyle.Undecorated) {
+  val MS_BEFORE_CLOSE = 5000
   initStyle(StageStyle.Transparent)
   centerOnScreen()
   requestFocus()
@@ -58,7 +59,7 @@ class Dialog(title: String) extends Stage(StageStyle.Undecorated) {
 
   def autoClose(stageToClose: Option[Stage], onCloseAction: Runnable): Dialog = {
     new Thread(() => {
-      Thread.sleep(5000)
+      Thread.sleep(MS_BEFORE_CLOSE)
       Platform.runLater(() => {
         this.close()
         if(stageToClose != Option.empty) {

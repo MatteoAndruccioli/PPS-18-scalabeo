@@ -21,13 +21,13 @@ import shared.GreetingToClientMessages._
 import scala.collection.mutable.ArrayBuffer
 
 class ClientActor extends Actor{
-  private val mediator = DistributedPubSub.get(context.system).mediator
+  val mediator = DistributedPubSub.get(context.system).mediator
   private val cluster = Cluster.get(context.system)
-  private val scheduler: CustomScheduler = ClusterScheduler(cluster)
+  val scheduler: CustomScheduler = ClusterScheduler(cluster)
 
   //todo cambia nomi ai due option che tengono i nomi dei server che non si possono vedere
   //contiene l'ActorRef del server
-  private var greetingServerActorRef: Option[ActorRef] = None
+  var greetingServerActorRef: Option[ActorRef] = None
   //contiene l'ActorRef del server
   var gameServerActorRef: Option[ActorRef] = None
   //contiene il topic relativi al GameServer
@@ -35,9 +35,9 @@ class ClientActor extends Actor{
   //contiene il topic della chat
   var chatTopic: Option[String] = None
   //contiene lo username scelto dall'utente
-  private var username: Option[String] = None
+  var username: Option[String] = None
   //l'utente è disposto a giocare
-  private var playerIsReady:Boolean = false
+  var playerIsReady:Boolean = false
 
   mediator ! Subscribe(GREETING_SERVER_RECEIVES_TOPIC, self)
 
@@ -79,8 +79,8 @@ class ClientActor extends Actor{
         case false => {
           //comunicare al player che la connessione non può essere stabilita e chiudere (valutare prossime due istruzioni)
           Controller.onConnectionFailed()
+          println("Client " + self + " ricevuto ConnectionAnswer negativa ["+ connection.connected +"] dal GreetingServer "+ sender())
           context.stop(self)
-          println("Client " + self + " ricevuto ConnectionAnswer negativa ["+ connection.connected +"] dal GreetingServer "+ greetingServerActorRef.get)
         }
       }
     }
@@ -262,7 +262,7 @@ class ClientActor extends Actor{
 
 
   //GESTIONE STOP CLIENT
-  private def handleClientStop():Unit = {
+  def handleClientStop():Unit = {
     println(self + " Muoro felicio")
     scheduler.stopTask()
     //dovrò comunicare al controller la riuscita terminazione
@@ -552,7 +552,7 @@ class ClientActor extends Actor{
   }
 
   //resetta le variabili temporanee
-  private def resetMatchInfo():Unit = {
+  def resetMatchInfo():Unit = {
     println("invocato metodo resetMatchInfo")
     if(gameServerActorRef.isDefined){
       context.unwatch(gameServerActorRef.get)
