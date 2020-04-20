@@ -92,11 +92,8 @@ class ClientToTest extends ClientActor {
 
   //gestione chiusura gioco, elimino lo stop dell'attore per evitare chiusura ActorSystem nel test di fine partita
   override def handleClientStop():Unit = {
-    println(self + " Muoio felice")
     scheduler.stopTask()
-    //dovrò comunicare al controller la riuscita terminazione
     Controller.exit()
-    //context.stop(self)
   }
 
 
