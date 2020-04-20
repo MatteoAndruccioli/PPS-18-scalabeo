@@ -51,6 +51,7 @@ class UtilityPanel extends GridPane {
           if(Controller.isMyTurn) {
             println("Passato")
             timerPanel.pauseTimer()
+            Controller.collectLetters()
             View.sendToClient(UserMadeHisMove(Pass()))
           } else {
             println("Non è il mio turno!!!!!!!!!!!!!")
