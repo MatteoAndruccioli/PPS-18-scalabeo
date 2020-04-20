@@ -18,13 +18,12 @@ import shared.GameServerToClientMessages
  */
 class OnGameTopicSenderActor(gameServerTopic: String, gameServer: ActorRef) extends Actor {
 
-  val mediator = DistributedPubSub(context.system).mediator
+  val mediator: ActorRef = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(gameServerTopic, self)
 
   override def receive: Receive = {
-    case msg : GameServerToClientMessages => {
+    case msg : GameServerToClientMessages =>
       println("SENDER = " + sender + "  === GAMESERVER = " + gameServer + " GAME_SERVER_TOPIC = " + gameServerTopic)
       if(sender == gameServer) mediator ! Publish(gameServerTopic, msg)
-    }
   }
 }

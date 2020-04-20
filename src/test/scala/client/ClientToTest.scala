@@ -56,41 +56,37 @@ class ClientToTest extends ClientActor {
 
   //permette di saltare nello stato WaitingReadyToJoinRequestFromGreetingServer
   def jumpToWAOUQR: Receive = {
-    case msg: JumpToWaitingReadyToJoinRequestFromGreetingServer => {
+    case msg: JumpToWaitingReadyToJoinRequestFromGreetingServer =>
       setGreetingConnectionVariables(msg.greetingServer, msg.username)
       sender ! SetUpDoneWRTJRFGS()
       context.become(waitingReadyToJoinRequestFromGreetingServer)
-    }
   }
 
   //permette di saltare nello stato WaitingGameServerTopic
   def jumpToWGST: Receive = {
-    case msg: JumpToWaitingGameServerTopic => {
+    case msg: JumpToWaitingGameServerTopic =>
       setReadyPlayerVariables(msg.greetingServer, msg.username)
       sender ! SetUpDoneWGST()
       context.become(waitingGameServerTopic)
-    }
   }
 
 
 
   //nota: non c'è sottoscrizione a chatTopic
   def jumpToWUCWPAOC: Receive = {
-    case msg: JumpToWaitingUserChoosingWheterPlayAgainOrClosing => {
+    case msg: JumpToWaitingUserChoosingWheterPlayAgainOrClosing =>
       setUpGameVariables(msg.greetingServer, msg.username, msg.gameServer, msg.gameServerTopic)
       resetMatchInfo()
       sender ! SetUpDoneWUCWPAOC()
       context.become(waitingUserChoosingWheterPlayAgainOrClosing)
-    }
   }
 
   //nota: non c'è sottoscrizione a chatTopic
   def jumpToWITPN: Receive = {
-    case msg: JumpToWaitingInTurnPlayerNomination => {
+    case msg: JumpToWaitingInTurnPlayerNomination =>
       setUpGameVariables(msg.greetingServer, msg.username, msg.gameServer, msg.gameServerTopic)
       sender ! SetUpDoneWITPN()
       context.become(waitingInTurnPlayerNomination)
-    }
   }
 
 

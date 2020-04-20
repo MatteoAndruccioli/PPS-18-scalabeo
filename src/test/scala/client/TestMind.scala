@@ -86,7 +86,7 @@ case class TestMind(verbose: Boolean = true, receiver: ActorRef) extends StupidM
   }
 
   override def moveOutcome[A >: MoveOutcome](outcome: A): Unit = {
-    receiver ! MoveOutcomeMessage(outcome)
+    receiver ! outcome
     super.moveOutcome(outcome)
   }
 

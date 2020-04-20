@@ -12,7 +12,7 @@ import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
   - avrei voluto usare un TestProbe ma non riesco a far si che tale TestProbe utilizzi il mediator
  */
 class GreetingServerTopicListener(dummyGreetingServer: ActorRef) extends Actor{
-  val mediator = DistributedPubSub(context.system).mediator
+  val mediator: ActorRef = DistributedPubSub(context.system).mediator
   mediator ! Subscribe(GREETING_SERVER_RECEIVES_TOPIC, self)
   override def receive: Receive = {
     case connectionMessage : ConnectionToGreetingQuery => dummyGreetingServer ! connectionMessage
