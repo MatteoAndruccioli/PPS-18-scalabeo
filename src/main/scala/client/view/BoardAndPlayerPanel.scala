@@ -16,8 +16,8 @@ class BoardAndPlayerPanel(cards: ArrayBuffer[(String, Int)]) extends BorderPane 
     styleClass += "my-hand"
   }
 
-  cards.zipWithIndex.foreach(c => myHand.getChildren.add(LetterTile(LETTER_SIZE, c._1._1, c._1._2.toString, c._2, LetterStatus.inHand)))
   BoardInteraction.setMyHand(myHand)
+  BoardInteraction.updateHand(cards)
 
   val opponentHandTop: HBox = new HBox(LETTERS_SPACING) {
     styleClass += "top-opponent"
