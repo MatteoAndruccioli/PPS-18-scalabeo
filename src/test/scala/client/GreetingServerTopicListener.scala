@@ -9,7 +9,7 @@ import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
 /*
   - è un attore che ascolta i messaggi inviati su Channels.GREETING_SERVER_RECEIVES_TOPIC
       e li rigira all'attore identificato da ActorRef dummyGreetingServer
-  - avrei voluto usare un TestProbe ma non riesco a far si che tale TestProbe utilizzi il mediator
+  - si sarebbe potuto usare un TestProbe se non fosse stato necessario usare mediator
  */
 class GreetingServerTopicListener(dummyGreetingServer: ActorRef) extends Actor{
   val mediator: ActorRef = DistributedPubSub(context.system).mediator

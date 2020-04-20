@@ -1,7 +1,6 @@
 package client.controller
 
 import client.controller.Messages.ViewToClientMessages.UserMadeHisMove
-import client.controller.{Controller, GameManager, MoveOutcome}
 import client.controller.MoveOutcome.{AcceptedWord, HandSwitchAccepted, HandSwitchRefused, PassReceived, RefusedWord, ServerDown, TimeoutReceived}
 import client.controller.MoveOutcome.ServerDown.{GameServerDown, GreetingServerDown}
 import client.view.{BoardInteraction, LetterStatus, LetterTile, View}
@@ -35,6 +34,7 @@ trait ControllerLogic {
 }
 
 object ControllerLogic {
+  //implementazione vera e propria di ControllerLogic
   case class CleverMind() extends ControllerLogic {
     def startGui(): Unit = {
       new Thread(() => {
@@ -89,12 +89,12 @@ object ControllerLogic {
 
     //metodo attraverso cui il Client comunica al controller l'esito della mossa inviata al GameServer
     def moveOutcome[A >: MoveOutcome](outcome: A):Unit = outcome match {
-      case _: RefusedWord => {takeLettersBackInHand(); userTurnContinues()}
-      case _: HandSwitchRefused => {userTurnContinues()}
-      case _: AcceptedWord => {updateHand(outcome.asInstanceOf[AcceptedWord].hand); View.confirmPlay(); GameManager.confirmPlay()}
-      case _: HandSwitchAccepted => {updateHand(outcome.asInstanceOf[HandSwitchAccepted].hand); Controller.endMyTurn()}
-      case _: PassReceived => {Controller.endMyTurn()}
-      case _: TimeoutReceived => {Controller.endMyTurn()}
+      case _: RefusedWord => takeLettersBackInHand(); userTurnContinues()
+      case _: HandSwitchRefused => userTurnContinues()
+      case _: AcceptedWord => updateHand(outcome.asInstanceOf[AcceptedWord].hand); View.confirmPlay(); GameManager.confirmPlay()
+      case _: HandSwitchAccepted => updateHand(outcome.asInstanceOf[HandSwitchAccepted].hand); Controller.endMyTurn()
+      case _: PassReceived => Controller.endMyTurn()
+      case _: TimeoutReceived => Controller.endMyTurn()
     }
 
     def updateHand(hand:ArrayBuffer[Card]): Unit = {
@@ -103,7 +103,7 @@ object ControllerLogic {
     }
 
     def takeLettersBackInHand(): Unit = {
-      View.getLettersBackFromBoard();
+      View.getLettersBackFromBoard()
       GameManager.collectLetters()
     }
 
@@ -146,6 +146,7 @@ object ControllerLogic {
     }
   }
 
+  //E' una vesione dummy di implementazione di ControllerLogic utile in fase di test e debug
   class StupidMind(verbose: Boolean = true) extends ControllerLogic{
 
     override def startGui(): Unit = myPrintln("invocato startGui()")
@@ -157,7 +158,7 @@ object ControllerLogic {
     override def onMatchStart(hand: ArrayBuffer[Card], players: List[String]): Unit = {
       myPrintln("invocato askUserToJoinGame(hand: ArrayBuffer[Card], players: List[String])")
       myPrintln("Hand: ")
-      hand.foreach(c=>myPrintln(c.toString()))
+      hand.foreach(c=>myPrintln(c.toString))
       myPrintln("Players: ")
       myPrintln(players)
     }
@@ -169,7 +170,7 @@ object ControllerLogic {
       myPrintln("ranking: ")
       ranking.foreach(c=>myPrintln("\n (" + c._1 + "," + c._2 +")"))
       myPrintln("board: ")
-      board.foreach(c=>myPrintln("\n" + c.toString()))
+      board.foreach(c=>myPrintln("\n" + c.toString))
     }
 
     override def addCardToTile(position: Int, x: Int, y: Int): Unit = {
@@ -191,7 +192,7 @@ object ControllerLogic {
     override def updateHand(hand: ArrayBuffer[Card]): Unit = {
       myPrintln("invocato updateHand(hand: ArrayBuffer[Card])")
       myPrintln("Hand: ")
-      hand.foreach(c=>myPrintln(c.toString()))
+      hand.foreach(c=>myPrintln(c.toString))
     }
 
     override def takeLettersBackInHand(): Unit = myPrintln("invocato takeLettersBackInHand()")
@@ -200,14 +201,14 @@ object ControllerLogic {
 
     override def isMulliganAvailable: Boolean = {
       myPrintln("invocato isMulliganAvailable()")
-      return true
+      true
     }
 
     override def onConnectionFailed(): Unit = myPrintln("invocato onConnectionFailed()")
 
     override def serversDown(server: ServerDown): Unit = {
       myPrintln("invocato serversDown(server: ServerDown)")
-      myPrintln("server: " + server.toString())
+      myPrintln("server: " + server.toString)
     }
 
     override def matchEnded(player: String, playerWon: Boolean): Unit = {
@@ -226,6 +227,6 @@ object ControllerLogic {
       myPrintln("message: " + message)
     }
 
-    def myPrintln:Any => Unit = condPrintln(verbose)_
+    def myPrintln:Any => Unit = condPrintln(verbose)
   }
 }
