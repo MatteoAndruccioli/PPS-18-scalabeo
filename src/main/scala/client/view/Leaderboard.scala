@@ -5,13 +5,15 @@ import scalafx.scene.layout.VBox
 import scalafx.scene.text.Text
 
 class Leaderboard(users: List[String]) extends VBox {
+  private val WIDTH = 250
+  private val HEIGHT = 240
   private val _leaderboard: List[(String, Int)] = users.map(u => (u, 0))
   val rankContainer: VBox = new VBox() {
     styleClass += "player-container"
   }
   updateLeaderboard(_leaderboard)
-  prefHeight = 240
-  prefWidth = 250
+  prefHeight = HEIGHT
+  prefWidth = WIDTH
   styleClass += "leaderboard"
   children = List(
     new Text("Classifica") {

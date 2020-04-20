@@ -1,6 +1,5 @@
 package client.view
 
-import client.controller.Controller
 import client.controller.Messages.ViewToClientMessages.ChatMessage
 import scalafx.scene.control.{Button, ScrollPane, TextField}
 import scalafx.scene.input.{KeyCode, KeyEvent}
@@ -9,15 +8,19 @@ import scalafx.scene.text.{Text, TextFlow}
 import scalafx.Includes._
 
 class ChatPanel extends BorderPane {
-  prefHeight = 430
-  prefWidth = 200
+  val CHAT_HEIGHT = 430
+  val CHAT_WIDTH = 200
+  val SEND_STRING = "Invia"
+  val SEND_BUTTON_SIZE = 60
+  prefHeight = CHAT_HEIGHT
+  prefWidth = CHAT_WIDTH
 
   val chatBox: TextFlow = new TextFlow() {
     styleClass += "chat"
   }
 
-  val sendButton: Button = new Button("Invia") {
-    minWidth = 60
+  val sendButton: Button = new Button(SEND_STRING) {
+    minWidth = SEND_BUTTON_SIZE
     onAction = handle {
       if(textField.text.value.trim != "") {
         View.sendToClient(ChatMessage(textField.text.value))

@@ -8,12 +8,14 @@ import scalafx.scene.{Group, Scene}
 import scala.collection.mutable.ArrayBuffer
 
 class GameView(cards: ArrayBuffer[(String, Int)], users: List[String]) extends PrimaryStage {
-
+  private val WIDTH = 1280
+  private val HEIGHT = 720
+  private val TITLE = "Scalabeo"
   private val utilityPanel: UtilityPanel = new UtilityPanel
   private val boardAndPlayerPanel: BoardAndPlayerPanel = new BoardAndPlayerPanel(cards)
   private val legendPanel = new LegendPanel(users)
-  title = "Scalabeo"
-  scene = new Scene(1280, 720) {
+  title = TITLE
+  scene = new Scene(WIDTH, HEIGHT) {
     root = new Group() {
       children = new GridPane() {
         add(legendPanel, 1, 0)
@@ -22,6 +24,7 @@ class GameView(cards: ArrayBuffer[(String, Int)], users: List[String]) extends P
       }
     }
   }
+
   resizable = false
   sizeToScene()
   show()
