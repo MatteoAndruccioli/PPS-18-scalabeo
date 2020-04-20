@@ -23,5 +23,5 @@ class Stopwatch {
     paused = false
   }
 
-  def getSeconds: Float = if (paused) time else (time - elapsed)/INITIAL_TIME_MS
+  def getSeconds: Float = if (paused) time else (time - elapsed)/1000
 }
