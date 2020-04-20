@@ -38,6 +38,13 @@ object ClientTestMessage {
 
 import ClientTestMessage._
 import ClientTestConstants._
+
+/*
+  - questa implementazione di ControllerLogic server a scopi di test
+  - ogni metodo non effettua elaborazione, ma quando viene invocato invia un messaggio all'attore receiver
+    indicato nel costruttore, in questo modo è possibile verificare il momento in cui ogni metodo viene invocato
+  - verbose settato a true abilita le stampe presenti in ogni metodo della classe estesa
+ */
 case class TestMind(verbose: Boolean = true, receiver: ActorRef) extends StupidMind(verbose){
 
   override def startGui(): Unit = {

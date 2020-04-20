@@ -29,9 +29,9 @@ import scala.collection.mutable.ArrayBuffer
 
 
 object TestOnClientCostants{
-  val TEST_SYSTEM_NAME = "test-system"
-  val USERNAME :String= "UsernameTest"
-  val CLIENTACTOR_NAME: String = "Client"
+  val TEST_SYSTEM_NAME = "test-system" //nome dell'ActorSystem
+  val USERNAME :String= "UsernameTest" //nome dell'utente
+  val CLIENTACTOR_NAME: String = "Client" //nome dell'attore Client
   val GREETING_TOPIC_LISTENER_NAME: String = "greetingTopicListener" //greeting server topic listener
   val GAME_TOPIC_SENDER_NAME: String = "gameTopicSender" //game server topic sender
   val GAME_SERVER_TOPIC: String = "GameServerTopic" //game server topic sender
@@ -46,9 +46,9 @@ object TestOnClientCostants{
                   val INITIAL_DELAY :Long = 6;
                   val INTERVAL :Long = 6;
    */
-  val WAIT_TIME_MESSAGES: Int = 10
-  val TIME_WITHOUT_MESSAGES: Int = 10
-  val DEFAULT_CARD: CardImpl = CardImpl("NULL")
+  val WAIT_TIME_MESSAGES: Int = 10  //dt (in secondi) entro cui un certo messaggio dovrebbe arrivare
+  val TIME_WITHOUT_MESSAGES: Int = 10 //dt (in secondi) in cui valuto se un attore riceve messaggi
+  val DEFAULT_CARD: CardImpl = CardImpl("NULL") //implementazione dummy di una carta
 }
 
 class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
@@ -93,7 +93,6 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     - client in grado di ricevere nome da utente
     - client in grado di ricevere stabilire connessione con GreetingServer
     - client notifica a utente che una partita è pronta quando richiesto dal GreetingServer
-
   */
   "Client"  should "be able to notify user when match is ready" in {
     val testId: String = "2"
@@ -456,7 +455,7 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   }
 
 
-  //--------------------METODI TEST CHIAMATI PIU VOLTE-------------------
+  //METODI TEST CHIAMATI PIU VOLTE
 
   //testa interazione di fineturno: GameServer dichiara fineturno e Client invia ack a gameserver e controller
   private def testTurnEnd(controllerListener: TestProbe,
@@ -560,7 +559,7 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     greetingServer.expectMsgType[ConnectionToGreetingQuery](new FiniteDuration(WAIT_TIME_MESSAGES,TimeUnit.SECONDS))
   }
 
-  //---------------------------------------METODI DI UTILITY------------------------------
+  //METODI DI UTILITY
 
 
   //spesso mi troverò a controllare che nessun altro attore oltre a Client riceva messaggi
