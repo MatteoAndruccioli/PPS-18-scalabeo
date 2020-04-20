@@ -38,6 +38,17 @@ class GreetingServerTest
       }
     }
 
+    /*test banale nel quale si vuole verificare che, qualora il client si disconnettesse, il server abbia un
+      comportamento corretto*/
+    "GreetingServer" must {
+
+      "replay with an Ack" in {
+
+        val greetingServer = system.actorOf(Props(new GreetingServer()), "greetingSe")
+        greetingServer ! DisconnectionToGreetingNotification()
+        expectMsg(DisconnectionAck())
+      }
+    }
 
     /*test nel quale si vuole verificare che, al verificarsi di almeno 4 connessioni, il server proponga di unirsi ad
       una partita*/
@@ -48,7 +59,7 @@ class GreetingServerTest
         val mediator = DistributedPubSub(system).mediator
         mediator ! Subscribe(GREETING_SERVER_RECEIVES_TOPIC, probe.ref)
 
-        val greetingServer = system.actorOf(Props(new GreetingServer()), "greetingSe")
+        val greetingServer = system.actorOf(Props(new GreetingServer()), "greetingSer")
         expectMsgType[SubscribeAck]
         greetingServer ! ConnectionToGreetingQuery("Mike")
         expectMsg(ConnectionAnswer(true))
@@ -72,7 +83,7 @@ class GreetingServerTest
       val mediator = DistributedPubSub(system).mediator
       mediator ! Subscribe(GREETING_SERVER_RECEIVES_TOPIC, probe.ref)
 
-      val greetingServer = system.actorOf(Props(new GreetingServer()), "greetingSer")
+      val greetingServer = system.actorOf(Props(new GreetingServer()), "greetingServ")
       expectMsgType[SubscribeAck]
       greetingServer ! ConnectionToGreetingQuery("Mike")
       expectMsg(ConnectionAnswer(true))
@@ -93,16 +104,16 @@ class GreetingServerTest
   }
 
     /*test nel quale si vuole verificare che con 4 risposte positive da parte degli utenti, una partita viene istanziata
-        correttament. Un gameServer la gestirà. */
-    "GreetingServer" must {
+        correttamente. Un gameServer la gestirà. */
+    "GreetingServer" should {
 
-      "create the GameServer correctly" in {
+      "choose the turn" in {
 
         val probe = TestProbe()
         val mediator = DistributedPubSub(system).mediator
         mediator ! Subscribe(GREETING_SERVER_RECEIVES_TOPIC, probe.ref)
 
-        val greetingServer = system.actorOf(Props(new GreetingServer()), "greetingServ")
+        val greetingServer = system.actorOf(Props(new GreetingServer()), "greetingServe")
         expectMsgType[SubscribeAck]
         greetingServer ! ConnectionToGreetingQuery("Mike")
         expectMsg(ConnectionAnswer(true))
@@ -122,16 +133,6 @@ class GreetingServerTest
         expectMsgType[MatchTopicListenQuery](new FiniteDuration(10, TimeUnit.SECONDS))
         expectMsgType[MatchTopicListenQuery](new FiniteDuration(10, TimeUnit.SECONDS))
         expectMsgType[MatchTopicListenQuery](new FiniteDuration(10, TimeUnit.SECONDS))
-      }
-    }
-
-    "GreetingServer" must {
-
-      "replay with an Ack" in {
-
-        val greetingServer = system.actorOf(Props(new GreetingServer()), "greetingServe")
-        greetingServer ! DisconnectionToGreetingNotification()
-        expectMsg(DisconnectionAck())
       }
     }
   }

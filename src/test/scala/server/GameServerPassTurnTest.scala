@@ -35,6 +35,7 @@ class GameServerPassTurnTest
   val gameServer = system.actorOf(Props(new GameServer(playerList,mapUsername)), "g")
   var topic : String = _
 
+  /*verifico l'inizializzazione corretta*/
   "GameServer" must {
 
     "initialize himself" in {
@@ -48,6 +49,7 @@ class GameServerPassTurnTest
     }
   }
 
+  /*verifico il proseguimento verso il primo turno*/
   "GameServer" should {
 
     "decide player turn" in {
