@@ -217,7 +217,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   }
 
   private def updatePointsAndCheckIfGameEnded(sender: ActorRef): Unit ={
-    ranking.updatePoints(sender, board.calculateTurnPoints(board.takeCardToCalculatePoints(isFirstWord)))
+    ranking.updatePoints(sender, board.calculateTurnPoints(board.takeCardToCalculatePoints(isFirstWord), isFirstWord))
     replaceHand()
     sender ! ClientMoveAck(WordAccepted(playersHand(sender)._hand))
     if (playersHand(sender).hand.isEmpty && pouch.bag.isEmpty) {
