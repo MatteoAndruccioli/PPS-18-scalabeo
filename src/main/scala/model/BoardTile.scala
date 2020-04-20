@@ -59,17 +59,16 @@ sealed trait Board{
   // metodo per il controllo della prima parola inserita nella partita
   def checkGameFirstWord(): Boolean
   // metodo per estrarre dalla board le parole da controllare
-  def takeCardToCalculatePoints():  List[ArrayBuffer[(Card, String)]]
+  def takeCardToCalculatePoints(isfirstWord: Boolean = false):  List[ArrayBuffer[(Card, String)]]
   // metodo per convertire le lettere giocate in stringhe corrispondenti alle parole che formano
   def getWordsFromLetters(word: List[ArrayBuffer[(Card, String)]]): List[String]
   // metodo per calcolare il punteggio di un turno
-  def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]]): Int
+  def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]], isfirstWord: Boolean = false): Int
 }
 
 case class BoardImpl() extends Board {
   private var _boardTiles: List[BoardTile] = populateBoard()
   private var _playedWord: List[BoardTile] = List()
-  private var _firstWord: Boolean = true
 
   override def boardTiles: List[BoardTile] = _boardTiles
   override def playedWord: List[BoardTile] = _playedWord
@@ -124,9 +123,9 @@ case class BoardImpl() extends Board {
   }
 
   // METODO PER ESTRARRE DALLA BOARD LE PAROLE DA CONTROLLARE
-  override def takeCardToCalculatePoints(): List[ArrayBuffer[(Card, String)]] = {
+  override def takeCardToCalculatePoints(isFirstWord: Boolean = false): List[ArrayBuffer[(Card, String)]] = {
     // caso 1 e caso 2 controllo delle parole
-    if (!(checkBoardLettersNearness() || _firstWord) || wordDirectionIsDiagonal()) return List()
+    if (!(checkBoardLettersNearness() || isFirstWord) || wordDirectionIsDiagonal()) return List()
     var listOfWords: List[ArrayBuffer[(Card, String)]] = List()
     // per la testa della lista controllo in tutti e due i versi
     listOfWords = (tileBoardsInADirection(Directions.N, _playedWord.head)++ ArrayBuffer(boardTails2Tuple(_playedWord.head)) ++ tileBoardsInADirection(Directions.S, _playedWord.head)) :: listOfWords
@@ -196,9 +195,9 @@ case class BoardImpl() extends Board {
     (for (tuple <- word; playedWord <- tuple._1.letter) yield playedWord).mkString("").toLowerCase
 
   // METODO PER CALCOLARE IL PUNTEGGIO DI UN TURNO
-  override def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]]): Int = (for (word <- words) yield calculateWordScore(word)).sum
+  override def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]], isFirstWord: Boolean = false): Int = (for (word <- words) yield calculateWordScore(word, isFirstWord)).sum
   // metodo per il calcolo del punteggio di una parola
-  private def calculateWordScore(word: ArrayBuffer[(Card, String)]): Int =  {
+  private def calculateWordScore(word: ArrayBuffer[(Card, String)], isFirstWord: Boolean): Int =  {
     var letterValue: Int = 0
     var multiplier: Int = 0
     val letterPoints = for (tuple <- word;
@@ -207,8 +206,8 @@ case class BoardImpl() extends Board {
     letterPoints.foreach(letterValue += _._1)
     letterPoints.foreach(multiplier += _._2)
     if(multiplier == 0) multiplier=1
-    letterValue * multiplier * firstWord+ scoreRules.lenghtBonus(word) + scoreRules.wordScarabeoBonus(word)
+    letterValue * multiplier * firstWord(isFirstWord)+ scoreRules.lenghtBonus(word) + scoreRules.wordScarabeoBonus(word)
   }
   // metodo per il bonus della prima parola inserita
-  private def firstWord(): Int = if(_firstWord){_firstWord= false; scoreRules.bonusFirstWord()} else 1
+  private def firstWord(isFirstWord: Boolean): Int = if(isFirstWord) scoreRules.bonusFirstWord() else 1
 }
