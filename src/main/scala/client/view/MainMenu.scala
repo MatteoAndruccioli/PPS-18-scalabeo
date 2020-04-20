@@ -29,6 +29,7 @@ class MainMenu extends JFXApp.PrimaryStage {
   private val MENU_BUTTON_STYLE = "menu-button"
   private val INNER_LOGIN_VBOX_STYLE = "innerLoginVBox"
   private val APPLICATION_TITLE = "Scalabeo"
+  private val DIALOG_FOUND_TEXT = "Match Found, do you want to accept?"
 
   title = APPLICATION_TITLE
   icons.add(new Image(this.getClass.getResourceAsStream(ICON_PATH)))
@@ -126,7 +127,7 @@ class MainMenu extends JFXApp.PrimaryStage {
     Platform.runLater(() => {
       loggedInContainer.children.remove(0)
       sizeToScene()
-      new Dialog("Match Found, do you want to accept?")
+      new Dialog(DIALOG_FOUND_TEXT)
         .addYesNoButtons(
           () => View.sendToClient(UserReadyToJoin(true)),
           () => {

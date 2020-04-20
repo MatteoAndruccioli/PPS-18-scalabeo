@@ -9,8 +9,10 @@ class BoardTile(size: Double, val row: Int, val column: Int) extends BorderPane 
   prefHeight = size
   maxWidth = size
   maxHeight = size
+
   stylesheets_=(List("/style/TileStyle.css"))
   styleClass += "board-tile"
+
   val tileType: TileType = BoardTile.getTileType(row, column)
   val tileStyle: String = tileType match {
     case TileType.Base => ""

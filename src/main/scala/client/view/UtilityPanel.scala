@@ -8,22 +8,27 @@ import scalafx.Includes.{handle, _}
 import shared.Move.{Pass, Switch}
 
 class UtilityPanel extends GridPane {
+  private val WIDTH = 310
+  private val HEIGHT = 720
+  private val SEND_BUTTON_TEXT = "Gioca"
+  private val MULLIGAN_BUTTON_TEXT = "Mulligan"
+  private val PASS_BUTTON_TEXT = "Passo"
+  private val RETIRE_LETTERS_BUTTON_TEXT = "Ritira Lettere"
   stylesheets = List("/style/UtilityPanel.css")
   styleClass += "body"
-  prefWidth = 310
-  prefHeight = 720
+  prefWidth = WIDTH
+  prefHeight = HEIGHT
   val timerPanel: TimerPanel = new TimerPanel
   val chatPanel: ChatPanel = new ChatPanel
-  val mulliganButton: Button = new Button("Mulligan") {
+  val mulliganButton: Button = new Button(MULLIGAN_BUTTON_TEXT) {
     onAction = handle {
       if(Controller.isMyTurn) {
-        println("Switchato")
         timerPanel.pauseTimer()
         Controller.endMyTurn()
         View.sendToClient(UserMadeHisMove(Switch()))
         mulliganButton.disable = true
       } else {
-        println("Non è il mio turno!!!!!!!!!!!!!")
+        chatPanel.showEventMessage("Non è il tuo turno!")
       }
     }
   }
@@ -35,34 +40,33 @@ class UtilityPanel extends GridPane {
 
   add(new HBox(5) {
     styleClass += "button-container"
-    children = List(new Button("Submit") {
+    children = List(new Button(SEND_BUTTON_TEXT) {
       onAction = handle {
         if(Controller.isMyTurn) {
-          println("Giocato")
           timerPanel.pauseTimer()
           Controller.playWord()
         } else {
-          println("Non è il mio turno!!!!!!!!!!!!!")
+          chatPanel.showEventMessage("Non è il tuo turno!")
         }
       }
     },
-      new Button("PASS") {
+      new Button(PASS_BUTTON_TEXT) {
         onAction = handle {
           if(Controller.isMyTurn) {
-            println("Passato")
             timerPanel.pauseTimer()
+            Controller.collectLetters()
             View.sendToClient(UserMadeHisMove(Pass()))
           } else {
-            println("Non è il mio turno!!!!!!!!!!!!!")
+            chatPanel.showEventMessage("Non è il tuo turno!")
           }
         }
       },
       mulliganButton,
-      new Button("Get Letters Back") {
+      new Button(RETIRE_LETTERS_BUTTON_TEXT) {
         onAction = handle {
-          println("Ritiro le lettere giocate questo turno")
           Controller.collectLetters()
           BoardInteraction.collectLetters()
+          chatPanel.showEventMessage("Hai ritirato le lettere che avevi messo sul tabellone")
         }
       }
     )

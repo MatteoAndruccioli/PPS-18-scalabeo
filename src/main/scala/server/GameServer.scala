@@ -103,7 +103,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
           message.word.foreach(boardTile => playedWord.insert(0, boardTile))
           board.addPlayedWord(List.concat(playedWord))
           println(board.boardTiles.toString)
-          if(isFirstWord && board.checkGameFirstWord() && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints()))){
+          if(isFirstWord && board.checkGameFirstWord() && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints(isFirstWord)))){
             updatePointsAndCheckIfGameEnded(sender())
             isFirstWord = false
           } else if (!isFirstWord && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints()))) {
@@ -217,7 +217,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   }
 
   private def updatePointsAndCheckIfGameEnded(sender: ActorRef): Unit ={
-    ranking.updatePoints(sender, board.calculateTurnPoints(board.takeCardToCalculatePoints()))
+    ranking.updatePoints(sender, board.calculateTurnPoints(board.takeCardToCalculatePoints(isFirstWord), isFirstWord))
     replaceHand()
     sender ! ClientMoveAck(WordAccepted(playersHand(sender)._hand))
     if (playersHand(sender).hand.isEmpty && pouch.bag.isEmpty) {
