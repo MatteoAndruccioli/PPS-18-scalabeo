@@ -6,56 +6,35 @@ import scala.collection.mutable.ArrayBuffer
 class BoardTest extends FlatSpec {
 
   def createBoardTileListFromPositionsAndStrings(wantedBoardTiles: List[(Int, Int, String)]): List[BoardTile] =
-    for(tuple <- wantedBoardTiles) yield BoardTileImpl(new Position(tuple._1,tuple._2), CardImpl(tuple._3))
+    for(tuple <- wantedBoardTiles) yield BoardTileImpl(new PositionImpl(tuple._1,tuple._2), CardImpl(tuple._3))
   def addListOfCardsToTheBoard(board:Board, cards: List[(Card, Int, Int)]): Unit = for (card <- cards) board.addCard2Tile(card._1, card._2, card._3)
 
-  // TEST SUI METODI UTILIZZATI PER INSERIRE E RIMUOVERE ELEMENTI DA BOARD
+  // TEST SUI METODI UTILIZZATI PER INSERIRE E RIMUOVERE ELEMENTI DALLA BOARD
   "A card " should " be added to the board in a specific position" in {
     val card = CardImpl("A")
     val board = BoardImpl()
     board.addCard2Tile(card, 1,1 )
     assert(board.boardTiles.head.card == card)
   }
-  "A card " should " be removed from a specific position of the board" in {
-    val card = CardImpl("A")
-    val board = BoardImpl()
-    board.addCard2Tile(card, 1,1)
-    board.removeCardFromTile(1,1)
-    assert(board.boardTiles.head.card == constants.defaultCard)
-  }
   "A card " should " be added to the board in a specific position and in the played word" in {
     val card = CardImpl("A")
     val board = BoardImpl()
     board.addCard2Tile(card, 1,1, add2PlayedWord = true)
-    assert(board.boardTiles.head.card.equals(card) && board.playedWord.contains(BoardTileImpl(Position(1,1),card)))
-  }
-  "A card " should " be removed from a specific position of the board and from the played word" in {
-    val card = CardImpl("A")
-    val board = BoardImpl()
-    board.addCard2Tile(card, 1,1)
-    board.removeCardFromTile(1,1, removeFromPlayedWord = true)
-    assert(board.boardTiles.head.card.equals(constants.defaultCard) && !board.playedWord.contains(BoardTileImpl(Position(1,1),card)))
-  }
-  "A hand " should " be removed from the board" in {
-    val card = CardImpl("A")
-    val board = BoardImpl()
-    board.addCard2Tile(card, 1,1)
-    board.removeCardFromTile(1,1, removeFromPlayedWord = true)
-    assert(board.boardTiles.head.card.equals(constants.defaultCard) && !board.playedWord.contains(BoardTileImpl(Position(1,1),card)))
+    assert(board.boardTiles.head.card.equals(card) && board.playedWord.contains(BoardTileImpl(PositionImpl(1,1),card)))
   }
   "A list of cards " should " be added to the board and removed" in {
-    val boardTile = BoardTileImpl(new Position(1,3), CardImpl("D"))
-    val boardTile1 = BoardTileImpl(new Position(2,3), CardImpl("B"))
-    val boardTile2 = BoardTileImpl(new Position(3,3), CardImpl("E"))
+    val boardTile = BoardTileImpl(PositionImpl(1,3), CardImpl("D"))
+    val boardTile1 = BoardTileImpl(PositionImpl(2,3), CardImpl("B"))
+    val boardTile2 = BoardTileImpl(PositionImpl(3,3), CardImpl("E"))
     val listBoardTile = List(boardTile,boardTile1,boardTile2)
     val board = BoardImpl()
     board.addPlayedWord(listBoardTile)
     assert(board.playedWord.equals(listBoardTile))
   }
   "A list of cards " should " be removed from the board" in {
-    val boardTile = BoardTileImpl(new Position(1,3), CardImpl("D"))
-    val boardTile1 = BoardTileImpl(new Position(2,3), CardImpl("B"))
-    val boardTile2 = BoardTileImpl(new Position(3,3), CardImpl("E"))
+    val boardTile = BoardTileImpl(PositionImpl(1,3), CardImpl("D"))
+    val boardTile1 = BoardTileImpl(PositionImpl(2,3), CardImpl("B"))
+    val boardTile2 = BoardTileImpl(PositionImpl(3,3), CardImpl("E"))
     val listBoardTile = List(boardTile,boardTile1,boardTile2)
     val board = BoardImpl()
     board.addPlayedWord(listBoardTile)
@@ -64,7 +43,7 @@ class BoardTest extends FlatSpec {
     assert(board.playedWord.isEmpty)
   }
   "A list of played cards " should " be remove from the board" in {
-    val boardTile = BoardTileImpl(new Position(1,3), CardImpl("D"))
+    val boardTile = BoardTileImpl(PositionImpl(1,3), CardImpl("D"))
     val listBoardTile = List(boardTile)
     val board = BoardImpl()
     board.addPlayedWord(listBoardTile)
@@ -162,7 +141,7 @@ class BoardTest extends FlatSpec {
     val board = BoardImpl()
     val listOfWords = List(ArrayBuffer((CardImpl("B"),"DEFAULT"), (CardImpl("E"),"DEFAULT"), (CardImpl("G"),"2P")), ArrayBuffer((CardImpl("D"),"2P"), (CardImpl("E"),"DEFAULT"), (CardImpl("F"),"DEFAULT")))
     addListOfCardsToTheBoard(board, List((CardImpl("B"), 1, 3), (CardImpl("D"), 2, 2), (CardImpl("F"), 2, 4), (CardImpl("G"), 3,3)))
-    board.addPlayedWord(List(BoardTileImpl(new Position(2,3), CardImpl("E"))))
+    board.addPlayedWord(List(BoardTileImpl(PositionImpl(2,3), CardImpl("E"))))
     assert(board.takeCardToCalculatePoints() == listOfWords)
   }
   // 2 => controllo incroci orizzontali

@@ -11,7 +11,7 @@ class CardTest extends FlatSpec {
   }
   "Score in a Card " should " be assigned according to the game rules" in {
     val letter = "A"
-    val score = constants.lettersScoresCardinalities.find(s => s._1 == letter).head._2
+    val score = cardConstants.lettersScoresCardinalities.find(s => s._1 == letter).head._2
     val cardA = CardImpl(letter)
     assert(cardA.score == score)
   }
