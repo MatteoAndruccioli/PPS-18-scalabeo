@@ -3,6 +3,7 @@ package client
 import akka.actor.ActorRef
 import client.ExtraMessagesForClientTesting._
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
+import client.controller.Controller
 
 sealed trait ExtraMessagesForClientTestingType
 object ExtraMessagesForClientTesting{
@@ -87,6 +88,15 @@ class ClientToTest extends ClientActor {
       setUpGameVariables(msg.greetingServer, msg.username, msg.gameServer, msg.gameServerTopic)
       sender ! SetUpDoneWITPN()
       context.become(waitingInTurnPlayerNomination)
+  }
+
+  //gestione chiusura gioco, elimino lo stop dell'attore per evitare chiusura ActorSystem nel test di fine partita
+  override def handleClientStop():Unit = {
+    println(self + " Muoio felice")
+    scheduler.stopTask()
+    //dovrò comunicare al controller la riuscita terminazione
+    Controller.exit()
+    //context.stop(self)
   }
 
 

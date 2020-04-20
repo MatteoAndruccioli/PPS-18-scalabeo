@@ -23,7 +23,7 @@ import scala.collection.mutable.ArrayBuffer
 class ClientActor extends Actor{
   val mediator = DistributedPubSub.get(context.system).mediator
   private val cluster = Cluster.get(context.system)
-  private val scheduler: CustomScheduler = ClusterScheduler(cluster)
+  val scheduler: CustomScheduler = ClusterScheduler(cluster)
 
   //todo cambia nomi ai due option che tengono i nomi dei server che non si possono vedere
   //contiene l'ActorRef del server
@@ -262,7 +262,7 @@ class ClientActor extends Actor{
 
 
   //GESTIONE STOP CLIENT
-  private def handleClientStop():Unit = {
+  def handleClientStop():Unit = {
     println(self + " Muoro felicio")
     scheduler.stopTask()
     //dovrò comunicare al controller la riuscita terminazione

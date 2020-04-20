@@ -11,17 +11,19 @@ import client.controller.Controller
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.flatspec.AnyFlatSpecLike
 import org.scalatest.matchers.must.Matchers
+
 import scala.concurrent.duration.FiniteDuration
 import TestOnClientCostants._
 import ClientTestConstants._
 import ExtraMessagesForClientTesting._
 import client.ClientTestMessage.{MatchEnded, OnMatchStart, TurnEndUpdates}
 import client.controller.MoveOutcome.AcceptedWord
-import model.{BoardTile, BoardTileImpl, Card, CardImpl, Position, constants}
+import model.{BoardTile, BoardTileImpl, Card, CardImpl, PositionImpl}
 import shared.ClientMoveAckType.WordAccepted
 import shared.ClientToGameServerMessages._
 import shared.GameServerToClientMessages._
 import shared.Move.WordMove
+
 import scala.collection.mutable.ArrayBuffer
 
 
@@ -46,6 +48,7 @@ object TestOnClientCostants{
    */
   val WAIT_TIME_MESSAGES: Int = 10
   val TIME_WITHOUT_MESSAGES: Int = 10
+  val DEFAULT_CARD: CardImpl = CardImpl("NULL")
 }
 
 class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
@@ -478,7 +481,7 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   private def getRanking:List[(String,Int)] = List(("player1",1),("player2",2),("player3",3))
 
   //restituisce una List[BoardTile] da usare come segnaposto in alcuni messaggi
-  private def getBoardTileList: List[BoardTile] = (for (x <- 1 to 17; y <- 1 to 17) yield BoardTileImpl(Position.apply(x, y), constants.defaultCard)).toList
+  private def getBoardTileList: List[BoardTile] = (for (x <- 1 to 17; y <- 1 to 17) yield BoardTileImpl(PositionImpl(x, y), DEFAULT_CARD)).toList
 
 
   //GameServer invia al client messaggio di terminazione della partita, poi vengono controllati i conseguenti ack
