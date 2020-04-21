@@ -49,7 +49,6 @@ class GreetingServer extends Actor {
             readyPlayers = readyPlayers.dequeue._2
             player
           })
-          println("!!!!!!!!!!SERVER: I GIOCATORI CHE GIOCHERANNO SARANNO: "+playersForGame.toString())
           listPlayers = listPlayers.filterNot(playersForGame.contains)
           val gameServer = context.actorOf(Props(new GameServer(playersForGame, mapPlayersName.filter(user => playersForGame.contains(user._1)))), "gameServer" + gameNumber)
           games += (gameServer -> playersForGame)
