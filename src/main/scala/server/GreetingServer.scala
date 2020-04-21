@@ -43,7 +43,7 @@ class GreetingServer extends Actor {
       if(answer) {
         readyPlayers.enqueue(sender())
         if (readyPlayers.size >= nPlayer) {
-          val playersForGame = List[ActorRef](readyPlayers.dequeue(), readyPlayers.dequeue(),readyPlayers.dequeue(),readyPlayers.dequeue())
+          val playersForGame = List.fill(nPlayer)(readyPlayers.dequeue())
           for (player <- playersForGame) listPlayers -= player
           val gameServer = context.actorOf(Props(new GameServer(playersForGame, mapPlayersName.filter(user => playersForGame.contains(user._1)).toMap)), "gameServer" + gameNumber)
           games += (gameServer -> playersForGame)

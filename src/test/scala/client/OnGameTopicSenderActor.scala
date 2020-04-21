@@ -23,7 +23,6 @@ class OnGameTopicSenderActor(gameServerTopic: String, gameServer: ActorRef) exte
 
   override def receive: Receive = {
     case msg : GameServerToClientMessages =>
-      println("SENDER = " + sender + "  === GAMESERVER = " + gameServer + " GAME_SERVER_TOPIC = " + gameServerTopic)
       if(sender == gameServer) mediator ! Publish(gameServerTopic, msg)
   }
 }

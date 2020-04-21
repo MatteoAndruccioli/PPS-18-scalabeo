@@ -81,7 +81,7 @@ object ClusterScheduler{
     }
   }
 
-  val INITIAL_DELAY :Long = 6;
+  val INITIAL_DELAY :Long = 1;
   val INTERVAL :Long = 6;
 
   //factory con apply per il mio ClusterScheduler
