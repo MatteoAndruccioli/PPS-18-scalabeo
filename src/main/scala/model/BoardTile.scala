@@ -1,6 +1,5 @@
 package model
 
-import scala.collection.mutable.ArrayBuffer
 import model.Directions.{N,S,W,E}
 
 package object boardConstants{
@@ -59,11 +58,11 @@ sealed trait Board{
   // metodo per il controllo della prima parola inserita nella partita
   def checkGameFirstWord(): Boolean
   // metodo per estrarre dalla board le parole da controllare
-  def takeCardToCalculatePoints(isfirstWord: Boolean = false):  List[ArrayBuffer[(Card, String)]]
+  def takeCardToCalculatePoints(isfirstWord: Boolean = false):  List[List[(Card, String)]]
   // metodo per convertire le lettere giocate in stringhe corrispondenti alle parole che formano
-  def getWordsFromLetters(word: List[ArrayBuffer[(Card, String)]]): List[String]
+  def getWordsFromLetters(word: List[List[(Card, String)]]): List[String]
   // metodo per calcolare il punteggio di un turno
-  def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]], isfirstWord: Boolean = false): Int
+  def calculateTurnPoints(words: List[List[(Card, String)]], isfirstWord: Boolean = false): Int
 }
 
 case class BoardImpl() extends Board {
@@ -123,26 +122,26 @@ case class BoardImpl() extends Board {
   }
 
   // METODO PER ESTRARRE DALLA BOARD LE PAROLE DA CONTROLLARE
-  override def takeCardToCalculatePoints(isFirstWord: Boolean = false): List[ArrayBuffer[(Card, String)]] = {
+  override def takeCardToCalculatePoints(isFirstWord: Boolean = false): List[List[(Card, String)]] = {
     // caso 1 e caso 2 controllo delle parole
     if (!(checkBoardLettersNearness() || isFirstWord) || wordDirectionIsDiagonal()) return List()
-    var listOfWords: List[ArrayBuffer[(Card, String)]] = List()
+    var listOfWords: List[List[(Card, String)]] = List()
     // per la testa della lista controllo in tutti e due i versi
-    listOfWords = (tileBoardsInADirection(Directions.N, _playedWord.head)++ ArrayBuffer(boardTails2Tuple(_playedWord.head)) ++ tileBoardsInADirection(Directions.S, _playedWord.head)) :: listOfWords
-    listOfWords = (tileBoardsInADirection(Directions.W, _playedWord.head)++ ArrayBuffer(boardTails2Tuple(_playedWord.head)) ++ tileBoardsInADirection(Directions.E, _playedWord.head)) :: listOfWords
+    listOfWords = (tileBoardsInADirection(Directions.N, _playedWord.head)++ List(boardTails2Tuple(_playedWord.head)) ++ tileBoardsInADirection(Directions.S, _playedWord.head)) :: listOfWords
+    listOfWords = (tileBoardsInADirection(Directions.W, _playedWord.head)++ List(boardTails2Tuple(_playedWord.head)) ++ tileBoardsInADirection(Directions.E, _playedWord.head)) :: listOfWords
     // se le carte giocate sono di più allora devo cercare anche le parole formate dagli incroci
     if (_playedWord.length > 1) {
       if (wordDirection(_playedWord) == boardConstants.horizontal) {
         // le carte messe sono in orizzontale
         // cerco gli incroci in S/N (verticale)
         for(boardTile <- _playedWord.tail){
-          listOfWords = (tileBoardsInADirection(Directions.N, boardTile)++ ArrayBuffer(boardTails2Tuple(boardTile)) ++ tileBoardsInADirection(Directions.S, boardTile)) :: listOfWords
+          listOfWords = (tileBoardsInADirection(Directions.N, boardTile)++ List(boardTails2Tuple(boardTile)) ++ tileBoardsInADirection(Directions.S, boardTile)) :: listOfWords
         }
       } else if (wordDirection(_playedWord) == boardConstants.vertical) {
         // le carte messe sono in verticale
         // cerco gli incroci in W/E (orizzontale)
         for(boardTile <- _playedWord.tail) {
-          listOfWords = (tileBoardsInADirection(Directions.W, boardTile) ++ ArrayBuffer(boardTails2Tuple(boardTile)) ++ tileBoardsInADirection(Directions.E, boardTile)) :: listOfWords
+          listOfWords = (tileBoardsInADirection(Directions.W, boardTile) ++ List(boardTails2Tuple(boardTile)) ++ tileBoardsInADirection(Directions.E, boardTile)) :: listOfWords
         }
       }
     }
@@ -150,8 +149,8 @@ case class BoardImpl() extends Board {
     if (playedLettersAreInFoundWords(listOfWords) ) listOfWords.filter(array => array.length > 1) else List()
   }
   // metodo per ottenere da una data posizione le carte inserite in una direzione
-  private def tileBoardsInADirection(direction: Direction, boardTile: BoardTile): ArrayBuffer[(Card, String)] = {
-    var wordReturn: ArrayBuffer[(Card,String)] = ArrayBuffer()
+  private def tileBoardsInADirection(direction: Direction, boardTile: BoardTile): List[(Card, String)] = {
+    var wordReturn: List[(Card,String)] = List()
     var actualBoardTile = getTileInAPosition(boardTile.position._coord._1+1+direction.shift._1, boardTile.position._coord._2+1+direction.shift._2)
     while(!actualBoardTile.card.equals(cardConstants.defaultCard) && actualBoardTile.position.isValidPosition){
       if(direction.equals(Directions.N) || direction.equals(Directions.W)) {
@@ -183,21 +182,21 @@ case class BoardImpl() extends Board {
       boardConstants.horizontal
     else boardConstants.diagonal
   // 3 => una parola, fra quelle trovate, deve contenere tutte le lettere giocate
-  private def playedLettersAreInFoundWords(foundWords: List[ArrayBuffer[(Card, String)]]): Boolean =
+  private def playedLettersAreInFoundWords(foundWords: List[List[(Card, String)]]): Boolean =
     foundWords.exists(word => {_playedWord.forall(tileBoard => word.contains((tileBoard.card,tileBoard.position._bonus)))})
 
   // metodo di utilità per ottenere da una BoardTile una tupla (Card, String)
   private def boardTails2Tuple(boardTile: BoardTile): (Card, String) = (boardTile.card, boardTile.position._bonus)
 
   // METODO PER CONVERTIRE LE LETTERE GICOATE IN STRINGHE CORRISPONDETI ALLE PAROLE CHE FORMANO
-  def getWordsFromLetters(words: List[ArrayBuffer[(Card, String)]]): List[String] = for( word <- words) yield getWordFromLetters(word)
-  private def getWordFromLetters(word: ArrayBuffer[(Card, String)]): String =
+  def getWordsFromLetters(words: List[List[(Card, String)]]): List[String] = for( word <- words) yield getWordFromLetters(word)
+  private def getWordFromLetters(word: List[(Card, String)]): String =
     (for (tuple <- word; playedWord <- tuple._1.letter) yield playedWord).mkString("").toLowerCase
 
   // METODO PER CALCOLARE IL PUNTEGGIO DI UN TURNO
-  override def calculateTurnPoints(words: List[ArrayBuffer[(Card, String)]], isFirstWord: Boolean = false): Int = (for (word <- words) yield calculateWordScore(word, isFirstWord)).sum
+  override def calculateTurnPoints(words: List[List[(Card, String)]], isFirstWord: Boolean = false): Int = (for (word <- words) yield calculateWordScore(word, isFirstWord)).sum
   // metodo per il calcolo del punteggio di una parola
-  private def calculateWordScore(word: ArrayBuffer[(Card, String)], isFirstWord: Boolean): Int =  {
+  private def calculateWordScore(word: List[(Card, String)], isFirstWord: Boolean): Int =  {
     var letterValue: Int = 0
     var multiplier: Int = 0
     val letterPoints = for (tuple <- word;

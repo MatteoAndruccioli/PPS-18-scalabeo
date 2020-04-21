@@ -141,7 +141,7 @@ class BoardTest extends FlatSpec {
   // - G -
   "The list of words to be checked " should "be the ones in the cross created by the played letter" in {
     val board = BoardImpl()
-    val listOfWords = List(ArrayBuffer((CardImpl("B"),"DEFAULT"), (CardImpl("E"),"DEFAULT"), (CardImpl("G"),"2P")), ArrayBuffer((CardImpl("D"),"2P"), (CardImpl("E"),"DEFAULT"), (CardImpl("F"),"DEFAULT")))
+    val listOfWords = List(List((CardImpl("B"),"DEFAULT"), (CardImpl("E"),"DEFAULT"), (CardImpl("G"),"2P")), List((CardImpl("D"),"2P"), (CardImpl("E"),"DEFAULT"), (CardImpl("F"),"DEFAULT")))
     addListOfCardsToTheBoard(board, List((CardImpl("B"), 1, 3), (CardImpl("D"), 2, 2), (CardImpl("F"), 2, 4), (CardImpl("G"), 3,3)))
     board.addPlayedWord(List(BoardTileImpl(PositionImpl(2,3), CardImpl("E"))))
     assert(board.takeCardToCalculatePoints(isFirstWord = true) == listOfWords)
@@ -152,7 +152,7 @@ class BoardTest extends FlatSpec {
   "The list of words to be checked" should "contain also the horizontal crossings, if the played letters are in vertical" in {
     val board = BoardImpl()
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((1,3,"B"),(2,3,"E"))))
-    val listOfWords = List(ArrayBuffer((CardImpl("D"),"2P"), (CardImpl("E"),"DEFAULT"), (CardImpl("F"),"DEFAULT")), ArrayBuffer((CardImpl("B"),"DEFAULT"), (CardImpl("E"),"DEFAULT")), ArrayBuffer((CardImpl("A"),"DEFAULT"), (CardImpl("B"),"DEFAULT"), (CardImpl("C"),"DEFAULT")))
+    val listOfWords = List(List((CardImpl("D"),"2P"), (CardImpl("E"),"DEFAULT"), (CardImpl("F"),"DEFAULT")), List((CardImpl("B"),"DEFAULT"), (CardImpl("E"),"DEFAULT")), List((CardImpl("A"),"DEFAULT"), (CardImpl("B"),"DEFAULT"), (CardImpl("C"),"DEFAULT")))
     addListOfCardsToTheBoard(board, List((CardImpl("A"), 1, 2),(CardImpl("D"), 2, 2), (CardImpl("C"), 1,4), (CardImpl("F"), 2,4)))
     assert(board.takeCardToCalculatePoints(isFirstWord = true) == listOfWords)
   }
@@ -163,7 +163,7 @@ class BoardTest extends FlatSpec {
   "The list of words to be checked" should "contain also the vertical crossings, if the played letters are in horizontal" in {
     val board = BoardImpl()
     board.addPlayedWord(createBoardTileListFromPositionsAndStrings(List((2,2,"C"), (2,3,"D"))))
-    val listOfWords = List(ArrayBuffer((CardImpl("B"),"DEFAULT"), (CardImpl("D"),"DEFAULT"), (CardImpl("F"),"2P")), ArrayBuffer((CardImpl("A"),"DEFAULT"), (CardImpl("C"),"2P"), (CardImpl("E"),"DEFAULT")), ArrayBuffer((CardImpl("C"),"2P"), (CardImpl("D"),"DEFAULT")))
+    val listOfWords = List(List((CardImpl("B"),"DEFAULT"), (CardImpl("D"),"DEFAULT"), (CardImpl("F"),"2P")), List((CardImpl("A"),"DEFAULT"), (CardImpl("C"),"2P"), (CardImpl("E"),"DEFAULT")), List((CardImpl("C"),"2P"), (CardImpl("D"),"DEFAULT")))
     addListOfCardsToTheBoard(board, List((CardImpl("A"), 1, 2), (CardImpl("B"), 1, 3), (CardImpl("E"), 3,2), (CardImpl("F"), 3,3)))
     assert(board.takeCardToCalculatePoints(isFirstWord = true) == listOfWords)
   }
@@ -171,7 +171,7 @@ class BoardTest extends FlatSpec {
   // TEST PER RICAVARE LA PAROLA NEL FORMATO DEL DIZIONARIO DALLE LETTERE GIOCATE
   "The word" should "be extracted from the list of letters" in {
     val board = BoardImpl()
-    val listOfWords: List[ArrayBuffer[(Card,String)]] = List(ArrayBuffer((CardImpl("O"),"DEFAULT"), (CardImpl("C"),"2P"), (CardImpl("A"),"DEFAULT")))
+    val listOfWords: List[List[(Card,String)]] = List(List((CardImpl("O"),"DEFAULT"), (CardImpl("C"),"2P"), (CardImpl("A"),"DEFAULT")))
     assert(board.getWordsFromLetters(listOfWords).contains("oca"))
   }
 
