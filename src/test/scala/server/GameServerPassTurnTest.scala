@@ -55,7 +55,6 @@ class GameServerPassTurnTest
     "decide player turn" in {
       /*iscrivo ogni client al mediator*/
       val mediator = DistributedPubSub(system).mediator
-      println(topic)
       mediator ! Subscribe(topic, probe1.ref)
       mediator ! Subscribe(topic, probe2.ref)
       /*verifico l'ack della sottoscrizione*/
