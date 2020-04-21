@@ -15,8 +15,7 @@ import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameSer
 import shared.GameServerToClientMessages.{ClientMoveAck, DisconnectionToGameServerNotificationAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins, SomeoneDisconnected}
 import shared.{ClusterScheduler, CustomScheduler, Move}
 
-import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+import scala.collection.mutable.ArrayBuffer
 
 class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) extends Actor {
 
@@ -36,9 +35,9 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   private val board = BoardImpl()
   private val pouch = LettersBagImpl()
-  private var playersHand = mutable.Map[ActorRef, LettersHandImpl]()
+  private var playersHand = Map[ActorRef, LettersHandImpl]()
   //creo le mani
-  gamePlayers.foreach(p => playersHand+=(p -> LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(8).get : _*))))
+  gamePlayers.foreach(p => playersHand+=(p -> LettersHandImpl.apply(ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(8).get : _*))))
   private var playedWord : ArrayBuffer[BoardTile] = ArrayBuffer[BoardTile]()
   private var numberOfPlayedTileInHand = 0
   //creo il dizionario
@@ -91,7 +90,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
           if (playersHand(sender()).containsOnlyVowelsOrOnlyConsonants()) {
             val nCard = playersHand(sender())._hand.size
             pouch.reinsertCardInBag(playersHand(sender())._hand)
-            playersHand(sender()) = LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(nCard).get: _*))
+            playersHand = playersHand + (sender() -> LettersHandImpl.apply(ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(nCard).get: _*)))
             sender ! ClientMoveAck(HandSwitchRequestAccepted(playersHand(sender())._hand))
             scheduler.replaceBehaviourAndStart(() => sendUpdate())
           } else {
@@ -102,7 +101,6 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
         if (sender().equals(gamePlayers(turn))) {
           message.word.foreach(boardTile => playedWord.insert(0, boardTile))
           board.addPlayedWord(List.concat(playedWord))
-          println(board.boardTiles.toString)
           if(isFirstWord && board.checkGameFirstWord() && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints(isFirstWord)))){
             updatePointsAndCheckIfGameEnded(sender())
             isFirstWord = false
@@ -197,9 +195,9 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   }
 
   private def sendUpdate(): Unit = {
-    val rankingTuples : ListBuffer[(String, Int)] = ListBuffer()
+    var rankingTuples : List[(String, Int)] = List()
     for( player <- gamePlayers){
-      rankingTuples.insert(0,(gamePlayersUsername(player), ranking.ranking(player)))
+      rankingTuples = List.concat(rankingTuples,List((gamePlayersUsername(player), ranking.ranking(player))))
     }
     mediator ! Publish(serverTopic, EndTurnUpdate(rankingTuples.toList, board.playedWord))
   }
