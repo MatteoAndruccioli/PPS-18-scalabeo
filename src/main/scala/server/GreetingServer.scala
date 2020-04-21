@@ -10,7 +10,8 @@ import shared.ClientToGreetingMessages.{ConnectionToGreetingQuery, Disconnection
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
 import shared.GreetingToClientMessages.{ConnectionAnswer, DisconnectionAck, ReadyToJoinAck, ReadyToJoinQuery}
 
-import scala.collection.mutable
+import scala.collection.immutable.Queue
+
 
 class GreetingServer extends Actor {
 
@@ -20,11 +21,11 @@ class GreetingServer extends Actor {
 
   private val nPlayer = 4
 
-  private var listPlayers = new mutable.ListBuffer[ActorRef]()
-  private var mapPlayersName = mutable.Map[ActorRef, String]()
-  private var readyPlayers = new mutable.Queue[ActorRef]()
+  private var listPlayers = List[ActorRef]()
+  private var mapPlayersName = Map[ActorRef, String]()
+  private var readyPlayers = Queue[ActorRef]()
 
-  var games = mutable.Map[ActorRef, List[ActorRef]]()
+  var games = Map[ActorRef, List[ActorRef]]()
   var gameNumber = 0
 
   //server si sottoscrive al proprio topic
@@ -32,7 +33,7 @@ class GreetingServer extends Actor {
 
   override def receive: Receive = {
     case message: ConnectionToGreetingQuery =>
-      listPlayers += sender()
+      listPlayers = List.concat(listPlayers,List(sender()))
       mapPlayersName += (sender() -> message.username)
       sender ! ConnectionAnswer(isServerOn)
       if(listPlayers.size>=nPlayer){
@@ -41,17 +42,22 @@ class GreetingServer extends Actor {
     case PlayerReadyAnswer(answer) =>
       sender ! ReadyToJoinAck()
       if(answer) {
-        readyPlayers.enqueue(sender())
+        readyPlayers = readyPlayers.enqueue(sender())
         if (readyPlayers.size >= nPlayer) {
-          val playersForGame = List.fill(nPlayer)(readyPlayers.dequeue())
-          for (player <- playersForGame) listPlayers -= player
-          val gameServer = context.actorOf(Props(new GameServer(playersForGame, mapPlayersName.filter(user => playersForGame.contains(user._1)).toMap)), "gameServer" + gameNumber)
+          val playersForGame : List[ActorRef] = List.fill[ActorRef](nPlayer)({
+            val player =readyPlayers.dequeue._1
+            readyPlayers = readyPlayers.dequeue._2
+            player
+          })
+          println("!!!!!!!!!!SERVER: I GIOCATORI CHE GIOCHERANNO SARANNO: "+playersForGame.toString())
+          listPlayers = listPlayers.filterNot(playersForGame.contains)
+          val gameServer = context.actorOf(Props(new GameServer(playersForGame, mapPlayersName.filter(user => playersForGame.contains(user._1)))), "gameServer" + gameNumber)
           games += (gameServer -> playersForGame)
           gameNumber = gameNumber + 1
           gameServer ! InitGame()
         }
       } else {
-          listPlayers-=sender()
+          listPlayers=listPlayers.filter( _ != sender())
           mapPlayersName -= sender()
       }
 
@@ -59,13 +65,17 @@ class GreetingServer extends Actor {
     case _ : EndGameToGreeting =>
       sender() ! EndGameToGreetingAck()
       if(games.contains(sender())) {
-        games.remove(sender())
+        games-=sender()
       }
     //disconnessione di un giocatore
     case _ : DisconnectionToGreetingNotification =>
       sender() ! DisconnectionAck()
       if(listPlayers.contains(sender())) {
-        listPlayers -= sender()
+        listPlayers = listPlayers.filter(_ != sender())
+        mapPlayersName-=sender()
+        if(readyPlayers.toSet.contains(sender())){
+          readyPlayers = readyPlayers.filter(_ != sender())
+        }
       }
   }
 }
