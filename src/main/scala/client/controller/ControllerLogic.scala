@@ -71,6 +71,7 @@ object ControllerLogic {
 
     def collectLetters(): Unit = {
       GameManager.collectLetters()
+      BoardInteraction.collectLetters()
     }
 
     def playWord(): Unit = {

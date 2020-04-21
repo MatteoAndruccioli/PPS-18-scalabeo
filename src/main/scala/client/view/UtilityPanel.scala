@@ -72,7 +72,6 @@ class UtilityPanel extends GridPane {
           new Button(RETIRE_LETTERS_BUTTON_TEXT) {
             onAction = handle {
               Controller.collectLetters()
-              BoardInteraction.collectLetters()
               chatPanel.showEventMessage("Hai ritirato le lettere che avevi messo sul tabellone")
             }
           }

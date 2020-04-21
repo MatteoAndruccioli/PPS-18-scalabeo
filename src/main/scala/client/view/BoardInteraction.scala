@@ -48,7 +48,6 @@ object BoardInteraction {
       letter.letterStatus = LetterStatus.inHand
       letter.unselect()
     }))
-    Controller.collectLetters()
     _thisTurnInsertions.clear()
   }
 

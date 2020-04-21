@@ -45,6 +45,7 @@ class TimerPanel() extends GridPane {
             })
             timer.cancel()
             if (Controller.isMyTurn) {
+              Controller.collectLetters()
               View.sendToClient(UserMadeHisMove(TimeOut()))
             }
           } else {
