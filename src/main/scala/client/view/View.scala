@@ -82,10 +82,12 @@ object View extends JFXApp {
   }
 
   def userTurnBegins(): Unit = {
-    gameBoard.disableMulliganButton(!Controller.isMulliganAvailable)
-    gameBoard.startTurn()
-    gameBoard.restartTimer()
-    showEventMessage("E' il tuo turno!")
+    Platform.runLater(() => {
+      gameBoard.disableMulliganButton(!Controller.isMulliganAvailable)
+      gameBoard.startTurn()
+      gameBoard.restartTimer()
+      showEventMessage("E' il tuo turno!")
+    })
   }
 
   def turnEndUpdates(word: List[(LetterTile, Int, Int)]): Unit = {
