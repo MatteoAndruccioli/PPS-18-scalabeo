@@ -85,6 +85,7 @@ object View extends JFXApp {
     gameBoard.disableMulliganButton(!Controller.isMulliganAvailable)
     gameBoard.startTurn()
     gameBoard.restartTimer()
+    showEventMessage("E' il tuo turno!")
   }
 
   def turnEndUpdates(word: List[(LetterTile, Int, Int)]): Unit = {
