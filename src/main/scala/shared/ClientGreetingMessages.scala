@@ -9,8 +9,6 @@ object ClientToGreetingMessages {
   case class PlayerReadyAnswer(playerAccepts: Boolean) extends ClientToGreetingMessages
   //client comunica disconnessione al server
   case class DisconnectionToGreetingNotification() extends ClientToGreetingMessages
-  //client torna in attesa di nuova richiesta per nuova partita
-  case class MissingOpponentAck() extends ClientToGreetingMessages
 }
 
 
@@ -26,6 +24,4 @@ object GreetingToClientMessages {
   case class ReadyToJoinAck() extends GreetingToClientMessages
   //conferma di ricezione messaggio di disconnessione
   case class DisconnectionAck() extends GreetingToClientMessages
-  //durante la composizione della partita, un avversario si è rifiutato di giocare
-  case class MissingOpponent() extends GreetingToClientMessages
 }

@@ -81,8 +81,7 @@ class ClientActor extends Actor{
 
 
   //attendo richiesta di join partita da parte del greeting server
-  def waitingReadyToJoinRequestFromGreetingServer: Receive = UnexpectedShutdown orElse
-    opponentRefusedMatch orElse {
+  def waitingReadyToJoinRequestFromGreetingServer: Receive = UnexpectedShutdown orElse {
     case _: ReadyToJoinQuery =>
       Controller.askUserToJoinGame() //chiedo all'UI di chiedere all'utente se è ancora disposto a giocare
       context.become(waitingReadyToJoinAnswerFromUser)
@@ -90,8 +89,7 @@ class ClientActor extends Actor{
 
 
   //in attesa che l'utente risponda se è pronto
-  def waitingReadyToJoinAnswerFromUser:Receive = UnexpectedShutdown orElse
-    opponentRefusedMatch orElse {
+  def waitingReadyToJoinAnswerFromUser:Receive = UnexpectedShutdown orElse {
     case message: UserReadyToJoin =>
       //memorizzo risposta dell'utente per valutare in futuro cosa sia necessario gestire
       playerIsReady = message.ready
@@ -104,8 +102,7 @@ class ClientActor extends Actor{
 
 
   //attendo che GreetingServer confermi ricezione di join partita da parte del greeting server
-  def waitingReadyToJoinAckFromGreetingServer: Receive = UnexpectedShutdown orElse
-    opponentRefusedMatch orElse {
+  def waitingReadyToJoinAckFromGreetingServer: Receive = UnexpectedShutdown orElse {
     case _: ReadyToJoinAck =>
       scheduler.stopTask()
       //valuto risposta del giocatore contenuta in playerIsReady
@@ -122,8 +119,7 @@ class ClientActor extends Actor{
 
   //attendo che il GameServer mi invii il messaggio con le informazioni per impostare la partita lato client
   def waitingGameServerTopic: Receive = UnexpectedShutdown orElse
-    opponentLefted orElse
-    opponentRefusedMatch orElse {
+    opponentLefted orElse {
     case topicMessage: MatchTopicListenQuery =>
       updateGameServerReference(sender())
       updateGameServerTopic(topicMessage.gameServerTopic)
@@ -234,16 +230,6 @@ class ClientActor extends Actor{
       if (sendOnChatMessage.senderActor != self){
         Controller.showInChat(sendOnChatMessage.senderUsername, sendOnChatMessage.message)
       }
-  }
-
-
-  //gestisce il caso in cui un avversario non si unisca alla partita
-  def opponentRefusedMatch: Receive = {
-    case _: MissingOpponent =>
-      playerIsReady = false
-      greetingServerActorRef.get ! MissingOpponentAck()
-      scheduler.stopTask()
-      context.become(waitingDisconnectionAck)
   }
 
 
