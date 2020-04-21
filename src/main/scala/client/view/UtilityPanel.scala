@@ -38,36 +38,45 @@ class UtilityPanel extends GridPane {
     children = timerPanel
   }, 0, 0)
 
-  add(new HBox(5) {
-    styleClass += "button-container"
-    children = List(new Button(SEND_BUTTON_TEXT) {
-      onAction = handle {
-        if(Controller.isMyTurn) {
-          timerPanel.pauseTimer()
-          Controller.playWord()
-        } else {
-          chatPanel.showEventMessage("Non è il tuo turno!")
-        }
-      }
-    },
-      new Button(PASS_BUTTON_TEXT) {
-        onAction = handle {
-          if(Controller.isMyTurn) {
-            timerPanel.pauseTimer()
-            Controller.collectLetters()
-            View.sendToClient(UserMadeHisMove(Pass()))
-          } else {
-            chatPanel.showEventMessage("Non è il tuo turno!")
+  add(new VBox(5){
+    children = List(
+      new HBox(5) {
+        styleClass += "button-container"
+        children = List(new Button(SEND_BUTTON_TEXT) {
+          onAction = handle {
+            if(Controller.isMyTurn) {
+              timerPanel.pauseTimer()
+              Controller.playWord()
+            } else {
+              chatPanel.showEventMessage("Non è il tuo turno!")
+            }
           }
-        }
+        },
+          new Button(PASS_BUTTON_TEXT) {
+            onAction = handle {
+              if(Controller.isMyTurn) {
+                timerPanel.pauseTimer()
+                Controller.collectLetters()
+                View.sendToClient(UserMadeHisMove(Pass()))
+              } else {
+                chatPanel.showEventMessage("Non è il tuo turno!")
+              }
+            }
+          }
+        )
       },
-      mulliganButton,
-      new Button(RETIRE_LETTERS_BUTTON_TEXT) {
-        onAction = handle {
-          Controller.collectLetters()
-          BoardInteraction.collectLetters()
-          chatPanel.showEventMessage("Hai ritirato le lettere che avevi messo sul tabellone")
-        }
+      new HBox(5) {
+        styleClass += "button-container"
+        children = List(
+          mulliganButton,
+          new Button(RETIRE_LETTERS_BUTTON_TEXT) {
+            onAction = handle {
+              Controller.collectLetters()
+              BoardInteraction.collectLetters()
+              chatPanel.showEventMessage("Hai ritirato le lettere che avevi messo sul tabellone")
+            }
+          }
+        )
       }
     )
   }, 0, 1)
