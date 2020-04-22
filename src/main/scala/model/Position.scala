@@ -1,6 +1,5 @@
 package model
 
-
 // Direzione in cui ci può movere nel tabellone
 sealed trait Direction {
   val shift : (Int, Int)
@@ -41,18 +40,5 @@ case class PositionImpl(row : Int, col : Int) extends Position {
   override def isValidPosition : Boolean = _coord match {
     case (_,_) if _coord._1 >= 0 && _coord._1 <=16 && _coord._2 >= 0 && _coord._2 <=16 => true
     case _ => false
-  }
-}
-
-// iterator per le posizioni
-class PositionIterator(pos: PositionImpl, dir: Direction, until: Option[PositionImpl]) extends Iterator[PositionImpl] {
-  var current: PositionImpl = pos
-  def hasNext: Boolean = {
-    val next = current.shiftByDirection(dir)
-    next.nonEmpty && (until.isEmpty || next != until)
-  }
-  def next(): PositionImpl = {
-    current = current.shiftByDirection(dir).get
-    current
   }
 }
