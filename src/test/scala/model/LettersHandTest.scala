@@ -16,6 +16,20 @@ class LettersHandTest extends FlatSpec {
     val card = lettersHand.playLetter(cardPosition = 1)
     assert(card.equals(CardImpl("B")) && !lettersHand.hand.contains(CardImpl("B")))
   }
+  "A new letter " should " be added in a specific position of the hand after one is already played" in {
+    val hand:Vector[Card] = Vector(CardImpl("A"), CardImpl("B"), CardImpl("C"))
+    val lettersHand = LettersHandImpl(hand)
+    lettersHand.playLetter(cardPosition = 1)
+    lettersHand.putLetter(cardPosition = 1,CardImpl("B"))
+    assert(lettersHand.hand == hand)
+  }
+  "A new letter " should " be added in a specific position of the hand after one is already played: case 2" in {
+    val hand:Vector[Card] = Vector(CardImpl("A"), CardImpl("B"), CardImpl("C"))
+    val lettersHand = LettersHandImpl(hand)
+    lettersHand.playLetter(cardPosition = 2)
+    lettersHand.putLetter(cardPosition = 2,CardImpl("C"))
+    assert(lettersHand.hand == hand)
+  }
   "The hand " should " be changed" in {
     val hand:Vector[Card] = Vector(CardImpl("A"), CardImpl("B"))
     val hand1:Vector[Card] = Vector(CardImpl("A"), CardImpl("B"))

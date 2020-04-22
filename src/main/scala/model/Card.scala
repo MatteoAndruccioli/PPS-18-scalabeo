@@ -92,7 +92,7 @@ case class LettersHandImpl(firstHand: Vector[Card]) extends LettersHand{
     card
   }
   // metodo per inserire una lettera nella mano
-  override def putLetter(cardPosition:Int, card: Card): Unit = _hand = _hand.updated(cardPosition, card)
+  override def putLetter(cardPosition:Int, card: Card): Unit =  _hand = _hand.slice(0,cardPosition)++Vector(card)++_hand.slice(cardPosition, _hand.length)
   // metodo per il cambio di una mano
   override def changeHand(newHand: Vector[Card]): Unit = _hand = newHand
   // metodo per il calcolo dei punti della mano
