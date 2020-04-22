@@ -5,8 +5,6 @@ import client.controller.Messages.ViewToClientMessages
 import client.controller.Messages.ViewToClientMessages.{PlayAgain, UserExited}
 import scalafx.application.{JFXApp, Platform}
 
-import scala.collection.mutable.ArrayBuffer
-
 object View extends JFXApp {
   private val PLAYER_EXITED_DIALOG_TEXT = "A player left the game, in 5 seconds you will be redirected to the main menu."
   private val SERVER_CRASHED_DIALOG_TEXT = "The main server has crashed, the game will exit in 5 seconds."
@@ -23,7 +21,7 @@ object View extends JFXApp {
     Controller.sendToClient(message)
   }
 
-  def onMatchStart(cards: ArrayBuffer[(String, Int)], players:List[String]): Unit = {
+  def onMatchStart(cards: Vector[(String, Int)], players:List[String]): Unit = {
     Platform.runLater(() => {
       if(stage != null)
         stage.close()
@@ -110,7 +108,7 @@ object View extends JFXApp {
     Controller.endMyTurn()
   }
 
-  def updateHand(cards: ArrayBuffer[(String, Int)]): Unit = {
+  def updateHand(cards: Vector[(String, Int)]): Unit = {
     BoardInteraction.updateHand(cards)
   }
 

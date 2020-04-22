@@ -6,7 +6,6 @@ import scalafx.application.Platform
 import scalafx.scene.layout.HBox
 
 import scala.collection.mutable
-import scala.collection.mutable.ArrayBuffer
 
 object BoardInteraction {
 
@@ -65,7 +64,7 @@ object BoardInteraction {
     _handHBox = myHand
   }
 
-  def updateHand(cards: ArrayBuffer[(String, Int)]): Unit = {
+  def updateHand(cards: Vector[(String, Int)]): Unit = {
     Platform.runLater(() => {
       _handHBox.getChildren.clear()
       cards.zipWithIndex.foreach(c => _handHBox.getChildren.add(LetterTile(LETTER_SIZE, c._1._1, c._1._2.toString, c._2, LetterStatus.inHand)))

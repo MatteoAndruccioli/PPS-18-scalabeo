@@ -7,20 +7,18 @@ import client.view.{BoardInteraction, LetterStatus, LetterTile, View}
 import model.{BoardTile, Card}
 import shared.Move.WordMove
 
-import scala.collection.mutable.ArrayBuffer
-
 trait ControllerLogic {
   def startGui(): Unit
   def onLoginResponse(): Unit
   def askUserToJoinGame(): Unit
-  def onMatchStart(hand:ArrayBuffer[Card], players: List[String]): Unit
+  def onMatchStart(hand:Vector[Card], players: List[String]): Unit
   def userTurnBegins(): Unit
   def turnEndUpdates(ranking: List[(String,Int)], board:List[BoardTile]): Unit
   def addCardToTile(position: Int, x: Int, y: Int): Unit
   def collectLetters(): Unit
   def playWord(): Unit
   def moveOutcome[A >: MoveOutcome](outcome: A):Unit
-  def updateHand(hand:ArrayBuffer[Card]): Unit
+  def updateHand(hand:Vector[Card]): Unit
   def takeLettersBackInHand(): Unit
   def userTurnContinues(): Unit
   def isMulliganAvailable: Boolean
@@ -50,7 +48,7 @@ object ControllerLogic {
       View.askUserToJoinGame()
     }
 
-    def onMatchStart(hand:ArrayBuffer[Card], players: List[String]): Unit = {
+    def onMatchStart(hand:Vector[Card], players: List[String]): Unit = {
       View.onMatchStart(hand.map(c => (c.letter, c.score)), players)
       GameManager.newGame(hand)
     }
@@ -98,7 +96,7 @@ object ControllerLogic {
       case _: TimeoutReceived => Controller.endMyTurn()
     }
 
-    def updateHand(hand:ArrayBuffer[Card]): Unit = {
+    def updateHand(hand:Vector[Card]): Unit = {
       View.updateHand(hand.map(c => (c.letter, c.score)))
       GameManager.changeHand(hand)
     }
@@ -156,8 +154,8 @@ object ControllerLogic {
 
     override def askUserToJoinGame(): Unit = myPrintln("invocato askUserToJoinGame()")
 
-    override def onMatchStart(hand: ArrayBuffer[Card], players: List[String]): Unit = {
-      myPrintln("invocato askUserToJoinGame(hand: ArrayBuffer[Card], players: List[String])")
+    override def onMatchStart(hand: Vector[Card], players: List[String]): Unit = {
+      myPrintln("invocato askUserToJoinGame(hand: Vector[Card], players: List[String])")
       myPrintln("Hand: ")
       hand.foreach(c=>myPrintln(c.toString))
       myPrintln("Players: ")
@@ -190,8 +188,8 @@ object ControllerLogic {
       myPrintln("outcome: " + outcome)
     }
 
-    override def updateHand(hand: ArrayBuffer[Card]): Unit = {
-      myPrintln("invocato updateHand(hand: ArrayBuffer[Card])")
+    override def updateHand(hand: Vector[Card]): Unit = {
+      myPrintln("invocato updateHand(hand: Vector[Card])")
       myPrintln("Hand: ")
       hand.foreach(c=>myPrintln(c.toString))
     }

@@ -2,18 +2,17 @@ package client.controller
 
 import model._
 
-import scala.collection.mutable.ArrayBuffer
 
 object GameManager {
   private var _myHand: Option[LettersHand] = Option.empty
   private var _board: Option[Board] = Option.empty
 
-  def newGame(myHand: ArrayBuffer[Card]): Unit = {
+  def newGame(myHand: Vector[Card]): Unit = {
     _board = Option(BoardImpl())
     _myHand = Option(LettersHandImpl(myHand))
   }
 
-  def changeHand(cards: ArrayBuffer[Card]): Unit = {
+  def changeHand(cards: Vector[Card]): Unit = {
     _myHand.get.changeHand(cards)
   }
 

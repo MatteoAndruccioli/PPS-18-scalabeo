@@ -2,9 +2,8 @@ package client.view
 
 import scalafx.scene.layout.{BorderPane, HBox, VBox}
 
-import scala.collection.mutable.ArrayBuffer
 
-class BoardAndPlayerPanel(cards: ArrayBuffer[(String, Int)]) extends BorderPane {
+class BoardAndPlayerPanel(cards: Vector[(String, Int)]) extends BorderPane {
   private val LETTER_SIZE = 60
   private val LETTER_PLACEHOLDER_VALUE = 0
   private val LETTERS_SPACING = 8

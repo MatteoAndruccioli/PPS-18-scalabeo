@@ -1,6 +1,5 @@
 package model
 
-import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
 package object cardConstants {
@@ -40,7 +39,7 @@ sealed trait LettersBag {
   // metodo per estarre un numero di lettere dalla bag
   def takeRandomElementFromBagOfLetters(lettersToTake: Int): Option[List[Card]]
   // metodo per inserire una lettera nella bag
-  def reinsertCardInBag(cardsToInsert: ArrayBuffer[Card]): Unit
+  def reinsertCardInBag(cardsToInsert: Vector[Card]): Unit
 }
 
 // implementazione LettersBag
@@ -63,19 +62,19 @@ case class LettersBagImpl(test: Boolean= false) extends LettersBag {
       Some(shuffledList.slice(0, lettersToTake))
   }
   // metodo per inserire una lettera nella bag
-  override def reinsertCardInBag(cardsToInsert: ArrayBuffer[Card]): Unit = _bag = _bag ++ cardsToInsert
+  override def reinsertCardInBag(cardsToInsert: Vector[Card]): Unit = _bag = _bag ++ cardsToInsert
 }
 
 
 // mano delle card di ogni giocatore
 sealed trait LettersHand {
-  def hand: ArrayBuffer[Card]
+  def hand: Vector[Card]
   // metodo per giocare una lettera dalla mano
   def playLetter (cardPosition: Int): Card
   // metodo per inserire una lettera nella mano
   def putLetter (cardPosition: Int, card: Card)
   // metodo per il cambio di una mano
-  def changeHand(newHand: ArrayBuffer[Card])
+  def changeHand(newHand: Vector[Card])
   // metodo per il calcolo dei punti della mano
   def calculateHandPoint: Int
   // metodo per controllare se la mano contiene solo vocali o constanti
@@ -83,19 +82,24 @@ sealed trait LettersHand {
 }
 
 // implementazione LettersHand
-case class LettersHandImpl(_hand: ArrayBuffer[Card]) extends LettersHand{
-  override def hand: ArrayBuffer[Card] = _hand
+case class LettersHandImpl(firstHand: Vector[Card]) extends LettersHand{
+  private var _hand = firstHand
+  override def hand: Vector[Card] = _hand
   // metodo per giocare una lettera dalla mano
-  override def playLetter(cardPosition: Int): Card = hand.remove(cardPosition)
+  override def playLetter(cardPosition: Int): Card = {
+    val card = hand(cardPosition)
+    _hand = _hand.patch(cardPosition, Nil, 1)
+    card
+  }
   // metodo per inserire una lettera nella mano
-  override def putLetter(cardPosition:Int, card: Card): Unit = hand.insert(cardPosition, card)
+  override def putLetter(cardPosition:Int, card: Card): Unit =  _hand = _hand.slice(0,cardPosition)++Vector(card)++_hand.slice(cardPosition, _hand.length)
   // metodo per il cambio di una mano
-  override def changeHand(newHand: ArrayBuffer[Card]): Unit = {hand.clear(); hand.insertAll(0, newHand)}
+  override def changeHand(newHand: Vector[Card]): Unit = _hand = newHand
   // metodo per il calcolo dei punti della mano
   override def containsOnlyVowelsOrOnlyConsonants(): Boolean = {
     val vowels = Set("A", "E", "I", "O", "U")
     hand.forall(card => vowels.contains(card.letter)) || hand.forall(card => !vowels.contains(card.letter))
   }
   // metodo per controllare se la mano contiene solo vocali o constanti
-  override def calculateHandPoint: Int = _hand.foldLeft(0)(_+_.score)
+  override def calculateHandPoint: Int = firstHand.foldLeft(0)(_+_.score)
 }

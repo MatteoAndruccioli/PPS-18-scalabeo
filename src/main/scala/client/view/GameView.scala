@@ -5,9 +5,8 @@ import scalafx.application.JFXApp.PrimaryStage
 import scalafx.scene.layout.GridPane
 import scalafx.scene.{Group, Scene}
 
-import scala.collection.mutable.ArrayBuffer
 
-class GameView(cards: ArrayBuffer[(String, Int)], users: List[String]) extends PrimaryStage {
+class GameView(cards: Vector[(String, Int)], users: List[String]) extends PrimaryStage {
   private val WIDTH = 1280
   private val HEIGHT = 720
   private val TITLE = "Scalabeo"
