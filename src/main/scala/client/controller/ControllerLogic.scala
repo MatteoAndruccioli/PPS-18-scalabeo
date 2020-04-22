@@ -33,7 +33,7 @@ trait ControllerLogic {
 
 object ControllerLogic {
   //implementazione vera e propria di ControllerLogic
-  case class CleverMind() extends ControllerLogic {
+  case class CleverLogic() extends ControllerLogic {
     def startGui(): Unit = {
       new Thread(() => {
         View.main(Array[String]())
@@ -146,7 +146,7 @@ object ControllerLogic {
   }
 
   //E' una vesione dummy di implementazione di ControllerLogic utile in fase di test e debug
-  class StupidMind(verbose: Boolean = true) extends ControllerLogic{
+  class DummyLogic(verbose: Boolean = true) extends ControllerLogic{
 
     override def startGui(): Unit = myPrintln("invocato startGui()")
 
