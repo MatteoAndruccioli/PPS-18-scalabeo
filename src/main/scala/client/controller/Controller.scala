@@ -10,7 +10,6 @@ import model.{BoardTile, Card}
 import scalafx.application.Platform
 import shared.Move.WordMove
 
-import scala.collection.mutable.ArrayBuffer
 
 object Controller {
 
@@ -36,7 +35,7 @@ object Controller {
 
   def askUserToJoinGame(): Unit = mind.askUserToJoinGame()
 
-  def onMatchStart(hand:ArrayBuffer[Card], players: List[String]): Unit = mind.onMatchStart(hand, players)
+  def onMatchStart(hand:Vector[Card], players: List[String]): Unit = mind.onMatchStart(hand, players)
 
 
   def isMyTurn: Boolean = {
@@ -104,9 +103,9 @@ object MoveOutcome{
 
   //casi in cui la mossa viene accettata dall'utente
   //utente aveva indicato la composizione di una parola che viene accettata, GameServer passa inoltre la nuova mano di tessere disponibili all'utente
-  case class AcceptedWord(hand:ArrayBuffer[Card]) extends MoveOutcome
+  case class AcceptedWord(hand:Vector[Card]) extends MoveOutcome
   //utente aveva richiesto un cambio delle tessere nella mano, GameServer passa inoltre la nuova mano di tessere disponibili all'utente
-  case class HandSwitchAccepted(hand:ArrayBuffer[Card]) extends MoveOutcome
+  case class HandSwitchAccepted(hand:Vector[Card]) extends MoveOutcome
   //utente aveva espresso intenzione di passare il turno, GameServer ne ha preso atto
   case class PassReceived() extends MoveOutcome
   //timer è scaduto, GameServer ne ha preso atto

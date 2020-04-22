@@ -18,7 +18,7 @@ class GreetingServer extends Actor {
   private val cluster = Cluster.get(context.system)
   private val isServerOn = true
 
-  private val nPlayer = 4
+  private val nPlayer = 2
 
   private var listPlayers = new mutable.ListBuffer[ActorRef]()
   private var mapPlayersName = mutable.Map[ActorRef, String]()

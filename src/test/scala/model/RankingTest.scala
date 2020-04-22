@@ -28,13 +28,12 @@ class RankingTest extends FlatSpec {
     rankingWithDefaultActor.system.terminate()
   }
   "The player's points" should "be subtracted at the end of his turn" in {
-    val hand = LettersHandImpl(new ArrayBuffer[Card]())
+    val hand = LettersHandImpl(firstHand = Vector())
     val handValue = 5
     val actorPoints = 100
     val rankingWithDefaultActor = new RankingWithDefaultActors()
-    hand.hand+=(CardImpl("A"),CardImpl("B"))
     rankingWithDefaultActor.ranking.updatePoints(rankingWithDefaultActor.actorRef2, setPoint = actorPoints)
-    rankingWithDefaultActor.ranking.removePoints(rankingWithDefaultActor.actorRef2, hand.calculateHandPoint)
+    rankingWithDefaultActor.ranking.removePoints(rankingWithDefaultActor.actorRef2, handValue)
     assert(rankingWithDefaultActor.ranking.ranking(rankingWithDefaultActor.actorRef2) == actorPoints-handValue)
     rankingWithDefaultActor.system.terminate()
   }

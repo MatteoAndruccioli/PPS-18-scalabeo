@@ -38,7 +38,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private val pouch = LettersBagImpl()
   private var playersHand = mutable.Map[ActorRef, LettersHandImpl]()
   //creo le mani
-  gamePlayers.foreach(p => playersHand+=(p -> LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(8).get : _*))))
+  gamePlayers.foreach(p => playersHand+=(p -> LettersHandImpl.apply(Vector(pouch.takeRandomElementFromBagOfLetters(8).get : _*))))
   private var playedWord : ArrayBuffer[BoardTile] = ArrayBuffer[BoardTile]()
   private var numberOfPlayedTileInHand = 0
   //creo il dizionario
@@ -89,10 +89,10 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       case _: Move.Switch =>
         if (sender().equals(gamePlayers(turn))) {
           if (playersHand(sender()).containsOnlyVowelsOrOnlyConsonants()) {
-            val nCard = playersHand(sender())._hand.size
-            pouch.reinsertCardInBag(playersHand(sender())._hand)
-            playersHand(sender()) = LettersHandImpl.apply(mutable.ArrayBuffer(pouch.takeRandomElementFromBagOfLetters(nCard).get: _*))
-            sender ! ClientMoveAck(HandSwitchRequestAccepted(playersHand(sender())._hand))
+            val nCard = playersHand(sender()).firstHand.size
+            pouch.reinsertCardInBag(playersHand(sender()).firstHand)
+            playersHand(sender()) = LettersHandImpl.apply(Vector(pouch.takeRandomElementFromBagOfLetters(nCard).get: _*))
+            sender ! ClientMoveAck(HandSwitchRequestAccepted(playersHand(sender()).firstHand))
             scheduler.replaceBehaviourAndStart(() => sendUpdate())
           } else {
             sender ! ClientMoveAck(HandSwitchRequestRefused())
@@ -183,7 +183,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
   //comportamento dello scheduler
   private def sendTopic(): Unit = {
-    gamePlayers.foreach(player => player ! MatchTopicListenQuery(serverTopic, chatTopic, playersHand(player)._hand, gamePlayersUsername.values.toList))
+    gamePlayers.foreach(player => player ! MatchTopicListenQuery(serverTopic, chatTopic, playersHand(player).firstHand, gamePlayersUsername.values.toList))
   }
 
   private def sendTurn(): Unit = {
@@ -208,7 +208,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   }
   private def replaceHand() : Unit = {
     for(boardTile <- playedWord){
-      playersHand(sender()).playLetter(playersHand(sender())._hand.indexOf(CardImpl(boardTile.card.letter)))
+      playersHand(sender()).playLetter(playersHand(sender()).firstHand.indexOf(CardImpl(boardTile.card.letter)))
       numberOfPlayedTileInHand = numberOfPlayedTileInHand + 1
     }
     val drawnTiles = pouch.takeRandomElementFromBagOfLetters(numberOfPlayedTileInHand).getOrElse(List())
@@ -219,7 +219,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private def updatePointsAndCheckIfGameEnded(sender: ActorRef): Unit ={
     ranking.updatePoints(sender, board.calculateTurnPoints(board.takeCardToCalculatePoints(isFirstWord), isFirstWord))
     replaceHand()
-    sender ! ClientMoveAck(WordAccepted(playersHand(sender)._hand))
+    sender ! ClientMoveAck(WordAccepted(playersHand(sender).firstHand))
     if (playersHand(sender).hand.isEmpty && pouch.bag.isEmpty) {
       winnerRef = sender
       for (player <- gamePlayers) {

@@ -18,7 +18,6 @@ import shared.{ClusterScheduler, CustomScheduler, Move}
 import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
 import shared.GreetingToClientMessages._
 
-import scala.collection.mutable.ArrayBuffer
 
 class ClientActor extends Actor{
   val mediator: ActorRef = DistributedPubSub.get(context.system).mediator
@@ -285,7 +284,7 @@ class ClientActor extends Actor{
 * - comunicare la nuova mano dell'utente alla UI perchè venga visualizzata
 * - passare allo stato in cui attendo update di fine turno
 * */
-  def onWordAccepted(hand:ArrayBuffer[Card]):Unit = {
+  def onWordAccepted(hand:Vector[Card]):Unit = {
     Controller.moveOutcome(AcceptedWord(hand))
     context.become(waitingTurnEndUpdates)
   }
@@ -305,7 +304,7 @@ class ClientActor extends Actor{
   * - comunicare la nuova mano dell'utente all'UI perchè venga visualizzata
   * - passare allo stato in cui attendo update di fine turno
   * */
-  def onHandSwitchAccepted(hand:ArrayBuffer[Card]):Unit = {
+  def onHandSwitchAccepted(hand:Vector[Card]):Unit = {
     Controller.moveOutcome(HandSwitchAccepted(hand))
     context.become(waitingTurnEndUpdates)
   }

@@ -24,7 +24,6 @@ import shared.ClientToGameServerMessages._
 import shared.GameServerToClientMessages._
 import shared.Move.WordMove
 
-import scala.collection.mutable.ArrayBuffer
 
 
 
@@ -381,12 +380,12 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     //ClientActor in WaitingMoveAckFromGameServer
 
     //contenuto del messaggio di risposta del client
-    val gsAnswer = WordAccepted(ArrayBuffer(CardImpl("A"), CardImpl("A"), CardImpl("A")))
+    val gsAnswer = WordAccepted(Vector(CardImpl("A"), CardImpl("A"), CardImpl("A")))
 
     gameServer.send(client, ClientMoveAck(gsAnswer))
 
     val state2 = controllerListener.expectMsgType[AcceptedWord](new FiniteDuration(WAIT_TIME_MESSAGES, TimeUnit.SECONDS))
-    state2 must equal(AcceptedWord(ArrayBuffer(CardImpl("A"), CardImpl("A"), CardImpl("A"))))
+    state2 must equal(AcceptedWord(Vector(CardImpl("A"), CardImpl("A"), CardImpl("A"))))
 
     //in questo stato gameServer non dovrebbe ricevere messaggi
     actorReceivesNoMessageCheck(gameServer)
@@ -524,7 +523,7 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
                                          gameServer: TestProbe,
                                          gsTopic:String):Unit = {
     //questa sarà la mano del giocatore
-    val hand: ArrayBuffer[Card] = ArrayBuffer(CardImpl("B"), CardImpl("C"), CardImpl("D"))
+    val hand: Vector[Card] = Vector(CardImpl("B"), CardImpl("C"), CardImpl("D"))
     val players: List[String] = List("player1","player2","player3")
     //il gameServer contatta il giocatore
     gameServer.send(client, MatchTopicListenQuery(gsTopic, "chatTopic", hand, players))

@@ -2,7 +2,6 @@ package shared
 
 import akka.actor.ActorRef
 import model.{BoardTile, Card}
-import scala.collection.mutable.ArrayBuffer
 
 //tipo dei messaggi inviati da Client a GameServer
 sealed trait ClientToGameServerMessages
@@ -40,7 +39,7 @@ object Move {
 sealed trait GameServerToClientMessages
 object GameServerToClientMessages {
   //messaggio per set-up comunicazione Client-GameServer
-  case class MatchTopicListenQuery(gameServerTopic:String, gameChatTopic:String, playerHand: ArrayBuffer[Card], playersList: List[String]) extends GameServerToClientMessages
+  case class MatchTopicListenQuery(gameServerTopic:String, gameChatTopic:String, playerHand: Vector[Card], playersList: List[String]) extends GameServerToClientMessages
   //notifica di inizio turno, playerInTurn identifica il giocatore in turno
   case class PlayerTurnBegins(playerInTurn:ActorRef) extends GameServerToClientMessages
   //ricevuta mossa dell'utente, contiene indicazioni su mossa accettata o meno
@@ -57,9 +56,9 @@ object GameServerToClientMessages {
 
 sealed trait ClientMoveAckType
 object ClientMoveAckType{
-  case class WordAccepted(hand:ArrayBuffer[Card]) extends ClientMoveAckType //la mossa dell'utente era la composizione di una parola e la parola viene accettata
+  case class WordAccepted(hand:Vector[Card]) extends ClientMoveAckType //la mossa dell'utente era la composizione di una parola e la parola viene accettata
   case class WordRefused() extends ClientMoveAckType//la mossa dell'utente era la composizione di una parola che viene rifiutata
-  case class HandSwitchRequestAccepted(hand:ArrayBuffer[Card]) extends ClientMoveAckType//la mossa dell'utente era una richiesta di cambio mano che viene accettata
+  case class HandSwitchRequestAccepted(hand:Vector[Card]) extends ClientMoveAckType//la mossa dell'utente era una richiesta di cambio mano che viene accettata
   case class HandSwitchRequestRefused() extends ClientMoveAckType//la mossa dell'utente era una richiesta di cambio mano che viene rifiutata
   case class PassAck() extends ClientMoveAckType //la mossa dell'utente era un passo => accettato sempre
   case class TimeoutAck() extends ClientMoveAckType //l'utente non ha prodotto nessuna mossa e il timer è scaduto => accettato sempre

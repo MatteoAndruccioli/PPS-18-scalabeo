@@ -5,7 +5,6 @@ import client.controller.ControllerLogic.StupidMind
 import client.controller.MoveOutcome
 import client.controller.MoveOutcome.ServerDown
 import model.{BoardTile, Card}
-import scala.collection.mutable.ArrayBuffer
 
 object ClientTestConstants {
   val START_GUI:String = "startGui"
@@ -25,11 +24,11 @@ object ClientTestConstants {
 sealed trait ClientTestMessage
 object ClientTestMessage {
 
-  case class OnMatchStart(hand:ArrayBuffer[Card], players: List[String]) extends ClientTestMessage
+  case class OnMatchStart(hand:Vector[Card], players: List[String]) extends ClientTestMessage
   case class TurnEndUpdates(ranking: List[(String,Int)], board:List[BoardTile]) extends ClientTestMessage
   case class AddCardToTile(position: Int, x: Int, y: Int) extends ClientTestMessage
   case class MoveOutcomeMessage[A >: MoveOutcome](outcome: A) extends ClientTestMessage
-  case class UpdateHand(hand:ArrayBuffer[Card]) extends ClientTestMessage
+  case class UpdateHand(hand:Vector[Card]) extends ClientTestMessage
   case class ServersDownMessage(server: ServerDown) extends ClientTestMessage
   case class MatchEnded(player: String, playerWon:Boolean) extends ClientTestMessage
   case class ShowInChat(sender: String, message: String) extends ClientTestMessage
@@ -62,7 +61,7 @@ case class TestMind(verbose: Boolean = true, receiver: ActorRef) extends StupidM
     super.askUserToJoinGame()
   }
 
-  override def onMatchStart(hand: ArrayBuffer[Card], players: List[String]): Unit = {
+  override def onMatchStart(hand: Vector[Card], players: List[String]): Unit = {
     receiver ! OnMatchStart(hand, players)
     super.onMatchStart(hand,players)
   }
@@ -97,7 +96,7 @@ case class TestMind(verbose: Boolean = true, receiver: ActorRef) extends StupidM
     super.moveOutcome(outcome)
   }
 
-  override def updateHand(hand: ArrayBuffer[Card]): Unit = {
+  override def updateHand(hand: Vector[Card]): Unit = {
     receiver ! UpdateHand(hand)
     super.updateHand(hand)
   }

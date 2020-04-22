@@ -1,7 +1,6 @@
 package model
 
 import org.scalatest._
-import scala.collection.mutable.ArrayBuffer
 
 class LettersBagTest extends FlatSpec {
   "The cards bag " should " not be empty" in {
@@ -31,7 +30,7 @@ class LettersBagTest extends FlatSpec {
   "A card " should "be inserted in the bag" in {
     val cardA: Card= CardImpl("$")
     val lettersBagImpl = LettersBagImpl()
-    lettersBagImpl.reinsertCardInBag(ArrayBuffer(cardA))
+    lettersBagImpl.reinsertCardInBag(Vector(cardA))
     assert(lettersBagImpl.bag.contains(cardA))
   }
 }
