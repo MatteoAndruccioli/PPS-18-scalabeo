@@ -15,8 +15,6 @@ import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameSer
 import shared.GameServerToClientMessages.{ClientMoveAck, DisconnectionToGameServerNotificationAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins, SomeoneDisconnected}
 import shared.{ClusterScheduler, CustomScheduler, Move}
 
-import scala.collection.mutable.ArrayBuffer
-
 class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) extends Actor {
 
   val mediator = DistributedPubSub(context.system).mediator
@@ -38,7 +36,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private var playersHand = Map[ActorRef, LettersHandImpl]()
   //creo le mani
   gamePlayers.foreach(p => playersHand+=(p -> LettersHandImpl.apply(Vector(pouch.takeRandomElementFromBagOfLetters(8).get : _*))))
-  private var playedWord : ArrayBuffer[BoardTile] = ArrayBuffer[BoardTile]()
+  private var playedWord : List[BoardTile] = List[BoardTile]()
   private var numberOfPlayedTileInHand = 0
   //creo il dizionario
   private val dictionaryPath: String = "/dictionary/dictionary.txt"
@@ -99,7 +97,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
         }
       case message: Move.WordMove =>
         if (sender().equals(gamePlayers(turn))) {
-          message.word.foreach(boardTile => playedWord.insert(0, boardTile))
+          playedWord = message.word
           board.addPlayedWord(List.concat(playedWord))
           if(isFirstWord && board.checkGameFirstWord() && dictionary.checkWords(board.getWordsFromLetters(board.takeCardToCalculatePoints(isFirstWord)))){
             updatePointsAndCheckIfGameEnded(sender())
@@ -111,7 +109,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
             board.clearPlayedWords()
             sender ! ClientMoveAck(WordRefused())
           }
-          playedWord.clear()
+          playedWord = List[BoardTile]()
         }
     }
 
@@ -199,7 +197,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
     for( player <- gamePlayers){
       rankingTuples = List.concat(rankingTuples,List((gamePlayersUsername(player), ranking.ranking(player))))
     }
-    mediator ! Publish(serverTopic, EndTurnUpdate(rankingTuples.toList, board.playedWord))
+    mediator ! Publish(serverTopic, EndTurnUpdate(rankingTuples, board.playedWord))
   }
 
   private def sendDisconnection(): Unit = {
