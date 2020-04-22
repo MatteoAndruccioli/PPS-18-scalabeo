@@ -193,10 +193,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   }
 
   private def sendUpdate(): Unit = {
-    var rankingTuples : List[(String, Int)] = List()
-    for( player <- gamePlayers){
-      rankingTuples = List.concat(rankingTuples,List((gamePlayersUsername(player), ranking.ranking(player))))
-    }
+    val rankingTuples : List[(String,Int)] = gamePlayers.map(player => (gamePlayersUsername(player), ranking.ranking(player)))
     mediator ! Publish(serverTopic, EndTurnUpdate(rankingTuples, board.playedWord))
   }
 
@@ -214,7 +211,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       numberOfPlayedTileInHand = numberOfPlayedTileInHand + 1
     }
     val drawnTiles = pouch.takeRandomElementFromBagOfLetters(numberOfPlayedTileInHand).getOrElse(List())
-    for(i <- drawnTiles.indices) playersHand(sender()).putLetter(playersHand(sender()).hand.size, CardImpl(drawnTiles(i).letter))
+    drawnTiles.indices.foreach(i => playersHand(sender()).putLetter(playersHand(sender()).hand.size, CardImpl(drawnTiles(i).letter)))
     numberOfPlayedTileInHand = 0
   }
 
