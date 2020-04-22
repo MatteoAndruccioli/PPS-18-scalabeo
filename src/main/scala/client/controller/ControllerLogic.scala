@@ -60,7 +60,7 @@ object ControllerLogic {
     def turnEndUpdates(ranking: List[(String,Int)], board:List[BoardTile]): Unit = {
       View.updateLeaderboard(ranking)
       GameManager.addPlayedWordAndConfirm(board)
-      View.turnEndUpdates(board.map(b => (LetterTile(60, b.card.letter, b.card.score.toString, 0, LetterStatus.insertedConfirmed), b.position.row, b.position.col)))
+      View.turnEndUpdates(board.map(b => (LetterTile(60, b.card.letter, b.card.score.toString, 0, LetterStatus.insertedConfirmed), b.position.coord._1+1, b.position.coord._2+1)))
     }
 
     def addCardToTile(position: Int, x: Int, y: Int): Unit = {
