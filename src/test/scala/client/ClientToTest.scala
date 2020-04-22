@@ -1,33 +1,33 @@
 package client
 
 import akka.actor.ActorRef
-import client.ExtraMessagesForClientTesting._
+import client.ClientActorTestingMessage._
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import client.controller.Controller
 
 
 //contiene messaggi utilizzati in fase di test dall'attore ClientToTest
-sealed trait ExtraMessagesForClientTestingType
-object ExtraMessagesForClientTesting{
+sealed trait ClientActorTestingMessage
+object ClientActorTestingMessage{
   //mi permette di saltare allo stato WaitingReadyToJoinRequestFromGreetingServer, settando gli opportuni parametri che avrei dovuto normalmente ottenere
-  case class JumpToWaitingReadyToJoinRequestFromGreetingServer(greetingServer:ActorRef, username:String) extends ExtraMessagesForClientTestingType
+  case class JumpToWaitingJoinRequest(greetingServer:ActorRef, username:String) extends ClientActorTestingMessage
   //messaggio inviato in risposta a JumpToWaitingReadyToJoinRequestFromGreetingServer, log contiene descrizione stampabile di cosa stia avvenendo
-  case class SetUpDoneWRTJRFGS(log: String = "") extends ExtraMessagesForClientTestingType
+  case class EnteredWaitingJoinRequest(log: String = "") extends ClientActorTestingMessage
 
   //mi permette di saltare allo stato WaitingGameServerTopic, settando gli opportuni parametri che avrei dovuto normalmente ottenere
-  case class JumpToWaitingGameServerTopic(greetingServer:ActorRef, username:String) extends ExtraMessagesForClientTestingType
+  case class JumpToWaitingGameServerTopic(greetingServer:ActorRef, username:String) extends ClientActorTestingMessage
   //messaggio inviato in risposta a JumpToWaitingGameServerTopic, log contiene descrizione stampabile di cosa stia avvenendo
-  case class SetUpDoneWGST(log: String = "") extends ExtraMessagesForClientTestingType
+  case class EnteredWaitingGameServerTopic(log: String = "") extends ClientActorTestingMessage
 
   //mi permette di saltare allo stato WaitingUserChoosingWheterPlayAgainOrClosing, settando gli opportuni parametri che avrei dovuto normalmente ottenere
-  case class JumpToWaitingUserChoosingWheterPlayAgainOrClosing(greetingServer:ActorRef, username:String, gameServer:ActorRef, gameServerTopic:String) extends ExtraMessagesForClientTestingType
+  case class JumpToEndGame(greetingServer:ActorRef, username:String, gameServer:ActorRef, gameServerTopic:String) extends ClientActorTestingMessage
   //messaggio inviato in risposta a JumpToWaitingUserChoosingWheterPlayAgainOrClosing, log contiene descrizione stampabile di cosa stia avvenendo
-  case class SetUpDoneWUCWPAOC(log: String = "") extends ExtraMessagesForClientTestingType
+  case class EnteredEndGame(log: String = "") extends ClientActorTestingMessage
 
   //mi permette di saltare allo stato WaitingInTurnPlayerNomination, settando gli opportuni parametri che avrei dovuto normalmente ottenere
-  case class JumpToWaitingInTurnPlayerNomination(greetingServer:ActorRef, username:String, gameServer:ActorRef, gameServerTopic:String) extends ExtraMessagesForClientTestingType
+  case class JumpToTurnStart(greetingServer:ActorRef, username:String, gameServer:ActorRef, gameServerTopic:String) extends ClientActorTestingMessage
   //messaggio inviato in risposta a JumpToWaitingInTurnPlayerNomination, log contiene descrizione stampabile di cosa stia avvenendo
-  case class SetUpDoneWITPN(log: String = "") extends ExtraMessagesForClientTestingType
+  case class EnteredTurnStart(log: String = "") extends ClientActorTestingMessage
 }
 
 /*
@@ -58,37 +58,37 @@ class ClientToTest extends ClientActor {
   }
 
   //permette di saltare nello stato WaitingReadyToJoinRequestFromGreetingServer
-  def jumpToWAOUQR: Receive = {
-    case msg: JumpToWaitingReadyToJoinRequestFromGreetingServer =>
+  def waitingJumpToJoinRequest: Receive = {
+    case msg: JumpToWaitingJoinRequest =>
       setGreetingConnectionVariables(msg.greetingServer, msg.username)
-      sender ! SetUpDoneWRTJRFGS()
+      sender ! EnteredWaitingJoinRequest()
       context.become(waitingReadyToJoinRequestFromGreetingServer)
   }
 
   //permette di saltare nello stato WaitingGameServerTopic
-  def jumpToWGST: Receive = {
+  def waitingJumpToGameServerTopic: Receive = {
     case msg: JumpToWaitingGameServerTopic =>
       setReadyPlayerVariables(msg.greetingServer, msg.username)
-      sender ! SetUpDoneWGST()
+      sender ! EnteredWaitingGameServerTopic()
       context.become(waitingGameServerTopic)
   }
 
 
 
   //permette di saltare nello stato waitingUserChoosingWheterPlayAgainOrClosing
-  def jumpToWUCWPAOC: Receive = {
-    case msg: JumpToWaitingUserChoosingWheterPlayAgainOrClosing =>
+  def waitingJumpToEndGame: Receive = {
+    case msg: JumpToEndGame =>
       setUpGameVariables(msg.greetingServer, msg.username, msg.gameServer, msg.gameServerTopic)
       resetMatchInfo()
-      sender ! SetUpDoneWUCWPAOC()
+      sender ! EnteredEndGame()
       context.become(waitingUserChoosingWheterPlayAgainOrClosing)
   }
 
   //permette di saltare nello stato waitingInTurnPlayerNomination
-  def jumpToWITPN: Receive = {
-    case msg: JumpToWaitingInTurnPlayerNomination =>
+  def waitingJumpToTurnStart: Receive = {
+    case msg: JumpToTurnStart =>
       setUpGameVariables(msg.greetingServer, msg.username, msg.gameServer, msg.gameServerTopic)
-      sender ! SetUpDoneWITPN()
+      sender ! EnteredTurnStart()
       context.become(waitingInTurnPlayerNomination)
   }
 
@@ -101,9 +101,9 @@ class ClientToTest extends ClientActor {
 
   //faccio si che dal primo stato io possa saltare in altri stati fondamentali, rendendo piu agile il test dell'attore
   override def waitingUsernameFromUser: Receive =
-    jumpToWAOUQR orElse
-    jumpToWGST orElse
-    jumpToWUCWPAOC orElse
-    jumpToWITPN orElse
+    waitingJumpToJoinRequest orElse
+    waitingJumpToGameServerTopic orElse
+    waitingJumpToEndGame orElse
+    waitingJumpToTurnStart orElse
       super.waitingUsernameFromUser
 }

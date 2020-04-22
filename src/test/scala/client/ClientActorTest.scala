@@ -15,7 +15,7 @@ import org.scalatest.matchers.must.Matchers
 import scala.concurrent.duration.FiniteDuration
 import TestOnClientCostants._
 import ClientTestConstants._
-import ExtraMessagesForClientTesting._
+import ClientActorTestingMessage._
 import client.ClientTestMessage.{MatchEnded, OnMatchStart, TurnEndUpdates}
 import client.controller.MoveOutcome.AcceptedWord
 import model.{BoardTile, BoardTileImpl, Card, CardImpl, PositionImpl}
@@ -37,13 +37,7 @@ object TestOnClientCostants{
   /*
     nota: dal momento che lavoriamo con uno scheduler, i valori di tempo influiscono sia sulla correttezza dei
          test sia sull'efficacia ed efficienza del programma; in particolare i test sono stati svolti cercando di determinare
-         i migliori valori per vari parametri temporali, quelli da utilizzare vengono riportati in seguito:
-           + IN QUESTA CLASSE:
-                val waitTimeForMessages: Int = 10
-                val secondsWithoutMessages: Int = 10
-           + Valori per ClusterScheduler usato in ClientActor:
-                  val INITIAL_DELAY :Long = 6;
-                  val INTERVAL :Long = 6;
+         i migliori valori per vari parametri temporali
    */
   val WAIT_TIME_MESSAGES: Int = 10  //dt (in secondi) entro cui un certo messaggio dovrebbe arrivare
   val TIME_WITHOUT_MESSAGES: Int = 10 //dt (in secondi) in cui valuto se un attore riceve messaggi
@@ -138,9 +132,9 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     controllerInitCheck(controllerListener, client)
 
     //trick per skippare parti già testate ed andare dritto a WaitingReadyToJoinRequestFromGreetingServer
-    client ! JumpToWaitingReadyToJoinRequestFromGreetingServer(greetingServer.ref, USERNAME)
+    client ! JumpToWaitingJoinRequest(greetingServer.ref, USERNAME)
     //controlla che sia avvenuto il setup
-    expectMsgType[SetUpDoneWRTJRFGS](new FiniteDuration(WAIT_TIME_MESSAGES,TimeUnit.SECONDS))
+    expectMsgType[EnteredWaitingJoinRequest](new FiniteDuration(WAIT_TIME_MESSAGES,TimeUnit.SECONDS))
 
     //greeting server è riuscito a creare una partita vorrebbe che l'utente joinasse
     greetingServer.send(client, ReadyToJoinQuery())
@@ -158,10 +152,6 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
 
     //in questo stato greetingServer non dovrebbe ricevere messaggi
     actorReceivesNoMessageCheck(greetingServer)
-
-    //client dovrebbe far aggiornare la UI
-    val state2 = controllerListener.expectMsgType[String](new FiniteDuration(WAIT_TIME_MESSAGES,TimeUnit.SECONDS))
-    state2 must equal(ON_LOGIN_RESPONSE)
 
     //dovrebbe essere possibile contattare il GreetingServer
     testNewGameRequest(client, greetingServer)
@@ -196,9 +186,9 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     controllerInitCheck(controllerListener, client)
 
     //trick per skippare parti già testate ed andare dritto a WaitingReadyToJoinRequestFromGreetingServer
-    client ! JumpToWaitingReadyToJoinRequestFromGreetingServer(greetingServer.ref, USERNAME)
+    client ! JumpToWaitingJoinRequest(greetingServer.ref, USERNAME)
     //controlla che sia avvenuto il setup
-    expectMsgType[SetUpDoneWRTJRFGS](new FiniteDuration(WAIT_TIME_MESSAGES,TimeUnit.SECONDS))
+    expectMsgType[EnteredWaitingJoinRequest](new FiniteDuration(WAIT_TIME_MESSAGES,TimeUnit.SECONDS))
 
     //greeting server è riuscito a creare una partita vorrebbe che l'utente joinasse
     greetingServer.send(client, ReadyToJoinQuery())
@@ -250,7 +240,7 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     //trick per skippare parti già testate ed andare dritto a WaitingGameServerTopic
     client ! JumpToWaitingGameServerTopic(greetingServer.ref, USERNAME)
     //controlla che sia avvenuto il setup
-    expectMsgType[SetUpDoneWGST](new FiniteDuration(WAIT_TIME_MESSAGES,TimeUnit.SECONDS))
+    expectMsgType[EnteredWaitingGameServerTopic](new FiniteDuration(WAIT_TIME_MESSAGES,TimeUnit.SECONDS))
 
     //testo interazione di inizio partita -> ClientActor attende (anche) GameEnded
     testConnectionToGameServer(controllerListener, client, gameServer, gsTopic)
@@ -295,9 +285,9 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     controllerInitCheck(controllerListener, client)
 
     //trick per skippare parti già testate ed andare dritto a WaitingInTurnPlayerNomination
-    client ! JumpToWaitingInTurnPlayerNomination(greetingServer.ref, USERNAME, gameServer.ref, gsTopic)
+    client ! JumpToTurnStart(greetingServer.ref, USERNAME, gameServer.ref, gsTopic)
     //controlla che sia avvenuto il setup
-    expectMsgType[SetUpDoneWITPN](new FiniteDuration(WAIT_TIME_MESSAGES, TimeUnit.SECONDS))
+    expectMsgType[EnteredTurnStart](new FiniteDuration(WAIT_TIME_MESSAGES, TimeUnit.SECONDS))
 
     //testprobe che genera ActorRef del giocatore in turno
     val playerInTurn = TestProbe()
@@ -352,9 +342,9 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     controllerInitCheck(controllerListener, client)
 
     //trick per skippare parti già testate ed andare dritto a WaitingInTurnPlayerNomination
-    client ! JumpToWaitingInTurnPlayerNomination(greetingServer.ref, USERNAME, gameServer.ref, gsTopic)
+    client ! JumpToTurnStart(greetingServer.ref, USERNAME, gameServer.ref, gsTopic)
     //controlla che sia avvenuto il setup
-    expectMsgType[SetUpDoneWITPN](new FiniteDuration(WAIT_TIME_MESSAGES, TimeUnit.SECONDS))
+    expectMsgType[EnteredTurnStart](new FiniteDuration(WAIT_TIME_MESSAGES, TimeUnit.SECONDS))
 
     //gameServer dichiara inizio del turno dell'utente
     gameServer.send(gameServerTopicSender, PlayerTurnBegins(client))
@@ -435,9 +425,9 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     controllerInitCheck(controllerListener, client)
 
     //trick per skippare parti già testate ed andare dritto a WaitingUserChoosingWheterPlayAgainOrClosing
-    client ! JumpToWaitingUserChoosingWheterPlayAgainOrClosing(greetingServer.ref, USERNAME, gameServer.ref, gsTopic)
+    client ! JumpToEndGame(greetingServer.ref, USERNAME, gameServer.ref, gsTopic)
     //controlla che sia avvenuto il setup
-    expectMsgType[SetUpDoneWUCWPAOC](new FiniteDuration(WAIT_TIME_MESSAGES,TimeUnit.SECONDS))
+    expectMsgType[EnteredEndGame](new FiniteDuration(WAIT_TIME_MESSAGES,TimeUnit.SECONDS))
 
     //comunico al client che utente vuole giocare di nuovo
     client ! PlayAgain(false)
@@ -574,7 +564,7 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   private def controllerInitCheck(controllerListener: TestProbe,
                                   client: ActorRef): Unit = {
     val verbous: Boolean = false //non voglio vengano eseguite print in ControllerLogic
-    Controller.init(client, TestMind(verbous, controllerListener.ref))
+    Controller.init(client, TestLogic(verbous, controllerListener.ref))
     checkReceivedStringMessage(controllerListener, START_GUI)
   }
 

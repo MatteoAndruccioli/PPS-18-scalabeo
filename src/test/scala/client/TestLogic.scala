@@ -1,7 +1,7 @@
 package client
 
 import akka.actor.ActorRef
-import client.controller.ControllerLogic.StupidMind
+import client.controller.ControllerLogic.DummyLogic
 import client.controller.MoveOutcome
 import client.controller.MoveOutcome.ServerDown
 import model.{BoardTile, Card}
@@ -44,7 +44,7 @@ import ClientTestConstants._
     indicato nel costruttore, in questo modo è possibile verificare il momento in cui ogni metodo viene invocato
   - verbose settato a true abilita le stampe presenti in ogni metodo della classe estesa
  */
-case class TestMind(verbose: Boolean = true, receiver: ActorRef) extends StupidMind(verbose){
+case class TestLogic(verbose: Boolean = true, receiver: ActorRef) extends DummyLogic(verbose){
 
   override def startGui(): Unit = {
     receiver ! START_GUI
