@@ -111,7 +111,6 @@ class ClientActor extends Actor{
       } else {
         //giocatore non pronto alla partita
         resetMatchInfo() //per sicurezza resetto le informazioni temporanee della partita
-        Controller.onLoginResponse()
         context.become(waitingUserQueueRequest)
       }
   }
