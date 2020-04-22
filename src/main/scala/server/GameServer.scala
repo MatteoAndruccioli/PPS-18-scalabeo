@@ -138,7 +138,13 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       sender ! DisconnectionToGameServerNotificationAck()
       scheduler.stopTask()
       ackDisconnection.increment()
-      scheduler.replaceBehaviourAndStart(() => sendDisconnection())
+      if (ackDisconnection.isFull()) {
+        scheduler.stopTask()
+        ackDisconnection.reset()
+        scheduler.replaceBehaviourAndStart(()=>greetingServerRef ! EndGameToGreeting())
+      } else {
+        scheduler.replaceBehaviourAndStart(() => sendDisconnection())
+      }
 
     case _: SomeoneDisconnectedAck =>
       ackDisconnection.increment()
