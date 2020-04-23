@@ -15,7 +15,7 @@ import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameSer
 import shared.ClientToGreetingMessages._
 import shared.GameServerToClientMessages.{ClientMoveAck, DisconnectionToGameServerNotificationAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins, SomeoneDisconnected}
 import shared.{ClusterScheduler, CustomScheduler, Move}
-import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
+import shared.Channels.GREETING_SERVER_RECEIVES_TOPIC
 import shared.GreetingToClientMessages._
 
 

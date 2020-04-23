@@ -4,7 +4,7 @@ import akka.actor.{Actor, ActorRef}
 import akka.cluster.pubsub.DistributedPubSub
 import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import shared.ClientToGreetingMessages.ConnectionToGreetingQuery
-import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
+import shared.Channels.GREETING_SERVER_RECEIVES_TOPIC
 
 /*
   - è un attore che ascolta i messaggi inviati su Channels.GREETING_SERVER_RECEIVES_TOPIC

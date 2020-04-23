@@ -1,6 +1,7 @@
 package shared
 
-//tipo dei messaggi inviati da Client a GreetingServer
+/** Messaggi che vengono inviati da Client a GreetingServer
+ */
 sealed trait ClientToGreetingMessages
 object ClientToGreetingMessages {
   //richiesta di nuova connessione al server, viene comunicato l'username del player
@@ -13,7 +14,8 @@ object ClientToGreetingMessages {
 
 
 
-//tipo dei messaggi inviati da GreetingServer a Client
+/** Messaggi che vengono inviati da GreetingServer a Client
+ */
 sealed trait GreetingToClientMessages
 object GreetingToClientMessages {
   //risposta alla richiesta di connessione
