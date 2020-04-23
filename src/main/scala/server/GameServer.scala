@@ -1,6 +1,6 @@
 package server
 
-import shared.Topic.{CHAT_TOPIC, GAME_SERVER_SEND_TOPIC}
+import shared.Channels.{CHAT_TOPIC, GAME_SERVER_SEND_TOPIC}
 import server.GreetingToGameServer.{EndGameToGreetingAck, InitGame}
 import akka.actor.{Actor, ActorRef}
 import akka.cluster.Cluster
@@ -15,6 +15,18 @@ import shared.ClientToGameServerMessages.{ClientMadeMove, DisconnectionToGameSer
 import shared.GameServerToClientMessages.{ClientMoveAck, DisconnectionToGameServerNotificationAck, EndTurnUpdate, GameEnded, MatchTopicListenQuery, PlayerTurnBegins, SomeoneDisconnected}
 import shared.{ClusterScheduler, CustomScheduler, Move}
 
+
+/** GameServer è l'attore server che gestisce interamente una singola partita.
+ *  GameServer è in grado di soddisfare ogni richiesta che può eseguire un client durante la partita:
+ *    - gestisce la dinamica dei turni
+ *    - valuta unicamente le giocate legittime dei giocatori
+ *    - trasmette la chat della partita
+ *    - contiene la classifica della partita
+ *    - gestisce l'allineamento di tutti i client, mantenendoli in uno stato consistente
+ *
+ * @param players lista degli ActorRef dei giocatori in questa partita
+ * @param mapUsername mappa che identifica il nome utente dal proprio ActorRef
+ */
 class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) extends Actor {
 
   val mediator = DistributedPubSub(context.system).mediator
@@ -55,6 +67,15 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
   private var ackEndGame = CounterImpl(nPlayer)
   private var ackDisconnection = CounterImpl(nPlayer)
 
+  /**Fornisce la definizione del comportamento del GameServer.
+   *  Essendo un server questo deve poter rispondere ad ogni richiesta leggitima dei client durante la partita:
+   *    - inizializzazione della partita
+   *    - selezione del turno
+   *    - gestione della giocata
+   *    - aggiornamento di fine turno per mantenere la consistenza del tabellone
+   *    - gestione della disconnessione di un giocatore e conseguente terminazione della partita
+   *    - inoltoltro dei messaggi in chat
+   */
   override def receive: Receive = {
     case _: InitGame =>
       scheduler.replaceBehaviourAndStart(() => sendTopic())
@@ -72,6 +93,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
         scheduler.stopTask()
         ackTurn.reset()
       }
+    //ricezione di una mossa
     case message: ClientMadeMove => message.move match {
       case _: Move.Pass =>
         if (sender().equals(gamePlayers(turn))) {
@@ -160,6 +182,9 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       })
   }
 
+  /** Fornisce la definizione del comportamento del GameServer quando la partita termina con un vincitore;
+   *  la procedura consiste in uno scambio di acknowledge per terminare la partita correttamente per ogni attore.
+   */
   def EndGame : Receive = {
     case _ : EndGameInit =>
       scheduler.replaceBehaviourAndStart(() => mediator ! Publish(serverTopic,GameEnded(gamePlayersUsername(winnerRef), winnerRef)))

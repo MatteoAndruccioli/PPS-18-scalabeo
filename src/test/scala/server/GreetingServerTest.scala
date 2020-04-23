@@ -12,7 +12,7 @@ import org.scalatest.wordspec.AnyWordSpecLike
 import shared.ClientToGreetingMessages.{ConnectionToGreetingQuery, DisconnectionToGreetingNotification, PlayerReadyAnswer}
 import shared.GameServerToClientMessages.MatchTopicListenQuery
 import shared.GreetingToClientMessages.{ConnectionAnswer, DisconnectionAck, ReadyToJoinAck, ReadyToJoinQuery}
-import shared.Topic.GREETING_SERVER_RECEIVES_TOPIC
+import shared.Channels.GREETING_SERVER_RECEIVES_TOPIC
 
 import scala.concurrent.duration.FiniteDuration
 

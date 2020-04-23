@@ -3,7 +3,9 @@ package shared
 import akka.actor.ActorRef
 import model.{BoardTile, Card}
 
-//tipo dei messaggi inviati da Client a GameServer
+
+/** Messaggi che vengono inviati da Client a Gameserver
+ */
 sealed trait ClientToGameServerMessages
 object ClientToGameServerMessages {
   //client ha ricevuto messaggio di inizio partita da GameServer
@@ -22,7 +24,8 @@ object ClientToGameServerMessages {
   case class SomeoneDisconnectedAck() extends ClientToGameServerMessages
 }
 
-//possibili tipi di mosse compiute dall'utente
+/** Tipi di mosse possibili dell'utente
+ */
 sealed trait Move
 object Move {
   //richiesta mulligan
@@ -35,7 +38,8 @@ object Move {
   case class TimeOut() extends Move
 }
 
-//tipo dei messaggi inviati da GameServer a Client
+/** Messaggi che vengono inviati da Gameserver a Client
+ */
 sealed trait GameServerToClientMessages
 object GameServerToClientMessages {
   //messaggio per set-up comunicazione Client-GameServer
@@ -54,18 +58,27 @@ object GameServerToClientMessages {
   case class SomeoneDisconnected() extends  GameServerToClientMessages
 }
 
+/** Tipi di risposte alle mosse possibili dell'utente
+ */
 sealed trait ClientMoveAckType
 object ClientMoveAckType{
-  case class WordAccepted(hand:Vector[Card]) extends ClientMoveAckType //la mossa dell'utente era la composizione di una parola e la parola viene accettata
-  case class WordRefused() extends ClientMoveAckType//la mossa dell'utente era la composizione di una parola che viene rifiutata
-  case class HandSwitchRequestAccepted(hand:Vector[Card]) extends ClientMoveAckType//la mossa dell'utente era una richiesta di cambio mano che viene accettata
-  case class HandSwitchRequestRefused() extends ClientMoveAckType//la mossa dell'utente era una richiesta di cambio mano che viene rifiutata
-  case class PassAck() extends ClientMoveAckType //la mossa dell'utente era un passo => accettato sempre
-  case class TimeoutAck() extends ClientMoveAckType //l'utente non ha prodotto nessuna mossa e il timer è scaduto => accettato sempre
+  //la mossa dell'utente era la composizione di una parola e la parola viene accettata
+  case class WordAccepted(hand:Vector[Card]) extends ClientMoveAckType
+  //la mossa dell'utente era la composizione di una parola che viene rifiutata
+  case class WordRefused() extends ClientMoveAckType
+  //la mossa dell'utente era una richiesta di cambio mano che viene accettata
+  case class HandSwitchRequestAccepted(hand:Vector[Card]) extends ClientMoveAckType
+  //la mossa dell'utente era una richiesta di cambio mano che viene rifiutata
+  case class HandSwitchRequestRefused() extends ClientMoveAckType
+  //la mossa dell'utente era un passo => accettato sempre
+  case class PassAck() extends ClientMoveAckType
+  //l'utente non ha prodotto nessuna mossa e il timer è scaduto => accettato sempre
+  case class TimeoutAck() extends ClientMoveAckType
 }
 
 
-//tipo che caratterizza messaggi inviati sulla chat
+/** Messaggi che vengono inviati per la gestione della chat
+ */
 sealed trait ChatMessages
 object ChatMessages{
   //messaggio che l'utente invia in chat
