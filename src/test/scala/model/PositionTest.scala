@@ -9,7 +9,7 @@ class PositionTest extends FlatSpec {
     val x = 1
     val y = 1
     val position = PositionImpl(x,y)
-    assert(position._bonus == boardConstants.boardBonus.get(x,y).getOrElse("DEFAULT"))
+    assert(position.bonus == boardConstants.boardBonus.get(x,y).getOrElse("DEFAULT"))
   }
   "A validity check " should " be performed on position coordinates" in {
     val positionGood = PositionImpl(1,1)

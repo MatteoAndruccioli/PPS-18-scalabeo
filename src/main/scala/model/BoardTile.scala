@@ -2,6 +2,11 @@ package model
 
 import model.Directions.{N,S,W,E}
 
+/** Costanti per il tabellone
+  * - boardBonus: mappa che associa alle posizioni un bonus secondo le regole dello scarabeo
+  * - boardTileDefault: valore di default della casella del tabellone
+  * - horizontal, vertical, diagonal: direzioni delle lettere inserite nel tabellone
+  */
 package object boardConstants{
   val boardBonus: Map[(Int, Int), String] = Map((1, 5) -> scoreConstants.letterForTwo, (1, 13) -> scoreConstants.letterForTwo, (3, 8) -> scoreConstants.letterForTwo,
     (3, 10) -> scoreConstants.letterForTwo, (4, 9) -> scoreConstants.letterForTwo, (5, 1) ->scoreConstants.letterForTwo,
@@ -34,34 +39,43 @@ package object boardConstants{
   val diagonal = "D"
 }
 
-// BoardTile: casella all'interno del tabellone
-// fa riferimento ad una posizione e poi, quando viene aggiunta, ad una Card
+/** Casella all'interno del tabellone
+  * - card: lettera in quella casella
+  * - position: posizione nel tabellone
+  */
 sealed trait BoardTile{
   def card: Card
   def position: Position
 }
 
+/** Implementazione della casella all'interno del tabellone
+  * @param _position : posizione nel tabellone
+  * @param _card : lettera da inserire nella casella
+  */
 case class BoardTileImpl(_position: Position, _card: Card) extends BoardTile{
   override def position: Position  = _position
   override def card: Card = _card
 }
 
-// Board: implementazione del modello del tabellone
+/** Tabellone di gioco
+  * - boardTiles: caselle nel tabellone
+  * - playedWord: parole giocate in un turno nel tabellone (parola giocata)
+  * - addCard2Tile, addPlayedWord, clearPlayedWords, clearBoardFromPlayedWords: metodi per inserire e rimuovere elementi dalla board
+  * - checkGameFirstWord: metodo per il controllo della prima parola inserita nella partita
+  * - takeCardToCalculatePoints: metodo per estrarre dalla board le parole da controllare
+  * - getWordsFromLetters: metodo per convertire le lettere giocate in stringhe corrispondenti alle parole che formano
+  * - calculateTurnPoints: metodo per calcolare il punteggio di un turno
+  */
 sealed trait Board{
   def boardTiles: List[BoardTile]
   def playedWord: List[BoardTile]
-  // metodi per inserire e rimuovere elementi dalla board
   def addCard2Tile (card: Card, x:Int, y:Int, add2PlayedWord:Boolean = false)
   def addPlayedWord(playedWordsList: List[BoardTile])
   def clearPlayedWords()
   def clearBoardFromPlayedWords()
-  // metodo per il controllo della prima parola inserita nella partita
   def checkGameFirstWord(): Boolean
-  // metodo per estrarre dalla board le parole da controllare
   def takeCardToCalculatePoints(isfirstWord: Boolean = false):  List[List[(Card, String)]]
-  // metodo per convertire le lettere giocate in stringhe corrispondenti alle parole che formano
   def getWordsFromLetters(word: List[List[(Card, String)]]): List[String]
-  // metodo per calcolare il punteggio di un turno
   def calculateTurnPoints(words: List[List[(Card, String)]], isfirstWord: Boolean = false): Int
 }
 
@@ -69,15 +83,25 @@ case class BoardImpl() extends Board {
   private var _boardTiles: List[BoardTile] = populateBoard()
   private var _playedWord: List[BoardTile] = List()
 
+  /** metodo per accedere alle caselle della board
+    * @return caselle della board
+    */
   override def boardTiles: List[BoardTile] = _boardTiles
+  /** metodo per accedere alle lettere giocate in un turno
+    * @return lettere giocate (parola giocata)
+    */
   override def playedWord: List[BoardTile] = _playedWord
 
-  // metodo per il popolamento della board
+  // metodo per il popolamento del tabellone
   private def populateBoard() = (for( x <- 1 to 17; y <- 1 to 17) yield tuple2BoardTile(x, y)).toList
   private def tuple2BoardTile(tuple: (Int, Int)): BoardTile = BoardTileImpl(PositionImpl(tuple._1, tuple._2), cardConstants.defaultCard)
 
-  // METODI PER INSERIRE ELEMENTI NELLA BOARD O NELLE PAROLE GIOCATE
-  // metodo per aggiungere una card in una posizione del tabellone
+  /** metodo per aggiungere una lettera in una posizione del tabellone
+    * @param card lettera da inserire
+    * @param x ascissa in cui inserire la lettera
+    * @param y ordinata in cui inserire la lettera
+    * @param add2PlayedWord aggiungere o meno la lettera alla lista di lettere giocate
+    */
   override def addCard2Tile(card: Card, x:Int, y:Int, add2PlayedWord:Boolean = false): Unit =  {
     _boardTiles = _boardTiles.map {
       element => if (element.equals(getTileInAPosition(x, y))){
@@ -86,13 +110,17 @@ case class BoardImpl() extends Board {
       else element
     }
   }
-  // metodi per aggiungere e rimuovere una lista di carte
+  /** metodo per aggiungere una lista di lettere a quelle giocate
+    * @param playedWordsList lista di lettere da inserire
+    */
   override def addPlayedWord(playedWordsList: List[BoardTile]): Unit = {
     _playedWord = List()
     _playedWord = _playedWord ++ playedWordsList
     for(playedWord <- playedWordsList)  addCard2Tile(playedWord.card, playedWord.position.coord._1+1, playedWord.position.coord._2+1)
   }
+  /** metodo per svuotare la lista delle lettere giocate */
   override def clearPlayedWords(): Unit = _playedWord = List()
+  /** metodo per pulire la board dalle lettere giocate */
   override def clearBoardFromPlayedWords(): Unit = for(playedWord <- _playedWord) removeCardFromTile(playedWord.position.coord._1+1, playedWord.position.coord._2+1)
   // metodo per rimuovere una card in una posizione del tabellone
   private def removeCardFromTile(x: Int, y: Int, removeFromPlayedWord:Boolean = false): Card = {
@@ -106,14 +134,19 @@ case class BoardImpl() extends Board {
     }
     card
   }
+
   private def samePosition(position: Position, x: Int, y: Int): Boolean = position.coord._1+1 == x && position.coord._2+1 == y
   private def getTileInAPosition(x:Int, y:Int): BoardTile = _boardTiles.find( boardTile => samePosition(boardTile.position,x, y)).getOrElse(boardConstants.boardTileDefault)
 
-  // METODO PER IL CONTROLLO DELLA PRIMA PAROLA INSERITA NELLA PARTITA
+  /** metodo per il controllo della prima parola inserita nella partita
+    * 1 => la prima parola deve essere sopra la figura dello scarabeo al centro del tabellone
+    * 2 => le lettere giocate devono essere tutte adiacenti
+    * @return vero se si passano i controlli, falso altrimenti
+    */
   override def checkGameFirstWord(): Boolean = playedWordIsOnScarabeo() && lettersAreAdjacent()
   // 1 => la prima parola deve essere sopra la figura dello scarabeo al centro del tabellone
   private def playedWordIsOnScarabeo(): Boolean = _playedWord exists(boardTile => boardTile.position.coord.equals(8,8))
-  // 2 -> le lettere giocate devono essere tutte adiacenti
+  // 2 => le lettere giocate devono essere tutte adiacenti
   private def lettersAreAdjacent(): Boolean = {
     val playedWordOrderedByX = _playedWord.sortWith(_.position.coord._1 < _.position.coord._1)
     val playedWordOrderedByY = _playedWord.sortWith(_.position.coord._2 < _.position.coord._2)
@@ -121,7 +154,18 @@ case class BoardImpl() extends Board {
       != playedWordOrderedByY.forall(boardTiles => boardTiles.position.coord._2 == playedWordOrderedByY.head.position.coord._2 + playedWordOrderedByY.indexWhere(element => element.equals(boardTiles))))
   }
 
-  // METODO PER ESTRARRE DALLA BOARD LE PAROLE DA CONTROLLARE
+  /** metodo per estrarre dal tabellone le parole da controllare partendo dalla lista delle lettere inserite_
+    * - per la testa della lista controllo in tutti e due i versi
+    * - se le carte giocate sono di più allora devo cercare anche le parole formate dagli incroci:
+    *    * le carte giocate sono in orizzontale -> si cercano gli incroci in S/N (verticale)
+    *    * le carte messe sono in verticale -> si cercano gli incroci in W/E (orizzontale)
+    * Inoltre si controlla che:
+    * - gli spazi fra le lettere giocate devono essere occupate dalle lettere già inserite nella board (caso 1)
+    * - le lettere inserite devo essere su una colonna o su una riga (caso 2)
+    * - una parola, fra quelle trovate, deve contenere tutte le lettere giocate (caso 3)
+    * @param isFirstWord flag per affermare se è la prima parola da controllare
+    * @return lista delle parole trovate
+    */
   override def takeCardToCalculatePoints(isFirstWord: Boolean = false): List[List[(Card, String)]] = {
     // caso 1 e caso 2 controllo delle parole
     if (!(checkBoardLettersNearness() || isFirstWord) || wordDirectionIsDiagonal()) return List()
@@ -133,13 +177,13 @@ case class BoardImpl() extends Board {
     if (_playedWord.length > 1) {
       if (wordDirection(_playedWord) == boardConstants.horizontal) {
         // le carte messe sono in orizzontale
-        // cerco gli incroci in S/N (verticale)
+        // si cercano gli incroci in S/N (verticale)
         for(boardTile <- _playedWord.tail){
           listOfWords = (tileBoardsInADirection(Directions.N, boardTile)++ List(boardTails2Tuple(boardTile)) ++ tileBoardsInADirection(Directions.S, boardTile)) :: listOfWords
         }
       } else if (wordDirection(_playedWord) == boardConstants.vertical) {
         // le carte messe sono in verticale
-        // cerco gli incroci in W/E (orizzontale)
+        // si cercano gli incroci in W/E (orizzontale)
         for(boardTile <- _playedWord.tail) {
           listOfWords = (tileBoardsInADirection(Directions.W, boardTile) ++ List(boardTails2Tuple(boardTile)) ++ tileBoardsInADirection(Directions.E, boardTile)) :: listOfWords
         }
@@ -167,10 +211,10 @@ case class BoardImpl() extends Board {
   // 1 => gli spazi fra le lettere giocate devono essere occupate dalle lettere già inserite nella board
   private def checkBoardLettersNearness(): Boolean =
     _playedWord.exists(boardTile =>
-      !getTileInAPosition(x = boardTile.position.shiftByDirection(N).get._coord._1, y = boardTile.position.shiftByDirection(N).get._coord._2).equals(boardConstants.boardTileDefault) ||
-        !getTileInAPosition(x = boardTile.position.shiftByDirection(W).get._coord._1, y = boardTile.position.shiftByDirection(W).get._coord._2).equals(boardConstants.boardTileDefault) ||
-        !getTileInAPosition(x = boardTile.position.shiftByDirection(E).get._coord._1, y = boardTile.position.shiftByDirection(E).get._coord._2).equals(boardConstants.boardTileDefault) ||
-        !getTileInAPosition(x = boardTile.position.shiftByDirection(S).get._coord._1, y = boardTile.position.shiftByDirection(S).get._coord._2).equals(boardConstants.boardTileDefault)
+      !getTileInAPosition(x = boardTile.position.shiftByDirection(N).get.coord._1, y = boardTile.position.shiftByDirection(N).get.coord._2).equals(boardConstants.boardTileDefault) ||
+        !getTileInAPosition(x = boardTile.position.shiftByDirection(W).get.coord._1, y = boardTile.position.shiftByDirection(W).get.coord._2).equals(boardConstants.boardTileDefault) ||
+        !getTileInAPosition(x = boardTile.position.shiftByDirection(E).get.coord._1, y = boardTile.position.shiftByDirection(E).get.coord._2).equals(boardConstants.boardTileDefault) ||
+        !getTileInAPosition(x = boardTile.position.shiftByDirection(S).get.coord._1, y = boardTile.position.shiftByDirection(S).get.coord._2).equals(boardConstants.boardTileDefault)
     )
   // 2 => le lettere inserite devo essere su una colonna o su una riga
   private def wordDirectionIsDiagonal(): Boolean = wordDirection(_playedWord) == boardConstants.diagonal
@@ -188,12 +232,25 @@ case class BoardImpl() extends Board {
   // metodo di utilità per ottenere da una BoardTile una tupla (Card, String)
   private def boardTails2Tuple(boardTile: BoardTile): (Card, String) = (boardTile.card, boardTile.position.bonus)
 
-  // METODO PER CONVERTIRE LE LETTERE GICOATE IN STRINGHE CORRISPONDETI ALLE PAROLE CHE FORMANO
+  /** metodo per convertire le parole trovate in stringhe corrispondenti alle parole che formano
+    * @param words : lista di parole trovare
+    * @return le parole in formato di stringhe
+    */
   def getWordsFromLetters(words: List[List[(Card, String)]]): List[String] = for( word <- words) yield getWordFromLetters(word)
   private def getWordFromLetters(word: List[(Card, String)]): String =
     (for (tuple <- word; playedWord <- tuple._1.letter) yield playedWord).mkString("").toLowerCase
 
-  // METODO PER CALCOLARE IL PUNTEGGIO DI UN TURNO
+  /** metodo per il calcolo del punteggio di una parola secondo le regole dello scarabeo:
+    * - si sommano i bonus per moltiplicare il valore della parola (multiplierBonus)
+    * - si moltiplicano i punteggi delle lettere per i bonus sulla singola lettera (letterValue)
+    * - si calcola il punteggio totale sommando anche i bonus per la lunghezza, per la presenza dello scarabeo
+    *   e per il bonus se si forma la parola scarabeo
+    * - il punteggio totale è dato da
+    *    letterValue * multiplier * firstWord + lenghtBonus + wordScarabeoBonus
+    * @param words
+    * @param isFirstWord
+    * @return
+    */
   override def calculateTurnPoints(words: List[List[(Card, String)]], isFirstWord: Boolean = false): Int = (for (word <- words) yield calculateWordScore(word, isFirstWord)).sum
   // metodo per il calcolo del punteggio di una parola
   private def calculateWordScore(word: List[(Card, String)], isFirstWord: Boolean): Int =  {
