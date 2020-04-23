@@ -4,7 +4,7 @@ package server
  */
 trait Counter {
   def increment() : Unit
-  def isFull() : Boolean
+  def isFull : Boolean
   def reset() : Unit
   }
 
@@ -24,7 +24,7 @@ case class CounterImpl(maxValue: Int) extends Counter {
   /** Controlla se il contatore ha raggiunto il valore massimo
    * @return true se il contatore ha raggiunto il massimo prestabilito
    */
-  override def isFull(): Boolean = this.value == this.max
+  override def isFull: Boolean = this.value == this.max
 
   /** Azzera il contatore
    */

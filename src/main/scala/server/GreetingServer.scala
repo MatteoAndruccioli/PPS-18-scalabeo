@@ -23,7 +23,7 @@ class GreetingServer extends Actor {
   private val isServerOn = true
 
   private var gameNumber = 0
-  private val nPlayer = 4
+  private val nPlayer = 2
 
   private var listPlayers = List[ActorRef]()
   private var mapPlayersName = Map[ActorRef, String]()

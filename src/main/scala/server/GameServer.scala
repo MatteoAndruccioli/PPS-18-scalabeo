@@ -82,14 +82,14 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       greetingServerRef = sender()
     case _: MatchTopicListenAck =>
       ackTopicReceived.increment()
-      if (ackTopicReceived.isFull()) {
+      if (ackTopicReceived.isFull) {
         scheduler.stopTask()
         ackTopicReceived.reset()
         scheduler.replaceBehaviourAndStart(() => sendTurn())
       }
     case _: PlayerTurnBeginAck =>
       ackTurn.increment()
-      if (ackTurn.isFull()) {
+      if (ackTurn.isFull) {
         scheduler.stopTask()
         ackTurn.reset()
       }
@@ -137,7 +137,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
     case _: EndTurnUpdateAck =>
       ackEndTurn.increment()
-      if (ackEndTurn.isFull()) {
+      if (ackEndTurn.isFull) {
         scheduler.stopTask()
         ackEndTurn.reset()
         board.clearPlayedWords()
@@ -155,7 +155,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       sender ! DisconnectionToGameServerNotificationAck()
       scheduler.stopTask()
       ackDisconnection.increment()
-      if (ackDisconnection.isFull()) {
+      if (ackDisconnection.isFull) {
         scheduler.stopTask()
         ackDisconnection.reset()
         scheduler.replaceBehaviourAndStart(()=>greetingServerRef ! EndGameToGreeting())
@@ -165,7 +165,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
 
     case _: SomeoneDisconnectedAck =>
       ackDisconnection.increment()
-      if (ackDisconnection.isFull()) {
+      if (ackDisconnection.isFull) {
         scheduler.stopTask()
         ackDisconnection.reset()
         scheduler.replaceBehaviourAndStart(()=>greetingServerRef ! EndGameToGreeting())
@@ -190,7 +190,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
       scheduler.replaceBehaviourAndStart(() => mediator ! Publish(serverTopic,GameEnded(gamePlayersUsername(winnerRef), winnerRef)))
     case  _ : GameEndedAck =>
       ackEndGame.increment()
-      if (ackEndGame.isFull()) {
+      if (ackEndGame.isFull) {
         ackEndGame.reset()
         scheduler.stopTask()
         scheduler.replaceBehaviourAndStart(()=>greetingServerRef ! EndGameToGreeting())
@@ -198,7 +198,7 @@ class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) 
     //se qualcuno si disconnette ora lo considero come un ack
     case _ : DisconnectionToGameServerNotification =>
       ackEndGame.increment()
-      if (ackEndGame.isFull()) {
+      if (ackEndGame.isFull) {
         ackEndGame.reset()
         scheduler.stopTask()
         scheduler.replaceBehaviourAndStart(()=>greetingServerRef ! EndGameToGreeting())
