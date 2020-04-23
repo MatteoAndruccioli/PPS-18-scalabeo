@@ -34,7 +34,6 @@ case class CardImpl (var _letter : String) extends Card {
 
 // Sacchetto contentenente le lettere da poter usare durante una partita
 sealed trait LettersBag {
-  def test: Boolean
   def bag: List[Card]
   // metodo per estarre un numero di lettere dalla bag
   def takeRandomElementFromBagOfLetters(lettersToTake: Int): Option[List[Card]]
@@ -43,11 +42,9 @@ sealed trait LettersBag {
 }
 
 // implementazione LettersBag
-case class LettersBagImpl(test: Boolean= false) extends LettersBag {
-  private var _bag: List[Card] = List()
-  if (test) _bag = populateBag(cardConstants.lettersScoresCardinalitiesTest) else _bag = populateBag(cardConstants.lettersScoresCardinalities)
-  private def populateBag(list: List[(String, Int, Int)]): List[Card] = list.flatMap(tuple2Cards)
-  private def tuple2Cards(tuple: (String, Int, Int)): List[Card] = List.fill(tuple._3)(CardImpl(tuple._1))
+case class LettersBagImpl() extends LettersBag {
+  private var _bag: List[Card] = populateBag(cardConstants.lettersScoresCardinalities)
+  private def populateBag(list: List[(String, Int, Int)]): List[Card] = list.flatMap(tuple => List.fill(tuple._3)(CardImpl(tuple._1)))
   override def bag: List[Card] = _bag
   // metodo per estarre un numero di lettere dalla bag
   def takeRandomElementFromBagOfLetters(lettersToTake: Int): Option[List[Card]] = _bag match {
