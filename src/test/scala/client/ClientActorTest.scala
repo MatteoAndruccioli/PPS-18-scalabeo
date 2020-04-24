@@ -54,7 +54,7 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   override def afterAll:Unit = {
     TestKit.shutdownActorSystem(system)
   }
-  
+
   /** testo la capacità del Client gestire connessione al server:
    *    - client in grado di ricevere nome da utente
    *    - client in grado di ricevere richiesta connessione da utente
