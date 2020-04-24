@@ -1,7 +1,9 @@
 package shared
 
-//messaggi scambiati tra client e server
-//sono solo dei messaggi di prova per verificare che la comunicazione funzioni
+
+/** messaggi scambiati tra client e server
+ *  sono solo dei messaggi di prova per verificare che la comunicazione funzioni
+ */
 sealed trait DemoMessage
 object DemoMessage {
   //messaggio inviato dal Client sul mediator
