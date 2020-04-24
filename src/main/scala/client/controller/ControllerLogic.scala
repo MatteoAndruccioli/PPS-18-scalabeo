@@ -32,7 +32,11 @@ trait ControllerLogic {
 }
 
 object ControllerLogic {
-  //implementazione vera e propria di ControllerLogic
+  /** Implementazione vera e propria di ControllerLogic
+   *
+   *  Si occupa della gestione del rapporto ClientActor GUI,
+   *    permettendo passaggio informazioni in entrambe le direzioni
+   * */
   case class CleverLogic() extends ControllerLogic {
     def startGui(): Unit = {
       new Thread(() => {
@@ -145,7 +149,7 @@ object ControllerLogic {
     }
   }
 
-  //E' una vesione dummy di implementazione di ControllerLogic utile in fase di test e debug
+  /** E' una vesione dummy di implementazione di ControllerLogic utile in fase di test e debug */
   class DummyLogic(verbose: Boolean = true) extends ControllerLogic{
 
     override def startGui(): Unit = myPrintln("invocato startGui()")
