@@ -22,14 +22,14 @@ package object scoreConstants {
 }
 
 /** Regole per il calcolo del punteggio delle parole formate in un turno:
-  * - wordMultiplier:
-  * - letterMultiplier:
-  * - lenghtBonus:
-  * - noScarabeoCardBonus:
-  * - wordScarabeoBonus:
+  * - wordMultiplier
+  * - letterMultiplier
+  * - lenghtBonus
+  * - noScarabeoCardBonus
+  * - wordScarabeoBonus
   */
 package object scoreRules{
-  /** regola assegnazione valore moltiplicatore del punteggio della parola
+  /** regola per l'assegnazione del valore moltiplicatore del punteggio della parola
     * @param positionBonus bonus della posizione
     * @return valore numerico del bonus
     */
@@ -38,7 +38,7 @@ package object scoreRules{
     case scoreConstants.wordForThree => 3
     case _ => 0
   }
-  /** regola assegnazione valore moltiplicatore del punteggio della lettera
+  /** regola per l'assegnazione del valore moltiplicatore del punteggio della lettera
     * @param positionBonus bonus della posizione
     * @return valore numerico del bonus
     */
@@ -47,7 +47,7 @@ package object scoreRules{
     case scoreConstants.letterForThree => 3
     case _ => 1
   }
-  /** regola assegnazione bonus lunghezza della parola inserita
+  /** regola per l'assegnazione del bonus per la lunghezza della parola inserita
     * @param word parola formata
     * @return valore numerico del bonus
     */
@@ -57,18 +57,18 @@ package object scoreRules{
     case 6 => scoreConstants.bonusLenght6 + noScarabeoCardBonus(word)
     case _ => 0
   }
-  /** regola assegnazione bonus per la composizione della parola senza scarabeo
+  /** regola per l'assegnazione del bonus per la composizione della parola senza scarabeo
     * @param word parola formata
     * @return valore numerico del bonus
     */
   def noScarabeoCardBonus(word: List[(Card, String)]): Int =
     if (word exists (tuple => tuple._1.letter == scoreConstants.scarabeo)) 0 else scoreConstants.bonusWithoutScarabeo
-  /** regola assegnazione bonus per parola formata == SCARABEO
+  /** regola per l'assegnazione del bonus per parola formata == SCARABEO
     * @param word parola formata
     * @return valore numerico del bonus
     */
   def wordScarabeoBonus(word: List[(Card, String)]): Int =  if ((for (tuple <- word; playedWord <- tuple._1.letter) yield playedWord).mkString("").toLowerCase.equals(scoreConstants.scarabeoWord)) scoreConstants.bonusScarabeoWord else 0
-  /** regola assegnazione bonus per la prima parola composta nella partita
+  /** regola per l'assegnazione del bonus per la prima parola composta nella partita
     * @return valore numerico del bonus
     */
   def bonusFirstWord(): Int = scoreConstants.firstWordBonus

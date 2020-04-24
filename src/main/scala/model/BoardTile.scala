@@ -53,7 +53,13 @@ sealed trait BoardTile{
   * @param _card : lettera da inserire nella casella
   */
 case class BoardTileImpl(_position: Position, _card: Card) extends BoardTile{
+  /** posione delle casella nel tabellone
+    * @return posizione
+    */
   override def position: Position  = _position
+  /** lettera in quella casella
+    * @return lettera
+    */
   override def card: Card = _card
 }
 
@@ -249,7 +255,7 @@ case class BoardImpl() extends Board {
     *    letterValue * multiplier * firstWord + lenghtBonus + wordScarabeoBonus
     * @param words
     * @param isFirstWord
-    * @return
+    * @return punteggio del turno
     */
   override def calculateTurnPoints(words: List[List[(Card, String)]], isFirstWord: Boolean = false): Int = (for (word <- words) yield calculateWordScore(word, isFirstWord)).sum
   // metodo per il calcolo del punteggio di una parola

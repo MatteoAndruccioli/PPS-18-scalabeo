@@ -4,7 +4,7 @@ import scala.util.Random
 
 /** Costanti riguardanti la classe Card
   * - lettersScoreCardinalites: lista del punteggio e della cardinalità che le lettere devono avere in una partita
-  *   (lettare. punteggio, cardinalità)
+  *   (lettara, punteggio, cardinalità)
   * - defaultCard: card di default utilizzata nella Board per indicare una casella senza card
   */
 package object cardConstants {
@@ -19,8 +19,8 @@ package object cardConstants {
   val defaultCard = CardImpl("NULL")
 }
 
-/** Una tessera che può essere giocata
-  * - letter: lettera che deve essera associata a questa tessera
+/** Una lettera che può essere giocata
+  * - letter: lettera che deve essera associata
   * - score: punteggio corrispondente alla tessera
   */
 sealed trait Card{
@@ -28,13 +28,15 @@ sealed trait Card{
   def score: Int
 }
 
-/** Implementazione della Carta
+/** Implementazione della lettera
   * @param _letter: lettera a cui deve corrispondere la Card
   */
 case class CardImpl (var _letter : String) extends Card {
+  /** metodo per accedere alla lettera
+    * @return la lettera
+    */
   override def letter: String = _letter
-
-  /** Poter accedere al punteggio della tessera
+  /** metodo per accedere al punteggio
     * corrisponde a quello definito in lettersScoresCardinalities
     * @return punteggio della lettera
     */
@@ -56,7 +58,6 @@ sealed trait LettersBag {
 case class LettersBagImpl() extends LettersBag {
   private var _bag: List[Card] = populateBag(cardConstants.lettersScoresCardinalities)
   private def populateBag(list: List[(String, Int, Int)]): List[Card] = list.flatMap(tuple => List.fill(tuple._3)(CardImpl(tuple._1)))
-
   /** metodo per accedere al sacchetto
     * @return il sacchetto delle lettere
     */
