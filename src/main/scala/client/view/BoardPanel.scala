@@ -3,6 +3,9 @@ package client.view
 import scalafx.application.Platform
 import scalafx.scene.layout.{ColumnConstraints, GridPane, RowConstraints}
 
+/** BoardPanel rappresenta il pannello dove viene mostrato il tabellone di gioco.
+ *
+ */
 class BoardPanel extends GridPane {
 
   val BOARD_SIZE = 17
@@ -26,6 +29,11 @@ class BoardPanel extends GridPane {
     }
   }
 
+  /** Metodo chiamato per aggiornare lo stato grafico della board, ad esempio quando viene giocata una parola da un
+   * altro giocatore.
+   *
+   * @param word lista delle lettere giocata e della posizione della riga e della colonna in cui sono state giocate
+   */
   def updateBoard(word: List[(LetterTile, Int, Int)]): Unit = {
     Platform.runLater(() => {
       word.foreach(l => board(l._2 - 1)(l._3 - 1).center = l._1)

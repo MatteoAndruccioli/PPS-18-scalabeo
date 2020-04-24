@@ -13,6 +13,9 @@ import scalafx.scene.Scene
 import scalafx.scene.layout.{StackPane, VBox}
 import scalafx.stage.Stage
 
+/** MainMenu rappresenta il menù principale di gioco.
+ *
+ */
 class MainMenu extends JFXApp.PrimaryStage {
   private val VBOX_CHILDREN_SPACING = 23
   private val VBOX_WIDTH = 400
@@ -119,10 +122,16 @@ class MainMenu extends JFXApp.PrimaryStage {
     View.terminate()
   }
 
+  /** Metodo chiamato quando l'utente effettua con successo il login.
+   *
+   */
   def onLoginResponse(): Unit = {
     loginAnimation()
   }
 
+  /** Metodo che mostra all'utente una dialog quando viene trovata una partita.
+   *
+   */
   def askUserToJoinGame(): Unit = {
     Platform.runLater(() => {
       loggedInContainer.children.remove(0)

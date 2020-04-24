@@ -7,6 +7,9 @@ import scalafx.scene.layout.{GridPane, HBox, VBox}
 import scalafx.Includes.{handle, _}
 import shared.Move.{Pass, Switch}
 
+/** Classe che include il timer, i pulsanti di gioco e la chat.
+ *
+ */
 class UtilityPanel extends GridPane {
   private val WIDTH = 310
   private val HEIGHT = 720
@@ -117,30 +120,55 @@ class UtilityPanel extends GridPane {
     )
   }, 0, 2)
 
+  /** Mostra un messaggio di un giocatore nella chat.
+   *
+   * @param sender nickname del giocatore che ha inviato il messaggio
+   * @param message messaggio inviato dal giocatore
+   */
   def showInChat(sender: String, message: String): Unit = {
     chatPanel.showInChat(sender, message)
   }
 
+  /** Stampa un messaggio in chat evidenziato di rosso per indicare che è successo qualcosa nella partita.
+   *
+   * @param message messaggio da inviare nella chat
+   */
   def showEventMessage(message: String): Unit = {
     chatPanel.showEventMessage(message)
   }
 
+  /** Metodo che verifica se il bottono per il mulligan è da disabilitare.
+   *
+   * @param condition condizione che specifica se il pulsante è da disabilitare
+   */
   def disableMulliganButton(condition: Boolean): Unit = {
     mulliganButton.disable = condition
   }
 
+  /** Metodo chiamato quando inizia il turno del giocatore.
+   *
+   */
   def startTurn(): Unit = {
     timerPanel.startTurn()
   }
 
+  /** Restarta il timer dall'inizio.
+   *
+   */
   def restartTimer(): Unit = {
     timerPanel.restartTimer()
   }
 
+  /** Ferma il timer in un momento preciso.
+   *
+   */
   def pauseTimer(): Unit = {
     timerPanel.pauseTimer()
   }
 
+  /** Il timer riprende da dove era stato messo in pausa.
+   *
+   */
   def resumeTimer(): Unit = {
     timerPanel.resumeTimer()
   }

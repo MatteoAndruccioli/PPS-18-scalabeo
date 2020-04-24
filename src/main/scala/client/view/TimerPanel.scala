@@ -13,6 +13,9 @@ import scalafx.scene.paint.Color
 import scalafx.scene.shape.Circle
 import shared.Move.TimeOut
 
+/** Pannello che contiene il timer.
+ *
+ */
 class TimerPanel() extends GridPane {
   private val WIDTH = 260
   private val HEIGHT = 125
@@ -34,6 +37,9 @@ class TimerPanel() extends GridPane {
 
   add(progress, 0, 0)
 
+  /** Metodo chiamato quando inizia il turno del giocatore. Il timer viene avviato.
+   *
+   */
   def startTurn(): Unit = {
     val timer = new Timer()
     timer.scheduleAtFixedRate(new TimerTask {
@@ -58,14 +64,23 @@ class TimerPanel() extends GridPane {
     }, UPDATE_TIME, UPDATE_TIME)
   }
 
+  /** Ferma il timer in un momento preciso.
+   *
+   */
   def pauseTimer(): Unit = {
     stopwatch.pause()
   }
 
+  /** Il timer riprende da dove era stato messo in pausa.
+   *
+   */
   def resumeTimer(): Unit = {
     stopwatch.resume()
   }
 
+  /** Restarta il timer dall'inizio.
+   *
+   */
   def restartTimer() : Unit = {
     stopwatch.restart()
   }

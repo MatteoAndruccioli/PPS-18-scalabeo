@@ -4,6 +4,10 @@ import scalafx.scene.image.{Image, ImageView}
 import scalafx.scene.layout.{ColumnConstraints, GridPane, HBox, RowConstraints}
 import scalafx.scene.text.Text
 
+/** Classe che rappresenta la legenda mostrata affianco al tabellone di gioco. Contiene per ogni lettera il suo valore
+ * in termini di punteggio.
+ *
+ */
 class Legend extends GridPane {
   private val WIDTH = 250
   private val HEIGHT = 480

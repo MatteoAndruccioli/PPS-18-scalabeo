@@ -2,7 +2,10 @@ package client.view
 
 import scalafx.scene.layout.{BorderPane, HBox, VBox}
 
-
+/** BoardAndPlayerPanel rappresenta il pannello che comprende la board di gioco e le mani dei giocatori.
+ *
+ * @param cards la mano iniziale del giocatore
+ */
 class BoardAndPlayerPanel(cards: Vector[(String, Int)]) extends BorderPane {
   private val LETTER_SIZE = 60
   private val LETTER_PLACEHOLDER_VALUE = 0
@@ -39,12 +42,18 @@ class BoardAndPlayerPanel(cards: Vector[(String, Int)]) extends BorderPane {
   top = opponentHandTop
   bottom = myHand
 
+  /** Metodo chiamato per aggiornare lo stato grafico della board, ad esempio quando viene giocata una parola da un
+   * altro giocatore.
+   *
+   * @param word lista delle lettere giocata e della posizione della riga e della colonna in cui sono state giocate
+   */
+  def updateBoard(word: List[(LetterTile, Int, Int)]): Unit = {
+    board.updateBoard(word)
+  }
+
   private def placeholderhand(): List[LetterTile] = {
     val list = List.fill(8)(LetterTile(LETTER_SIZE, "", "", LETTER_PLACEHOLDER_VALUE, LetterStatus.placeHolder))
     list
   }
 
-  def updateBoard(word: List[(LetterTile, Int, Int)]): Unit = {
-    board.updateBoard(word)
-  }
 }
