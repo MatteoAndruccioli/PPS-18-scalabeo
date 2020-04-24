@@ -5,7 +5,7 @@ import client.controller.Controller
 import client.controller.ControllerLogic.CleverLogic
 import com.typesafe.config.ConfigFactory
 
-//launcher del client
+/** Permette di lanciare ClientActor su una porta libera */
 object ClientLauncher extends App{
   val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 0)
     .withFallback(ConfigFactory.parseString("akka.cluster.roles = [clientRole]"))

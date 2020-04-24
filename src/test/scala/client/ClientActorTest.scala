@@ -26,7 +26,7 @@ import shared.Move.WordMove
 
 
 
-
+/** Oggetto contenente alcune costanti utilizzate nel test dell'attore client */
 object TestOnClientCostants{
   val TEST_SYSTEM_NAME = "test-system" //nome dell'ActorSystem
   val USERNAME :String= "UsernameTest" //nome dell'utente
@@ -44,6 +44,7 @@ object TestOnClientCostants{
   val DEFAULT_CARD: CardImpl = CardImpl("NULL") //implementazione dummy di una carta
 }
 
+/** Classe che implementa test per l'attore client */
 class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   with AnyFlatSpecLike
   with ImplicitSender
@@ -54,13 +55,11 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     TestKit.shutdownActorSystem(system)
   }
 
-
-  /*
-  testo la capacità del Client gestire connessione al server:
-    - client in grado di ricevere nome da utente
-    - client in grado di ricevere richiesta connessione da utente
-    - client in grado di gestire connessione impossibile da stabilire
- */
+  /** testo la capacità del Client gestire connessione al server:
+   *    - client in grado di ricevere nome da utente
+   *    - client in grado di ricevere richiesta connessione da utente
+   *    - client in grado di gestire connessione impossibile da stabilire
+   */
   "Client"  should "be able to send connection request to GreetingServer" in {
     val testId: String = "1"
     //attore a cui il Controller invierà messaggi
@@ -80,13 +79,11 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     checkReceivedStringMessage(controllerListener, ON_CONNECTION_FAILED)
   }
 
-
-  /*
-  testo la capacità del Client gestire connessione al server:
-    - client in grado di ricevere nome da utente
-    - client in grado di ricevere stabilire connessione con GreetingServer
-    - client notifica a utente che una partita è pronta quando richiesto dal GreetingServer
-  */
+  /** testo la capacità del Client gestire connessione al server:
+   *    - client in grado di ricevere nome da utente
+   *    - client in grado di ricevere stabilire connessione con GreetingServer
+   *    - client notifica a utente che una partita è pronta quando richiesto dal GreetingServer
+   */
   "Client"  should "be able to notify user when match is ready" in {
     val testId: String = "2"
     //attore a cui il Controller invierà messaggi
@@ -111,12 +108,10 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     checkReceivedStringMessage(controllerListener, ASK_USER_TO_JOIN_GAME)
   }
 
-
-  /*
-  testo la capacità del Client gestire risposta negativa dell'utente alla richiesta di entrare in partita
-    - il test parte da quando attendo richiesta utente pronto (waitingReadyToJoinRequestFromGreetingServer)
-    - testo successivo scambio di messaggi con UI, GreetingServer e risposta a UI
- */
+  /** testo la capacità del Client gestire risposta negativa dell'utente alla richiesta di entrare in partita
+   *    - il test parte da quando attendo richiesta utente pronto (waitingReadyToJoinRequestFromGreetingServer)
+   *    - testo successivo scambio di messaggi con UI, GreetingServer e risposta a UI
+   */
   "Client"  should "be able to handle user not ready for match" in {
     val testId: String = "3"
     //attore a cui il Controller invierà messaggi
@@ -157,14 +152,11 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     testNewGameRequest(client, greetingServer)
   }
 
-
-
-  /*
-  testo la capacità del Client gestire risposta positiva dell'utente alla richiesta di entrare in partita
-    - il test parte da quando attendo richiesta utente pronto (waitingReadyToJoinRequestFromGreetingServer)
-    - testo successivo scambio di messaggi con UI, GreetingServer e risposta a UI
-    - l'ultimo passo consiste nella gestione del primo messaggio proveniente dal GameServer
-  */
+  /** testo la capacità del Client gestire risposta positiva dell'utente alla richiesta di entrare in partita
+   *    - il test parte da quando attendo richiesta utente pronto (waitingReadyToJoinRequestFromGreetingServer)
+   *    - testo successivo scambio di messaggi con UI, GreetingServer e risposta a UI
+   *    - l'ultimo passo consiste nella gestione del primo messaggio proveniente dal GameServer
+   */
   "Client"  should "be able to handle game start" in {
     val testId: String = "4"
     //attore a cui il Controller invierà messaggi
@@ -211,12 +203,11 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
     testConnectionToGameServer(controllerListener, client, gameServer, gsTopic)
   }
 
-  /*
-  testo la capacità del Client gestire terminazione della partita
-    - il test parte da quando attendo primo messaggio GameServer -> lo gestisco
-    - il GameServer comunica fine della partita -> viene gestita
-    - l'utente vuole rigiocare -> verrà ricontattato GreetingServer
-  */
+  /** testo la capacità del Client gestire terminazione della partita
+   *    - il test parte da quando attendo primo messaggio GameServer -> lo gestisco
+   *    - il GameServer comunica fine della partita -> viene gestita
+   *    - l'utente vuole rigiocare -> verrà ricontattato GreetingServer
+   */
   "Client"  should "be able to handle game end, player wants to play again" in {
     val testId: String = "5"
     //attore a cui il Controller invierà messaggi
@@ -259,9 +250,8 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   }
 
 
-  /*
-    test della fase di gioco, nel caso in cui non sia il turno del player;
-    dopodichè fingo la partita finisce (in pratica è l'ultimo turno)
+  /** test della fase di gioco, nel caso in cui non sia il turno del player;
+   *    dopodichè fingo la partita finisce (in pratica è l'ultimo turno)
    */
   "Client"  should "be able to handle other player's turn, the game ends" in {
     //id del test
@@ -315,10 +305,8 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   }
 
 
-
-  /*
-    test della fase di gioco, nel caso in cui sia il turno del player [caso 1 AcceptedWord];
-    dopodichè termina la partita
+  /** test della fase di gioco, nel caso in cui sia il turno del player [caso 1 AcceptedWord];
+   *    dopodichè termina la partita
    */
   "Client" should "be able to play his turn [AcceptedWord], poi faccio terminare la partita" in {
     //id del test
@@ -391,18 +379,11 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   }
 
 
-
-
-
-
-
-  /*
-     il test6 va per ultimo: termina l'ActorSystem quindi poi non puoi piu creare attori,
-     deve essere l'ultimo test, valutare se eliminarlo
-   */
-  /*
-    testo la capacità del Client gestire chiusura del gioco dopo la fine di una partita
-    parto dall'attesa della risposta (negativa) dell'utente riguardo a fare nuova partita
+  /** testo la capacità del Client gestire chiusura del gioco dopo la fine di una partita
+   *    parto dall'attesa della risposta (negativa) dell'utente riguardo a fare nuova partita
+   *
+   *  tale test va per ultimo: termina l'ActorSystem quindi poi non puoi piu creare attori,
+   *    deve essere l'ultimo test, valutare se eliminarlo
    */
   "Client"  should "be able to handle game end, player doesn't want to play again" in {
     val testId: String = "6"
@@ -572,7 +553,6 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   private def checkReceivedStringMessage(receiver: TestProbe, expectedMessage:String):Unit = {
     var state = receiver.expectMsgType[String](new FiniteDuration(WAIT_TIME_MESSAGES,TimeUnit.SECONDS))
     state must equal(expectedMessage)
-    //println("checkReceivedStrinMessage: " + state  + " == " + expectedMessage)
   }
 
 }

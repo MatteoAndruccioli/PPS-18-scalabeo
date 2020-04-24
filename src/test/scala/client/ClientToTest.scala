@@ -6,35 +6,36 @@ import akka.cluster.pubsub.DistributedPubSubMediator.Subscribe
 import client.controller.Controller
 
 
-//contiene messaggi utilizzati in fase di test dall'attore ClientToTest
+/** tipo messaggi utilizzati in fase di test dall'attore ClientToTest */
 sealed trait ClientActorTestingMessage
+/** contiene messaggi utilizzati in fase di test dall'attore ClientToTest */
 object ClientActorTestingMessage{
-  //mi permette di saltare allo stato WaitingReadyToJoinRequestFromGreetingServer, settando gli opportuni parametri che avrei dovuto normalmente ottenere
+  /** mi permette di saltare allo stato WaitingReadyToJoinRequestFromGreetingServer, settando gli opportuni parametri che avrei dovuto normalmente ottenere */
   case class JumpToWaitingJoinRequest(greetingServer:ActorRef, username:String) extends ClientActorTestingMessage
-  //messaggio inviato in risposta a JumpToWaitingReadyToJoinRequestFromGreetingServer, log contiene descrizione stampabile di cosa stia avvenendo
+  /** messaggio inviato in risposta a JumpToWaitingReadyToJoinRequestFromGreetingServer, log contiene descrizione stampabile di cosa stia avvenendo */
   case class EnteredWaitingJoinRequest(log: String = "") extends ClientActorTestingMessage
 
-  //mi permette di saltare allo stato WaitingGameServerTopic, settando gli opportuni parametri che avrei dovuto normalmente ottenere
+  /** mi permette di saltare allo stato WaitingGameServerTopic, settando gli opportuni parametri che avrei dovuto normalmente ottenere */
   case class JumpToWaitingGameServerTopic(greetingServer:ActorRef, username:String) extends ClientActorTestingMessage
-  //messaggio inviato in risposta a JumpToWaitingGameServerTopic, log contiene descrizione stampabile di cosa stia avvenendo
+  /** messaggio inviato in risposta a JumpToWaitingGameServerTopic, log contiene descrizione stampabile di cosa stia avvenendo */
   case class EnteredWaitingGameServerTopic(log: String = "") extends ClientActorTestingMessage
 
-  //mi permette di saltare allo stato WaitingUserChoosingWheterPlayAgainOrClosing, settando gli opportuni parametri che avrei dovuto normalmente ottenere
+  /** mi permette di saltare allo stato WaitingUserChoosingWheterPlayAgainOrClosing, settando gli opportuni parametri che avrei dovuto normalmente ottenere */
   case class JumpToEndGame(greetingServer:ActorRef, username:String, gameServer:ActorRef, gameServerTopic:String) extends ClientActorTestingMessage
-  //messaggio inviato in risposta a JumpToWaitingUserChoosingWheterPlayAgainOrClosing, log contiene descrizione stampabile di cosa stia avvenendo
+  /** messaggio inviato in risposta a JumpToWaitingUserChoosingWheterPlayAgainOrClosing, log contiene descrizione stampabile di cosa stia avvenendo */
   case class EnteredEndGame(log: String = "") extends ClientActorTestingMessage
 
-  //mi permette di saltare allo stato WaitingInTurnPlayerNomination, settando gli opportuni parametri che avrei dovuto normalmente ottenere
+  /** mi permette di saltare allo stato WaitingInTurnPlayerNomination, settando gli opportuni parametri che avrei dovuto normalmente ottenere */
   case class JumpToTurnStart(greetingServer:ActorRef, username:String, gameServer:ActorRef, gameServerTopic:String) extends ClientActorTestingMessage
-  //messaggio inviato in risposta a JumpToWaitingInTurnPlayerNomination, log contiene descrizione stampabile di cosa stia avvenendo
+  /** messaggio inviato in risposta a JumpToWaitingInTurnPlayerNomination, log contiene descrizione stampabile di cosa stia avvenendo */
   case class EnteredTurnStart(log: String = "") extends ClientActorTestingMessage
 }
 
-/*
-    ho creato questa estensione dell'attore per poter aggiungere dei salti a degli stati controllati;
-    questo permette di snellire la fase di test e andare con ogni test a valutare
-    solo gli aspetti fondamentali per una specifica funzionalità. Usare questa classe mi permette inoltre di non
-    apportare modifiche utili solo ai fini di test alla classe attore utilizzata nel normale funzionamento
+/** Classe Client da testare
+ * ho creato questa estensione dell'attore per poter aggiungere dei salti a degli stati controllati;
+ * questo permette di snellire la fase di test e andare con ogni test a valutare
+ * solo gli aspetti fondamentali per una specifica funzionalità. Usare questa classe mi permette inoltre di non
+ * apportare modifiche utili solo ai fini di test alla classe attore utilizzata nel normale funzionamento
  */
 class ClientToTest extends ClientActor {
   //setta le variabili contenenti ActorRef di GreetingServer e nome dell'utente, permettendo di saltare stati di inizializzazione
@@ -57,7 +58,7 @@ class ClientToTest extends ClientActor {
     mediator ! Subscribe(this.gameServerTopic.get, self)
   }
 
-  //permette di saltare nello stato WaitingReadyToJoinRequestFromGreetingServer
+  /** permette di saltare nello stato WaitingReadyToJoinRequestFromGreetingServer */
   def waitingJumpToJoinRequest: Receive = {
     case msg: JumpToWaitingJoinRequest =>
       setGreetingConnectionVariables(msg.greetingServer, msg.username)
@@ -65,7 +66,7 @@ class ClientToTest extends ClientActor {
       context.become(waitingReadyToJoinRequestFromGreetingServer)
   }
 
-  //permette di saltare nello stato WaitingGameServerTopic
+  /** permette di saltare nello stato WaitingGameServerTopic */
   def waitingJumpToGameServerTopic: Receive = {
     case msg: JumpToWaitingGameServerTopic =>
       setReadyPlayerVariables(msg.greetingServer, msg.username)
@@ -75,7 +76,7 @@ class ClientToTest extends ClientActor {
 
 
 
-  //permette di saltare nello stato waitingUserChoosingWheterPlayAgainOrClosing
+  /** permette di saltare nello stato waitingUserChoosingWheterPlayAgainOrClosing */
   def waitingJumpToEndGame: Receive = {
     case msg: JumpToEndGame =>
       setUpGameVariables(msg.greetingServer, msg.username, msg.gameServer, msg.gameServerTopic)
@@ -84,7 +85,7 @@ class ClientToTest extends ClientActor {
       context.become(waitingUserChoosingWheterPlayAgainOrClosing)
   }
 
-  //permette di saltare nello stato waitingInTurnPlayerNomination
+  /** permette di saltare nello stato waitingInTurnPlayerNomination */
   def waitingJumpToTurnStart: Receive = {
     case msg: JumpToTurnStart =>
       setUpGameVariables(msg.greetingServer, msg.username, msg.gameServer, msg.gameServerTopic)
@@ -92,14 +93,14 @@ class ClientToTest extends ClientActor {
       context.become(waitingInTurnPlayerNomination)
   }
 
-  //gestione chiusura gioco, elimino lo stop dell'attore per evitare chiusura ActorSystem nel test di fine partita
+  /** gestione chiusura gioco, elimino lo stop dell'attore per evitare chiusura ActorSystem nel test di fine partita */
   override def handleClientStop():Unit = {
     scheduler.stopTask()
     Controller.exit()
   }
 
 
-  //faccio si che dal primo stato io possa saltare in altri stati fondamentali, rendendo piu agile il test dell'attore
+  /** faccio si che dal primo stato io possa saltare in altri stati fondamentali, rendendo piu agile il test dell'attore */
   override def waitingUsernameFromUser: Receive =
     waitingJumpToJoinRequest orElse
     waitingJumpToGameServerTopic orElse
