@@ -149,7 +149,10 @@ object ControllerLogic {
     }
   }
 
-  /** E' una vesione dummy di implementazione di ControllerLogic utile in fase di test e debug */
+  /**
+   * E' una vesione dummy di implementazione di ControllerLogic utile in fase di test e debug
+   * I vari metodi quando chiamati si limitano ad effettuare una stampa
+   * */
   class DummyLogic(verbose: Boolean = true) extends ControllerLogic{
 
     override def startGui(): Unit = myPrintln("invocato startGui()")
