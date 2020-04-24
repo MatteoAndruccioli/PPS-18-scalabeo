@@ -22,7 +22,7 @@ sealed trait Ranking {
   */
 class RankingImpl(players: List[ActorRef]) extends Ranking {
   private var _ranking: Map[ActorRef, Int] = addInitialPlayers(players)
-  /** metood per accedere alla classifica
+  /** metodo per accedere alla classifica
     * @return la classifica
     */
   override def ranking: Map[ActorRef, Int] = _ranking

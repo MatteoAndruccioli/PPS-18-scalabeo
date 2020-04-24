@@ -27,7 +27,7 @@ sealed trait Dictionary {
   */
 class DictionaryImpl(val _dictionaryPath: String) extends Dictionary {
   /** metodo per accedere al percorso del dizionario
-    * @return
+    * @return il percorso del dizionario
     */
   override def dictionaryPath: String = _dictionaryPath
   /** metodo per accedere al dizionario
@@ -35,7 +35,6 @@ class DictionaryImpl(val _dictionaryPath: String) extends Dictionary {
     */
   override def dictionarySet: Set[String] = populateDictionary()
   private def populateDictionary(): Set[String] = Source.fromInputStream(getClass.getResourceAsStream(dictionaryPath)).getLines().toSet
-  //
   /** metodo per il controllo di una lista di parole nel dizionario
     * @param listToCheck: lista delle parole da controllare
     * @return: vero se tutte le parole appartengono al dizionario, falso altrimenti
