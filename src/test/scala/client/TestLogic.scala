@@ -2,7 +2,7 @@ package client
 
 import akka.actor.ActorRef
 import client.controller.ControllerLogic.DummyLogic
-import client.controller.MoveOutcome
+import client.controller.{ControllerLogic, MoveOutcome}
 import client.controller.MoveOutcome.ServerDown
 import model.{BoardTile, Card}
 
@@ -81,112 +81,93 @@ object ClientTestMessage {
 import ClientTestMessage._
 import ClientTestConstants._
 
-/**
- * - implementazione di ControllerLogic server a scopo di test
+
+/** implementazione di ControllerLogic server a scopo di test
  * - ogni metodo non effettua elaborazione, ma quando viene invocato invia un messaggio all'attore receiver
  *    indicato nel costruttore, in questo modo è possibile verificare il momento in cui ogni metodo viene invocato
- * - verbose settato a true abilita le stampe presenti in ogni metodo della classe estesa
+ * @param receiver attore a cui invio messaggi
  */
-case class TestLogic(verbose: Boolean = true, receiver: ActorRef) extends DummyLogic(verbose){
+case class TestLogic(receiver: ActorRef) extends ControllerLogic{
 
   override def startGui(): Unit = {
     receiver ! START_GUI
-    super.startGui()
   }
 
   override def onLoginResponse(): Unit = {
     receiver ! ON_LOGIN_RESPONSE
-    super.onLoginResponse()
   }
 
   override def askUserToJoinGame(): Unit = {
     receiver ! ASK_USER_TO_JOIN_GAME
-    super.askUserToJoinGame()
   }
 
   override def onMatchStart(hand: Vector[Card], players: List[String]): Unit = {
     receiver ! OnMatchStart(hand, players)
-    super.onMatchStart(hand,players)
   }
 
   override def userTurnBegins(): Unit = {
     receiver ! USER_TURN_BEGINS
-    super.userTurnBegins()
   }
 
   override def turnEndUpdates(ranking: List[(String, Int)], board: List[BoardTile]): Unit = {
     receiver ! TurnEndUpdates(ranking, board)
-    super.turnEndUpdates(ranking, board)
   }
 
   override def addCardToTile(position: Int, x: Int, y: Int): Unit = {
     receiver ! AddCardToTile(position, x, y)
-    super.addCardToTile(position, x, y)
   }
 
   override def collectLetters(): Unit = {
     receiver ! COLLECT_LETTERS
-    super.collectLetters()
   }
 
   override def playWord(): Unit = {
     receiver ! PLAY_WORD
-    super.playWord()
   }
 
   override def moveOutcome[A >: MoveOutcome](outcome: A): Unit = {
     receiver ! outcome
-    super.moveOutcome(outcome)
   }
 
   override def updateHand(hand: Vector[Card]): Unit = {
     receiver ! UpdateHand(hand)
-    super.updateHand(hand)
   }
 
   override def takeLettersBackInHand(): Unit = {
     receiver ! TAKE_LETTERS_BACK_IN_HAND
-    super.takeLettersBackInHand()
   }
 
   override def userTurnContinues(): Unit = {
     receiver ! USER_TURN_CONTINUES
-    super.userTurnContinues()
   }
 
   override def isMulliganAvailable: Boolean = {
     receiver ! IS_MULLIGAN_AVAILABLE
-    super.isMulliganAvailable
+    true
   }
 
   override def onConnectionFailed(): Unit = {
     receiver ! ON_CONNECTION_FAILED
-    super.onConnectionFailed()
   }
 
   override def serversDown(server: ServerDown): Unit = {
     receiver ! ServersDownMessage(server)
-    super.serversDown(server)
   }
 
   override def matchEnded(player: String, playerWon: Boolean): Unit = {
     receiver ! MatchEnded(player,playerWon)
-    super.matchEnded(player, playerWon)
   }
 
   override def playerLeft(): Unit = {
     receiver ! PLAYER_LEFT
-    super.playerLeft()
   }
 
   override def terminate(): Unit = {
     receiver ! TERMINATE
-    super.terminate()
   }
 
   override def showInChat(sender: String, message: String): Unit = {
     receiver ! ShowInChat(sender, message)
-    super.showInChat(sender, message)
   }
 
 }
