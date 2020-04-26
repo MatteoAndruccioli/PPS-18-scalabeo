@@ -1,7 +1,6 @@
 package client
 
 import akka.actor.ActorRef
-import client.controller.ControllerLogic.DummyLogic
 import client.controller.{ControllerLogic, MoveOutcome}
 import client.controller.MoveOutcome.ServerDown
 import model.{BoardTile, Card}
