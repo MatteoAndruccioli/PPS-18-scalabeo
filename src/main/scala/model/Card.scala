@@ -1,12 +1,14 @@
 package model
 
-import scala.collection.mutable.ArrayBuffer
 import scala.util.Random
 
+/** Costanti riguardanti la classe Card
+  * - lettersScoreCardinalites: lista del punteggio e della cardinalità che le lettere devono avere in una partita
+  *   (lettara, punteggio, cardinalità)
+  * - defaultCard: card di default utilizzata nella Board per indicare una casella senza card
+  */
+package object cardConstants {
 
-package object constants {
-  // lista del punteggio e della cardinalità che le lettere devono avere in una partita
-  // (lettare. valore, cardinalità)
   val lettersScoresCardinalities = List(("A",1,12), ("B",4,4), ("C",1,7), ("D",4,4),
     ("E",1,12), ("F",4,4), ("G",4,4), ("H",8,2),
     ("I",1,12), ("L",2,6), ("M",2,6), ("N",2,6),
@@ -14,97 +16,127 @@ package object constants {
     ("S",1,7),  ("T",1,7), ("U",4,4), ("V",4,4),
     ("Z",8,2),  ("[a-zA-Z]",1,2))
 
-  val lettersScoresCardinalitiesTest = List(("I",1,8), ("S",1,8))
-
-  // bonus che può avere una card
-  val letterForTwo: String = "2L"
-  val letterForThree: String = "3L"
-  val wordForTwo: String = "2P"
-  val wordForThree: String = "3P"
-  val bonusLenght8 = 50
-  val bonusLenght7 = 30
-  val bonusLenght6 = 10
-  val scarabeo = "[a-zA-Z]"
-  val firstWordBonus = 2
-  val bonusScarabeoWord = 100
-  val bonusWithoutScarabeo = 10
-  val scarabeoWord = "scarabeo"
+  val defaultCard = CardImpl("NULL")
 }
 
-// interfaccia della Carta: lettera e relativo valore
+/** Una lettera che può essere giocata
+  * - letter: lettera che deve essera associata
+  * - score: punteggio corrispondente alla tessera
+  */
 sealed trait Card{
   def letter: String
   def score: Int
 }
 
-
-// implementazione della Carta
+/** Implementazione della lettera
+  * @param _letter: lettera a cui deve corrispondere la Card
+  */
 case class CardImpl (var _letter : String) extends Card {
+  /** metodo per accedere alla lettera
+    * @return la lettera
+    */
   override def letter: String = _letter
-  // lo score è assegnato automaticamente usando la lista definita in lettersScoresCardinalities
-  override def score: Int = constants.lettersScoresCardinalities.find(s => s._1 == _letter).head._2
+  /** metodo per accedere al punteggio
+    * corrisponde a quello definito in lettersScoresCardinalities
+    * @return punteggio della lettera
+    */
+  override def score: Int = cardConstants.lettersScoresCardinalities.find(s => s._1 == _letter).head._2
 }
 
-
-// Sacchetto contentenente le lettere da poter usare durante una partita
+/** Sacchetto contenente le lettere da estrarre durante la partita
+  * - bag: il sacchetto delle lettere
+  * - takeRandomElementFromBagOfLetters: metodo per estarre un numero di lettere dalla bag
+  * - reinsertCardInBag: metodo per inserire una lettera nella bag
+  */
 sealed trait LettersBag {
-  def test: Boolean
   def bag: List[Card]
-  def populateBag(list: List[(String, Int, Int)]): List[Card]
-  def tuple2Cards(tuple: (String, Int, Int)): List[Card]
-  def reinsertCardInBag(cardsToInsert: ArrayBuffer[Card]): Unit
   def takeRandomElementFromBagOfLetters(lettersToTake: Int): Option[List[Card]]
+  def reinsertCardInBag(cardsToInsert: Vector[Card]): Unit
 }
 
-
-// implementazione LettersBag
-case class LettersBagImpl(test: Boolean= false) extends LettersBag {
-  private var _bag: List[Card] = List()
-  if (test) _bag = populateBag(constants.lettersScoresCardinalitiesTest) else _bag = populateBag(constants.lettersScoresCardinalities)
-  override def populateBag(list: List[(String, Int, Int)]): List[Card] = list.flatMap(tuple2Cards)
-  override def tuple2Cards(tuple: (String, Int, Int)): List[Card] = List.fill(tuple._3)(CardImpl(tuple._1))
+/** Implementazione della sacchetto delle lettere */
+case class LettersBagImpl() extends LettersBag {
+  private var _bag: List[Card] = populateBag(cardConstants.lettersScoresCardinalities)
+  private def populateBag(list: List[(String, Int, Int)]): List[Card] = list.flatMap(tuple => List.fill(tuple._3)(CardImpl(tuple._1)))
+  /** metodo per accedere al sacchetto
+    * @return il sacchetto delle lettere
+    */
   override def bag: List[Card] = _bag
-  override def reinsertCardInBag(cardsToInsert: ArrayBuffer[Card]): Unit = _bag = _bag ++ cardsToInsert
+  /** metodo per estarre un numero di lettere dalla bag
+    * @param lettersToTake : numero di lettere desiderate
+    * @return lista delle n lettere estratte dal sacchetto
+    */
   def takeRandomElementFromBagOfLetters(lettersToTake: Int): Option[List[Card]] = _bag match {
     case Nil => Option.empty
+    case _ if lettersToTake > _bag.length =>
+      val shuffledList = Random.shuffle(_bag)
+      _bag = Nil
+      Some(shuffledList)
     case _ =>
       val shuffledList = Random.shuffle(_bag)
-      if (lettersToTake > _bag.length) {
-        _bag = Nil
-        Some(shuffledList)
-      } else {
-        _bag = shuffledList.drop(lettersToTake)
-        Some(shuffledList.slice(0, lettersToTake))
-      }
+      _bag = shuffledList.drop(lettersToTake)
+      Some(shuffledList.slice(0, lettersToTake))
   }
+  /** metodo per inserire una lettera nella bag
+    * @param cardsToInsert: lettera da inserire nel sacchetto
+    */
+  override def reinsertCardInBag(cardsToInsert: Vector[Card]): Unit = _bag = _bag ++ cardsToInsert
 }
 
-// mano delle card di ogni giocatore
+
+/** Mano di lettere per un giocatore
+  * - hand: la mano
+  * - playLetter: giocare una lettera dalla mano
+  * - putLetter: inserire una lettera nella mano
+  * - changeHand: cambio della mano
+  * - calculateHandPoint: calcolo del punteggio delle lettere nella mano
+  * - containsOnlyVowelsOrOnlyConsonants: controllo se la mano contiene solo vocali o solo consonanti
+  */
 sealed trait LettersHand {
-  def hand: ArrayBuffer[Card]
+  def hand: Vector[Card]
   def playLetter (cardPosition: Int): Card
   def putLetter (cardPosition: Int, card: Card)
-  def changeHand(newHand: ArrayBuffer[Card])
+  def changeHand(newHand: Vector[Card])
   def calculateHandPoint: Int
   def containsOnlyVowelsOrOnlyConsonants(): Boolean
 }
 
-// implementazione LettersHand
-case class LettersHandImpl(_hand: ArrayBuffer[Card]) extends LettersHand{
-  override def hand: ArrayBuffer[Card] = _hand
-  override def playLetter(cardPosition: Int): Card = hand.remove(cardPosition)
-  override def putLetter(cardPosition:Int, card: Card): Unit = hand.insert(cardPosition, card)
-  override def changeHand(newHand: ArrayBuffer[Card]): Unit = {
-    hand.clear()
-    hand.insertAll(0, newHand)
+/** Implementazione della mano del giocatore
+  * @param firstHand : mano iniziale del giocatore
+  */
+case class LettersHandImpl(firstHand: Vector[Card]) extends LettersHand{
+  private var _hand = firstHand
+  /** metodo per accedere alla mano
+    * @return hand: la mano
+    */
+  override def hand: Vector[Card] = _hand
+  /** metodo per giocare una lettera dalla mano
+    * @param cardPosition: posizione della lettera da estrarre
+    * @return la lettera voluta
+    */
+  override def playLetter(cardPosition: Int): Card = {
+    val card = hand(cardPosition)
+    _hand = _hand.patch(cardPosition, Nil, 1)
+    card
   }
+  /** metodo per inserire una lettera nella mano
+    * @param cardPosition: posizione in cui inserire la lettera
+    * @param card: lettera da inserire
+    */
+  override def putLetter(cardPosition:Int, card: Card): Unit =  _hand = _hand.slice(0,cardPosition)++Vector(card)++_hand.slice(cardPosition, _hand.length)
+  /** metodo per il cambio di una mano
+    * @param newHand: le nuove lettere da inserire
+    */
+  override def changeHand(newHand: Vector[Card]): Unit = _hand = newHand
+  /** metodo per controllare se la mano contiene solo vocali o constanti
+    * @return vero se contiene solo consonanti o solo vocali
+    */
   override def containsOnlyVowelsOrOnlyConsonants(): Boolean = {
     val vowels = Set("A", "E", "I", "O", "U")
     hand.forall(card => vowels.contains(card.letter)) || hand.forall(card => !vowels.contains(card.letter))
   }
-  override def calculateHandPoint: Int = {
-    var handValue = 0
-    _hand.foreach(card => handValue += card.score)
-    handValue
-  }
+  /** metodo per il calcolo dei punti della mano
+    * @return la somma dei punteggi delle lettere
+    */
+  override def calculateHandPoint: Int = firstHand.foldLeft(0)(_+_.score)
 }

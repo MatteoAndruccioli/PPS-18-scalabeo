@@ -2,52 +2,35 @@ package client.controller
 
 import akka.actor.ActorRef
 import client.controller.Messages.ViewToClientMessages
-import client.controller.Messages.ViewToClientMessages.UserMadeHisMove
-import client.controller.MoveOutcome.ServerDown.{GameServerDown, GreetingServerDown}
-import client.controller.MoveOutcome.{AcceptedWord, HandSwitchAccepted, HandSwitchRefused, PassReceived, RefusedWord, ServerDown, TimeoutReceived}
-import client.view.{BoardInteraction, LetterStatus, LetterTile, View}
+import client.controller.MoveOutcome.ServerDown
 import model.{BoardTile, Card}
-import scalafx.application.Platform
-import shared.Move.WordMove
-
-import scala.collection.mutable.ArrayBuffer
 
 object Controller {
 
   private var _myTurn: Boolean = false
   private var clientRef: ActorRef = _
   private var _username: String = _
+  private var mind: ControllerLogic = _
 
   def username_= (username: String): Unit = _username = username
   def username: String = _username
 
-  def init(clientRef: ActorRef): Unit  = {
+  def init(clientRef: ActorRef, mind: ControllerLogic): Unit  = {
     this.clientRef = clientRef
-    startGui()
-  }
-
-  private def startGui(): Unit = {
-    new Thread(() => {
-      View.main(Array[String]())
-    }).start()
+    this.mind = mind
+    mind.startGui()
   }
 
   def sendToClient(message: ViewToClientMessages): Unit ={
     clientRef ! message
   }
 
-  def onLoginResponse(): Unit = {
-    View.onLoginResponse()
-  }
+  def onLoginResponse(): Unit = mind.onLoginResponse()
 
-  def askUserToJoinGame(): Unit = {
-    View.askUserToJoinGame()
-  }
+  def askUserToJoinGame(): Unit = mind.askUserToJoinGame()
 
-  def onMatchStart(hand:ArrayBuffer[Card], players: List[String]): Unit = {
-    View.onMatchStart(hand.map(c => (c.letter, c.score)), players)
-    GameManager.newGame(hand)
-  }
+  def onMatchStart(hand:Vector[Card], players: List[String]): Unit = mind.onMatchStart(hand, players)
+
 
   def isMyTurn: Boolean = {
     this._myTurn
@@ -55,91 +38,50 @@ object Controller {
 
   def userTurnBegins(): Unit = {
     this._myTurn = true
-    View.userTurnBegins()
+    mind.userTurnBegins()
   }
 
   def endMyTurn(): Unit = {
     this._myTurn = false
   }
 
-  def turnEndUpdates(ranking: List[(String,Int)], board:List[BoardTile]): Unit = {
-    View.updateLeaderboard(ranking)
-    GameManager.addPlayedWordAndConfirm(board)
-    View.turnEndUpdates(board.map(b => (LetterTile(60, b.card.letter, b.card.score.toString, 0, LetterStatus.insertedConfirmed), b.position.row, b.position.col)))
-  }
+  def turnEndUpdates(ranking: List[(String,Int)], board:List[BoardTile]): Unit = mind.turnEndUpdates(ranking,board)
 
-  def addCardToTile(position: Int, x: Int, y: Int): Unit = {
-    GameManager.addCardToTile(position, x, y)
-  }
+  def addCardToTile(position: Int, x: Int, y: Int): Unit = mind.addCardToTile(position, x, y)
 
-  def collectLetters(): Unit = {
-    GameManager.collectLetters()
-  }
+  def collectLetters(): Unit = mind.collectLetters()
 
-  def playWord(): Unit = {
-    val playedWord = GameManager.getPlayedWord
-    if(!playedWord.isEmpty)
-      {
-        playedWord.foreach(b => {
-          print(b.card.letter)
-        })
-        sendToClient(UserMadeHisMove(WordMove(playedWord)))
-      }
-  }
+  def playWord(): Unit = mind.playWord()
+
 
   //metodo attraverso cui il Client comunica al controller l'esito della mossa inviata al GameServer
-  def moveOutcome[A >: MoveOutcome](outcome: A):Unit = outcome match {
-    case _: RefusedWord => {takeLettersBackInHand(); userTurnContinues()}
-    case _: HandSwitchRefused => {userTurnContinues()}
-    case _: AcceptedWord => {updateHand(outcome.asInstanceOf[AcceptedWord].hand); View.confirmPlay(); GameManager.confirmPlay()}
-    case _: HandSwitchAccepted => {updateHand(outcome.asInstanceOf[HandSwitchAccepted].hand); endMyTurn()}
-    case _: PassReceived => {endMyTurn()}
-    case _: TimeoutReceived => {endMyTurn()}
-  }
-
-  private def updateHand(hand:ArrayBuffer[Card]): Unit = {
-    View.updateHand(hand.map(c => (c.letter, c.score)))
-    GameManager.changeHand(hand)
-  }
-
-  private def takeLettersBackInHand(): Unit = {
-    View.getLettersBackFromBoard();
-    GameManager.collectLetters()
-  }
+  def moveOutcome[A >: MoveOutcome](outcome: A):Unit = mind.moveOutcome(outcome)
 
   def userTurnContinues(): Unit = {
     _myTurn = true
-    View.userTurnContinues()
+    mind.userTurnContinues()
   }
 
-  def isMulliganAvailable: Boolean = {
-    GameManager.isMulliganAvailable()
+  //aggiunto per userTurnContinue in controllerLogic
+  def setMyTurn():Unit = {
+    _myTurn = true
   }
 
-  def onConnectionFailed(): Unit = {
-    View.terminate()
+  def showInChat(sender: String, message: String): Unit = {
+    mind.showInChat(sender, message)
   }
 
-  def serversDown(server: ServerDown):Unit = {
-    server match {
-      case _: GreetingServerDown => View.greetingDisconnected()
-      case _: GameServerDown => View.gameServerDisconnected()
-    }
-  }
+  def isMulliganAvailable: Boolean = mind.isMulliganAvailable
 
-  def matchEnded(player: String, playerWon:Boolean): Unit =  {
-    endMyTurn()
-    BoardInteraction.reset()
-    View.matchEnded(player, playerWon)
-  }
+  def onConnectionFailed(): Unit = mind.onConnectionFailed()
 
-  def playerLeft(): Unit = {
-    View.playerLeft()
-  }
+  def serversDown(server: ServerDown):Unit = mind.serversDown(server)
 
-  def terminate(): Unit = {
-    View.terminate()
-  }
+  def matchEnded(player: String, playerWon:Boolean): Unit =  mind.matchEnded(player, playerWon)
+
+  def playerLeft(): Unit = mind.playerLeft()
+
+  def terminate(): Unit = mind.terminate()
 
   def exit(): Unit = {
     System.exit(0)
@@ -147,25 +89,59 @@ object Controller {
 }
 
 // tipo dell'esito di una mossa, contiene informazioni che indicano la risposta del server alla mossa compiuta dall'utente
+/** MoveOutcome contiene gli esiti che risultano da una mossa. Viene mandato dal server quando un giocatore effettua la
+ * propria mossa.
+ *
+ */
 sealed trait MoveOutcome
 object MoveOutcome{
-  //casi in cui la mossa effettuata non viene accettata dal'utente
-  case class RefusedWord() extends MoveOutcome //utente aveva indicato la composizione di una parola che viene rifìutata
-  case class HandSwitchRefused() extends MoveOutcome //utente aveva richiesto un cambio delle tessere nella mano, rifiutato dal GameServer
 
-  //casi in cui la mossa viene accettata dall'utente
-  //utente aveva indicato la composizione di una parola che viene accettata, GameServer passa inoltre la nuova mano di tessere disponibili all'utente
-  case class AcceptedWord(hand:ArrayBuffer[Card]) extends MoveOutcome
-  //utente aveva richiesto un cambio delle tessere nella mano, GameServer passa inoltre la nuova mano di tessere disponibili all'utente
-  case class HandSwitchAccepted(hand:ArrayBuffer[Card]) extends MoveOutcome
-  //utente aveva espresso intenzione di passare il turno, GameServer ne ha preso atto
+  /** La parola giocata dall'utente non è valida, quindi viene rifiutata.
+   *
+   */
+  case class RefusedWord() extends MoveOutcome
+
+  /** La mano dell'utente non viene cambiata perché non soddisfa i requisiti.
+   *
+   */
+  case class HandSwitchRefused() extends MoveOutcome
+
+  /** La parola dell'utente viene accettata e viene anche mandata la nuova mano dell'utente.
+   *
+   * @param hand la nuova mano dell'utente
+   */
+  case class AcceptedWord(hand:Vector[Card]) extends MoveOutcome
+
+  /** Lo scambio mano dell'utente viene accettato e quindi gli viene passata la nuova mano.
+   *
+   * @param hand la nuova mano dell'utente
+   */
+  case class HandSwitchAccepted(hand:Vector[Card]) extends MoveOutcome
+
+  /** Il passo dell'utente viene accettato.
+   *
+   */
   case class PassReceived() extends MoveOutcome
-  //timer è scaduto, GameServer ne ha preso atto
+
+  /** Viene confermato il timeout del giocatore.
+   *
+   */
   case class TimeoutReceived() extends MoveOutcome
 
+  /** ServerDown specifica i vari errori che si possono riscontrare lato server.
+   *
+   */
   sealed trait ServerDown
   object ServerDown{
+
+    /** Il GreetingServer per un qualche motivo va down.
+     *
+     */
     case class GreetingServerDown() extends ServerDown
+
+    /** Il GameServer per un qualche motivo va down.
+     *
+     */
     case class GameServerDown() extends ServerDown
   }
 

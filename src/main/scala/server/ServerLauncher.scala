@@ -3,8 +3,10 @@ package server
 import akka.actor.{ActorSystem, Props}
 import com.typesafe.config.ConfigFactory
 
-//launcher del server
-//nota: la porta che usa è importante => deve essere quella indicata nel file application.conf
+
+
+/** Permette di lanciare il server sulla porta specificata anche in application.conf (2551)
+ */
 object ServerLauncher extends App{
   val config = ConfigFactory.parseString("akka.remote.netty.tcp.port=" + 2551)
     .withFallback(ConfigFactory.parseString("akka.cluster.roles = [serverRole]"))

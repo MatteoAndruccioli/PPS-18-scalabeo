@@ -9,7 +9,12 @@ import scalafx.scene.layout.{HBox, StackPane, VBox}
 import scalafx.scene.paint.Color
 import scalafx.stage.{Stage, StageStyle}
 
+/** Dialog implementa una finestra di interazione per l'utente.
+ *
+ * @param title testo della dialog
+ */
 class Dialog(title: String) extends Stage(StageStyle.Undecorated) {
+  val MS_BEFORE_CLOSE = 5000
   initStyle(StageStyle.Transparent)
   centerOnScreen()
   requestFocus()
@@ -31,6 +36,12 @@ class Dialog(title: String) extends Stage(StageStyle.Undecorated) {
     }
   }
 
+  /** Metodo che permette di aggiungere alla dialog due bottoni, uno per confermare e uno per declinare.
+   *
+   * @param accept funzione da eseguire se l'utente preme il tasto di conferma
+   * @param decline funzione da eseguire se l'utente preme il teasto per declinare
+   * @return la dialog
+   */
   def addYesNoButtons(accept: Runnable, decline: Runnable): Dialog = {
     val buttons: HBox = new HBox {
       alignment = Pos.Center
@@ -56,9 +67,15 @@ class Dialog(title: String) extends Stage(StageStyle.Undecorated) {
     this
   }
 
+  /** Metodo che imposta un tempo limite dopo il quale la dialog si chiude.
+   *
+   * @param stageToClose lo stage di ScalaFX che si vuole chiudere
+   * @param onCloseAction funzione chiamata alla chiusura della dialog
+   * @return
+   */
   def autoClose(stageToClose: Option[Stage], onCloseAction: Runnable): Dialog = {
     new Thread(() => {
-      Thread.sleep(5000)
+      Thread.sleep(MS_BEFORE_CLOSE)
       Platform.runLater(() => {
         this.close()
         if(stageToClose != Option.empty) {

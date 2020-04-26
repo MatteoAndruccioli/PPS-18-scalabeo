@@ -5,21 +5,36 @@ import akka.actor.Cancellable
 import akka.cluster.Cluster
 import scala.concurrent.duration.Duration
 
-
+/** Scheduler che esegue task ripetutamente;
+ *  mette a disposizione metodi per:
+ *    - avviare lo scheduling del task corrente
+ *    - stoppare lo scheduling del task corrente
+ *    - sostituire lo scheduling corrente
+ */
 sealed trait CustomScheduler{
-  //avvia l'esecuzione del task preimpostato
+  /** avvia l'esecuzione del task preimpostato */
   def startTask():Unit
-  //stoppa l'esecuzione del task corrente
+  /** stoppa l'esecuzione del task corrente */
   def stopTask(): Unit
-  //stoppa il task schedulato,se in esecuzione, lo sostituisce e avvia il nuovo task
+  /** stoppa il task schedulato,se in esecuzione, lo sostituisce e avvia il nuovo task
+   * @param newTask = un nuovo task da eseguire con lo scheduler
+   */
   def replaceBehaviourAndStart(newTask: Runnable): Unit
 }
 
-
+/** Oggetto contenente implementazione di CustoScheduler e alcuni factory method */
 object ClusterScheduler{
 
-  //implementa uno scheduler utilizzabile dagli attori del cluster specificato
-  //espone funzioni di utility che facilitano il rimpiazzo del task schedulato
+  /**implementa uno scheduler utilizzabile dagli attori del cluster specificato
+   * espone funzioni di utility che facilitano il rimpiazzo del task schedulato
+   *
+   * @param initialDelay -> delay tra invocazione start e prima esecuzione del task
+   * @param timeUnitInitialDelay -> unità di misura temporale per initialDelay
+   * @param interval -> delay tra una invocazione del task schedulato e invocazione successiva
+   * @param timeUnitInterval -> unità di misura temporale per interval
+   * @param runnable -> Option contenente task che verrà eseguito
+   * @param cluster -> cluster cui appartiene l'attore che usa lo scheduler
+   */
   private class ClusterScheduler(var initialDelay: Long,
                          var timeUnitInitialDelay: TimeUnit,
                          var interval: Long,
@@ -35,7 +50,7 @@ object ClusterScheduler{
     //true quando il task sta eseguendo
     var running:Boolean = false
 
-    //avvia lo scheduling dell'attività presente in cancellable
+    /** avvia lo scheduling dell'attività presente in cancellable */
     def startTask():Unit = {
       runnable match {
         case Some(action) => {
@@ -46,7 +61,7 @@ object ClusterScheduler{
       }
     }
 
-    //permette di stoppare lo scheduler
+    /** permette di stoppare lo scheduler */
     def stopTask(): Unit = {
       if(running){
         running = false
@@ -73,7 +88,7 @@ object ClusterScheduler{
       }
     }
 
-    //stoppa task corrente, lo rimpiazza con quello indicato e riavvia lo scheduler
+    /** stoppa task corrente, lo rimpiazza con quello indicato e riavvia lo scheduler */
     def replaceBehaviourAndStart(newTask: Runnable): Unit ={
       stopTask() //aggiunto per sicurezza, se già stoppato non fa niente e passa alla prossima istruzione
       quickBehaviourReset(newTask)
@@ -81,14 +96,24 @@ object ClusterScheduler{
     }
   }
 
-  val INITIAL_DELAY :Long = 3;
-  val INTERVAL :Long = 3;
+  /** delay tra invocazione start e prima esecuzione del task */
+  val INITIAL_DELAY :Long = 1;
+  /** delay tra una invocazione del task schedulato e invocazione successiva */
+  val INTERVAL :Long = 6;
 
-  //factory con apply per il mio ClusterScheduler
+  /** factory con apply per ClusterScheduler */
   def apply(cluster: Cluster): CustomScheduler =
     new ClusterScheduler(INITIAL_DELAY, TimeUnit.SECONDS, INTERVAL, TimeUnit.SECONDS, None,cluster)
 
-  //factory con apply per il ClusterScheduler in cui posso specificare tutti i parametri
+  /**factory con apply per il ClusterScheduler in cui è possibile specificare tutti i parametri
+   *
+   * @param initialDelay -> delay tra invocazione start e prima esecuzione del task
+   * @param timeUnitInitialDelay -> unità di misura temporale per initialDelay
+   * @param interval -> delay tra una invocazione del task schedulato e invocazione successiva
+   * @param timeUnitInterval -> unità di misura temporale per interval
+   * @param runnable -> Option contenente task che verrà eseguito
+   * @param cluster -> cluster cui appartiene l'attore che usa lo scheduler
+   */
   def apply(initialDelay: Long,
             timeUnitInitialDelay: TimeUnit,
             interval: Long,

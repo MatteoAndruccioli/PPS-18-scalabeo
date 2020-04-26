@@ -4,13 +4,21 @@ import client.view.TileType.TileType
 import scalafx.Includes.handle
 import scalafx.scene.layout.BorderPane
 
+/** Classe che modella le varie caselle del tabellone.
+ *
+ * @param size grandezza in pixel della casella
+ * @param row posizione nella riga della casella
+ * @param column posizione nella colonna della casella
+ */
 class BoardTile(size: Double, val row: Int, val column: Int) extends BorderPane {
   prefWidth = size
   prefHeight = size
   maxWidth = size
   maxHeight = size
+
   stylesheets_=(List("/style/TileStyle.css"))
   styleClass += "board-tile"
+
   val tileType: TileType = BoardTile.getTileType(row, column)
   val tileStyle: String = tileType match {
     case TileType.Base => ""
@@ -31,6 +39,9 @@ class BoardTile(size: Double, val row: Int, val column: Int) extends BorderPane 
   }
 }
 
+/** Oggetto che associa ad ogni coppia di valori riga e colonna un tipo di casella.
+ *
+ */
 object BoardTile {
   var TwoXLettersTile: List[(Int, Int)] = List((1, 5), (1, 13), (3, 8), (3, 10), (4, 9),
     (5, 1), (5, 17), (8, 3),(8, 8), (8, 10), (8, 15), (9, 4), (9, 14), (10, 3), (10, 8),
@@ -44,6 +55,12 @@ object BoardTile {
     (5, 13), (6, 12), (12, 6), (13, 5), (14, 4), (15, 3), (16, 2))
   var StartTile: List[(Int, Int)] = List((9, 9))
 
+  /** Metodo usato per stabilire il tipo di casella a partire dall'indice della riga e della colonna.
+   *
+   * @param row indice della riga
+   * @param column indice della colonna
+   * @return il tipo della casella
+   */
   def getTileType(row: Int, column: Int): TileType = (row, column) match {
     case _ if TwoXLettersTile.contains((row, column)) => TileType.TwoXLetter
     case _ if ThreeXLettersTile.contains((row, column)) => TileType.ThreeXLetter
@@ -54,6 +71,9 @@ object BoardTile {
   }
 }
 
+/** Enumerazione che contiene i vari tipi di caselle presenti sul tabellone.
+ *
+ */
 object TileType extends Enumeration {
   type TileType = Value
   val TwoXLetter, ThreeXLetter, TwoXWord, ThreeXWord, Start, Base = Value

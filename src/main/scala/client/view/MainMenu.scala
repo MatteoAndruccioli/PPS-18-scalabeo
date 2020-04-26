@@ -13,6 +13,9 @@ import scalafx.scene.Scene
 import scalafx.scene.layout.{StackPane, VBox}
 import scalafx.stage.Stage
 
+/** MainMenu rappresenta il menù principale di gioco.
+ *
+ */
 class MainMenu extends JFXApp.PrimaryStage {
   private val VBOX_CHILDREN_SPACING = 23
   private val VBOX_WIDTH = 400
@@ -29,6 +32,7 @@ class MainMenu extends JFXApp.PrimaryStage {
   private val MENU_BUTTON_STYLE = "menu-button"
   private val INNER_LOGIN_VBOX_STYLE = "innerLoginVBox"
   private val APPLICATION_TITLE = "Scalabeo"
+  private val DIALOG_FOUND_TEXT = "Match Found, do you want to accept?"
 
   title = APPLICATION_TITLE
   icons.add(new Image(this.getClass.getResourceAsStream(ICON_PATH)))
@@ -118,15 +122,21 @@ class MainMenu extends JFXApp.PrimaryStage {
     View.terminate()
   }
 
+  /** Metodo chiamato quando l'utente effettua con successo il login.
+   *
+   */
   def onLoginResponse(): Unit = {
     loginAnimation()
   }
 
+  /** Metodo che mostra all'utente una dialog quando viene trovata una partita.
+   *
+   */
   def askUserToJoinGame(): Unit = {
     Platform.runLater(() => {
       loggedInContainer.children.remove(0)
       sizeToScene()
-      new Dialog("Match Found, do you want to accept?")
+      new Dialog(DIALOG_FOUND_TEXT)
         .addYesNoButtons(
           () => View.sendToClient(UserReadyToJoin(true)),
           () => {
