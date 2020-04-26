@@ -545,7 +545,7 @@ class ClientActorTest extends TestKit (ActorSystem(TEST_SYSTEM_NAME))
   private def controllerInitCheck(controllerListener: TestProbe,
                                   client: ActorRef): Unit = {
     val verbous: Boolean = false //non voglio vengano eseguite print in ControllerLogic
-    Controller.init(client, TestLogic(verbous, controllerListener.ref))
+    Controller.init(client, TestLogic(controllerListener.ref))
     checkReceivedStringMessage(controllerListener, START_GUI)
   }
 
