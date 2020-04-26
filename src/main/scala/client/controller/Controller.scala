@@ -2,14 +2,8 @@ package client.controller
 
 import akka.actor.ActorRef
 import client.controller.Messages.ViewToClientMessages
-import client.controller.Messages.ViewToClientMessages.UserMadeHisMove
-import client.controller.MoveOutcome.ServerDown.{GameServerDown, GreetingServerDown}
-import client.controller.MoveOutcome.{AcceptedWord, HandSwitchAccepted, HandSwitchRefused, PassReceived, RefusedWord, ServerDown, TimeoutReceived}
-import client.view.{BoardInteraction, LetterStatus, LetterTile, View}
+import client.controller.MoveOutcome.ServerDown
 import model.{BoardTile, Card}
-import scalafx.application.Platform
-import shared.Move.WordMove
-
 
 object Controller {
 
@@ -95,25 +89,59 @@ object Controller {
 }
 
 // tipo dell'esito di una mossa, contiene informazioni che indicano la risposta del server alla mossa compiuta dall'utente
+/** MoveOutcome contiene gli esiti che risultano da una mossa. Viene mandato dal server quando un giocatore effettua la
+ * propria mossa.
+ *
+ */
 sealed trait MoveOutcome
 object MoveOutcome{
-  //casi in cui la mossa effettuata non viene accettata dal'utente
-  case class RefusedWord() extends MoveOutcome //utente aveva indicato la composizione di una parola che viene rifìutata
-  case class HandSwitchRefused() extends MoveOutcome //utente aveva richiesto un cambio delle tessere nella mano, rifiutato dal GameServer
 
-  //casi in cui la mossa viene accettata dall'utente
-  //utente aveva indicato la composizione di una parola che viene accettata, GameServer passa inoltre la nuova mano di tessere disponibili all'utente
+  /** La parola giocata dall'utente non è valida, quindi viene rifiutata.
+   *
+   */
+  case class RefusedWord() extends MoveOutcome
+
+  /** La mano dell'utente non viene cambiata perché non soddisfa i requisiti.
+   *
+   */
+  case class HandSwitchRefused() extends MoveOutcome
+
+  /** La parola dell'utente viene accettata e viene anche mandata la nuova mano dell'utente.
+   *
+   * @param hand la nuova mano dell'utente
+   */
   case class AcceptedWord(hand:Vector[Card]) extends MoveOutcome
-  //utente aveva richiesto un cambio delle tessere nella mano, GameServer passa inoltre la nuova mano di tessere disponibili all'utente
+
+  /** Lo scambio mano dell'utente viene accettato e quindi gli viene passata la nuova mano.
+   *
+   * @param hand la nuova mano dell'utente
+   */
   case class HandSwitchAccepted(hand:Vector[Card]) extends MoveOutcome
-  //utente aveva espresso intenzione di passare il turno, GameServer ne ha preso atto
+
+  /** Il passo dell'utente viene accettato.
+   *
+   */
   case class PassReceived() extends MoveOutcome
-  //timer è scaduto, GameServer ne ha preso atto
+
+  /** Viene confermato il timeout del giocatore.
+   *
+   */
   case class TimeoutReceived() extends MoveOutcome
 
+  /** ServerDown specifica i vari errori che si possono riscontrare lato server.
+   *
+   */
   sealed trait ServerDown
   object ServerDown{
+
+    /** Il GreetingServer per un qualche motivo va down.
+     *
+     */
     case class GreetingServerDown() extends ServerDown
+
+    /** Il GameServer per un qualche motivo va down.
+     *
+     */
     case class GameServerDown() extends ServerDown
   }
 
