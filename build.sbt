@@ -36,3 +36,14 @@ libraryDependencies ++= Seq(
   "org.openjfx" % s"javafx-swing" % "12.0.1" classifier osName,
   "org.openjfx" % s"javafx-web" % "12.0.1" classifier osName
 )
+
+
+enablePlugins(PackPlugin)
+packMain := Map("server" -> "server.ServerLauncher", "client" -> "client.ClientLauncher")
+
+import xerial.sbt.pack.PackPlugin._
+publishPackArchives
+
+// set the main class for packaging the main jar
+mainClass in (Compile, packageBin) := Some("server.ServerLauncher")
+
