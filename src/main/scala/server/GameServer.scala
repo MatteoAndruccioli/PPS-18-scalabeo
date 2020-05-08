@@ -29,43 +29,43 @@ import shared.{ClusterScheduler, CustomScheduler, Move}
  */
 class GameServer(players : List[ActorRef], mapUsername : Map[ActorRef, String]) extends Actor {
 
-  val mediator = DistributedPubSub(context.system).mediator
-  val serverTopic = GAME_SERVER_SEND_TOPIC+self.toString().substring(self.toString().indexOf('#'))
+  val mediator : ActorRef = DistributedPubSub(context.system).mediator
+  val serverTopic : String = GAME_SERVER_SEND_TOPIC+self.toString().substring(self.toString().indexOf('#'))
   val chatTopic : String = CHAT_TOPIC+self.toString().substring(self.toString().indexOf('#'))
   mediator ! Subscribe(serverTopic, self)
   mediator ! Subscribe(chatTopic, self)
-  private val cluster = Cluster.get(context.system)
-  private val scheduler: CustomScheduler = ClusterScheduler(cluster)
-  private val nPlayer = players.size
+  private val cluster : Cluster = Cluster.get(context.system)
+  private val scheduler : CustomScheduler = ClusterScheduler(cluster)
+  private val nPlayer : Int = players.size
 
   private var greetingServerRef: ActorRef = _
-  private val gamePlayers = players
+  private val gamePlayers : List[ActorRef] = players
   private val gamePlayersUsername: Map[ActorRef, String] = mapUsername
   private var winnerRef: ActorRef = _
 
-  private val board = BoardImpl()
-  private val pouch = LettersBagImpl()
-  private var playersHand = Map[ActorRef, LettersHandImpl]()
+  private val board : Board = BoardImpl()
+  private val pouch : LettersBag = LettersBagImpl()
+  private var playersHand : Map[ActorRef, LettersHand]= Map[ActorRef, LettersHandImpl]()
   //creo le mani
   gamePlayers.foreach(p => playersHand+=(p -> LettersHandImpl.apply(Vector(pouch.takeRandomElementFromBagOfLetters(8).get : _*))))
   private var playedWord : List[BoardTile] = List[BoardTile]()
-  private var numberOfPlayedTileInHand = 0
+  private var numberOfPlayedTileInHand : Int = 0
   //creo il dizionario
   private val dictionaryPath: String = "/dictionary/dictionary.txt"
-  private val dictionary: DictionaryImpl = new DictionaryImpl(dictionaryPath)
+  private val dictionary: Dictionary = new DictionaryImpl(dictionaryPath)
 
   private val ranking : Ranking = new RankingImpl(players)
 
-  private var turn = 0
+  private var turn : Int = 0
   private var isGameEnded : Boolean = false
   private var isFirstWord : Boolean = true
 
   //variabili ack
-  private var ackTopicReceived = CounterImpl(nPlayer)
-  private var ackTurn = CounterImpl(nPlayer)
-  private var ackEndTurn = CounterImpl(nPlayer)
-  private var ackEndGame = CounterImpl(nPlayer)
-  private var ackDisconnection = CounterImpl(nPlayer)
+  private var ackTopicReceived : Counter = CounterImpl(nPlayer)
+  private var ackTurn : Counter = CounterImpl(nPlayer)
+  private var ackEndTurn : Counter = CounterImpl(nPlayer)
+  private var ackEndGame : Counter = CounterImpl(nPlayer)
+  private var ackDisconnection : Counter = CounterImpl(nPlayer)
 
   /**Fornisce la definizione del comportamento del GameServer.
    *  Essendo un server questo deve poter rispondere ad ogni richiesta leggitima dei client durante la partita:
